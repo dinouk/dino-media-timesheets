@@ -307,8 +307,25 @@ export default function TimeLogsPage() {
 
     if (companyLogo) {
       try {
-        doc.addImage(companyLogo, "PNG", pageWidth / 2 - 25, yPos, 50, 20);
-        yPos += 30;
+        const img = new Image();
+        img.src = companyLogo;
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        const aspectRatio = imgWidth / imgHeight;
+        
+        const maxLogoWidth = 60;
+        const maxLogoHeight = 25;
+        
+        let logoWidth = maxLogoWidth;
+        let logoHeight = logoWidth / aspectRatio;
+        
+        if (logoHeight > maxLogoHeight) {
+          logoHeight = maxLogoHeight;
+          logoWidth = logoHeight * aspectRatio;
+        }
+        
+        doc.addImage(companyLogo, "PNG", (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight);
+        yPos += logoHeight + 10;
       } catch (error) {
         console.error("Error adding logo to PDF:", error);
         yPos += 10;
@@ -317,7 +334,7 @@ export default function TimeLogsPage() {
 
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("TIMESHEET REPORT", pageWidth / 2, yPos, { align: "center" });
+    doc.text(selectedClient.name, pageWidth / 2, yPos, { align: "center" });
     yPos += 10;
 
     doc.setFontSize(14);
@@ -625,8 +642,7 @@ export default function TimeLogsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Client</label>
+              <div>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select client" />
@@ -655,8 +671,7 @@ export default function TimeLogsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Period</label>
+              <div>
                 <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select period" />
