@@ -102,15 +102,14 @@ export default function LogTimePage() {
     );
     localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
 
-    setSuccess(true);
-    setTimeout(() => {
-      setSuccess(false);
-      setSelectedClientId("");
-      setHours("");
-      setSelectedTags([]);
-      setDescription("");
-      setSelectedDate(new Date().toISOString().split("T")[0]);
-    }, 2000);
+    // Redirect to time-logs page with client and month pre-selected
+    router.push({
+      pathname: "/time-logs",
+      query: {
+        clientId: selectedClientId,
+        month: monthKey,
+      },
+    });
   };
 
   if (!mounted) return null;
