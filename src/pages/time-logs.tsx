@@ -54,7 +54,7 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
-    files: [] as Array<{ id: string; name: string; data: string }>,
+    files: [] as Array<{ id: string; name: string; data: string; type: string; size: number }>,
   });
   const [editingRollover, setEditingRollover] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(false);
@@ -220,6 +220,8 @@ export default function TimeLogsPage() {
           id: Date.now().toString() + Math.random(),
           name: file.name,
           data: event.target?.result as string,
+          type: file.type,
+          size: file.size,
         };
         setEditForm(prev => ({
           ...prev,
