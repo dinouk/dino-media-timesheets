@@ -20,6 +20,7 @@ export interface TimeEntry {
   files?: Array<{
     id: string;
     name: string;
+    displayName: string;
     data: string;
     type: string;
     size: number;
