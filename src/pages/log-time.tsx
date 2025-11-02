@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation } from "@/types";
 import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
 import { Textarea } from "@/components/ui/textarea";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function LogTimePage() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function LogTimePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [success, setSuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -31,6 +32,7 @@ export default function LogTimePage() {
       router.push("/");
       return;
     }
+    setCurrentUser(user);
     loadClients();
     setSelectedDate(new Date().toISOString().split("T")[0]);
   }, [router]);
@@ -105,20 +107,14 @@ export default function LogTimePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
-            Log Time
-          </h1>
-        </div>
-      </header>
+      <AppHeader currentUser={currentUser} />
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">Log Time</h2>
+          <p className="text-slate-600">Record time spent on client projects</p>
+        </div>
+
         <Card className="max-w-2xl mx-auto shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

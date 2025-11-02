@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { ArrowLeft, FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle } 
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
 import { calculateClientStats, processMonthlyRollover } from "@/lib/timeCalculations";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function TimeLogsPage() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function TimeLogsPage() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
+  const [currentUser, setCurrentUser] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -29,6 +30,7 @@ export default function TimeLogsPage() {
       router.push("/");
       return;
     }
+    setCurrentUser(user);
     loadData();
     const now = new Date();
     setSelectedMonth((now.getMonth() + 1).toString());
@@ -84,12 +86,15 @@ export default function TimeLogsPage() {
     if (!selectedClient || !stats) return;
 
     const monthName = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    const companyLogo = localStorage.getItem("companyLogo");
     
-    const content = `
-TIMESHEET REPORT
-================
-
-Client: ${selectedClient.name}
+    let content = `TIMESHEET REPORT\n================\n\n`;
+    
+    if (companyLogo) {
+      content += `[Company Logo Included]\n\n`;
+    }
+    
+    content += `Client: ${selectedClient.name}
 Period: ${monthName}
 
 STATISTICS
@@ -145,18 +150,7 @@ Total Hours: ${stats.usedHours.toFixed(2)}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
-            Time Logs
-          </h1>
-        </div>
-      </header>
+      <AppHeader currentUser={currentUser} />
 
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">

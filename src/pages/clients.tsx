@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ArrowLeft, Tag } from "lucide-react";
 import Link from "next/link";
 import { Client } from "@/types";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function ClientsPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [currentUser, setCurrentUser] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
@@ -30,6 +31,7 @@ export default function ClientsPage() {
       router.push("/");
       return;
     }
+    setCurrentUser(user);
     loadClients();
   }, [router]);
 
@@ -109,17 +111,13 @@ export default function ClientsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
-              Clients
-            </h1>
+      <AppHeader currentUser={currentUser} />
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">Clients</h2>
+            <p className="text-slate-600">Manage your client relationships</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
@@ -180,9 +178,7 @@ export default function ClientsPage() {
             </DialogContent>
           </Dialog>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
         {clients.length === 0 ? (
           <Card className="max-w-md mx-auto text-center py-12">
             <CardContent>

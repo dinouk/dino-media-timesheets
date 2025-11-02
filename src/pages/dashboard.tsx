@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Users, Clock, LogOut, TrendingUp, FileText, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry } from "@/types";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -51,20 +51,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
-              Timesheets
-            </h1>
-            <p className="text-sm text-slate-600 mt-0.5">{currentUser}</p>
-          </div>
-          <Button variant="ghost" onClick={handleLogout} className="gap-2 hover:bg-slate-100">
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
-        </div>
-      </header>
+      <AppHeader currentUser={currentUser} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
