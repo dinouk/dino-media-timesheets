@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
@@ -54,6 +54,10 @@ export default function TimeLogsPage() {
     description: "",
     tags: [] as string[],
   });
+  const [editingRollover, setEditingRollover] = useState(false);
+  const [editingAllocation, setEditingAllocation] = useState(false);
+  const [rolloverValue, setRolloverValue] = useState("");
+  const [allocationValue, setAllocationValue] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -346,6 +350,155 @@ export default function TimeLogsPage() {
     return option ? option.label : "";
   };
 
+  const handleSaveRollover = () => {
+    if (!selectedClient || !selectedPeriod) return;
+
+    const newRollover = parseFloat(rolloverValue);
+    if (isNaN(newRollover)) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a valid number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingIndex = manualRollovers.findIndex(
+      r => r.clientId === selectedClientId && r.month === selectedPeriod
+    );
+
+    let updatedRollovers: ManualRollover[];
+
+    if (existingIndex !== -1) {
+      updatedRollovers = [...manualRollovers];
+      updatedRollovers[existingIndex] = {
+        ...updatedRollovers[existingIndex],
+        rolloverHours: newRollover,
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      const newRolloverEntry: ManualRollover = {
+        id: Date.now().toString(),
+        clientId: selectedClientId,
+        month: selectedPeriod,
+        year: parseInt(selectedPeriod.split("-")[0]),
+        rolloverHours: newRollover,
+        note: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      updatedRollovers = [...manualRollovers, newRolloverEntry];
+    }
+
+    setManualRollovers(updatedRollovers);
+    localStorage.setItem("manualRollovers", JSON.stringify(updatedRollovers));
+
+    const [year, month] = selectedPeriod.split("-");
+    const updatedAllocations = processMonthlyRollover(
+      clients,
+      timeEntries,
+      monthlyAllocations,
+      month,
+      parseInt(year),
+      updatedRollovers
+    );
+    setMonthlyAllocations(updatedAllocations);
+    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+
+    toast({
+      title: "Rollover Updated",
+      description: "Rollover hours have been updated successfully",
+    });
+
+    setEditingRollover(false);
+    loadData();
+  };
+
+  const handleSaveAllocation = () => {
+    if (!selectedClient || !selectedPeriod) return;
+
+    const newAllocation = parseFloat(allocationValue);
+    if (isNaN(newAllocation) || newAllocation < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a valid positive number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const [year, month] = selectedPeriod.split("-");
+    const currentDate = new Date();
+    const currentPeriod = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, "0")}`;
+    const isCurrentMonth = selectedPeriod === currentPeriod;
+
+    if (isCurrentMonth) {
+      // Update the client's base allocated hours (affects future months)
+      const updatedClients = clients.map(c =>
+        c.id === selectedClientId ? { ...c, allocatedHoursPerMonth: newAllocation } : c
+      );
+      setClients(updatedClients);
+      localStorage.setItem("clients", JSON.stringify(updatedClients));
+
+      toast({
+        title: "Allocation Updated",
+        description: "Base allocated hours updated for this client (affects current and future months)",
+      });
+    } else {
+      // Update only this specific month's allocation
+      const existingIndex = monthlyAllocations.findIndex(
+        a => a.clientId === selectedClientId && a.month === selectedPeriod
+      );
+
+      let updatedAllocations: MonthlyAllocation[];
+
+      if (existingIndex !== -1) {
+        updatedAllocations = [...monthlyAllocations];
+        updatedAllocations[existingIndex] = {
+          ...updatedAllocations[existingIndex],
+          allocatedHours: newAllocation,
+        };
+      } else {
+        // Create new monthly allocation entry
+        const newEntry: MonthlyAllocation = {
+          id: Date.now().toString(),
+          clientId: selectedClientId,
+          month: selectedPeriod,
+          year: parseInt(year),
+          allocatedHours: newAllocation,
+          rolloverHours: 0,
+          usedHours: 0,
+        };
+        updatedAllocations = [...monthlyAllocations, newEntry];
+      }
+
+      setMonthlyAllocations(updatedAllocations);
+      localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+
+      toast({
+        title: "Allocation Updated",
+        description: "Allocated hours updated for this month only",
+      });
+    }
+
+    setEditingAllocation(false);
+    loadData();
+  };
+
+  const handleStartEditRollover = () => {
+    if (stats) {
+      setRolloverValue(stats.rolloverHours.toString());
+      setEditingRollover(true);
+    }
+  };
+
+  const handleStartEditAllocation = () => {
+    if (stats) {
+      setAllocationValue(stats.allocatedHours.toString());
+      setEditingAllocation(true);
+    }
+  };
+
   if (!mounted) return null;
 
   return (
@@ -417,28 +570,110 @@ export default function TimeLogsPage() {
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               <Card className="border-2 border-brand-light">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600">Allocated Hours</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                    Allocated Hours
+                    {!editingAllocation ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleStartEditAllocation}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                    ) : null}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-brand-primary">{stats.allocatedHours.toFixed(2)}</div>
+                  {editingAllocation ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.25"
+                        value={allocationValue}
+                        onChange={(e) => setAllocationValue(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSaveAllocation}
+                        className="h-8 w-8 p-0 text-green-600"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingAllocation(false)}
+                        className="h-8 w-8 p-0 text-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-2xl font-bold text-brand-primary">{stats.allocatedHours.toFixed(2)}</div>
+                  )}
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-purple-100">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600">Rollover Hours</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                    Rollover Hours
+                    {!editingRollover ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleStartEditRollover}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                    ) : null}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2">
-                    <div className={`text-2xl font-bold ${stats.rolloverHours >= 0 ? "text-purple-600" : "text-red-600"}`}>
-                      {stats.rolloverHours.toFixed(2)}
+                  {editingRollover ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.25"
+                        value={rolloverValue}
+                        onChange={(e) => setRolloverValue(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSaveRollover}
+                        className="h-8 w-8 p-0 text-green-600"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingRollover(false)}
+                        className="h-8 w-8 p-0 text-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
-                    {stats.rolloverHours >= 0 ? (
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                    ) : (
-                      <TrendingDown className="w-5 h-5 text-red-600" />
-                    )}
-                  </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className={`text-2xl font-bold ${stats.rolloverHours >= 0 ? "text-purple-600" : "text-red-600"}`}>
+                        {stats.rolloverHours.toFixed(2)}
+                      </div>
+                      {stats.rolloverHours >= 0 ? (
+                        <TrendingUp className="w-5 h-5 text-purple-600" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5 text-red-600" />
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
