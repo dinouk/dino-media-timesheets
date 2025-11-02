@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Clock, Filter } from "lucide-react";
-import { Client } from "@/types";
+import { Client, TimeEntry, MonthlyAllocation, ManualRollover } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { calculateClientStats } from "@/lib/timeCalculations";
 
 type StatusFilter = "active" | "archived" | "all";
 
@@ -21,6 +23,9 @@ export default function ClientsPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
+  const [manualRollovers, setManualRollovers] = useState<ManualRollover[]>([]);
   const [currentUser, setCurrentUser] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -45,8 +50,21 @@ export default function ClientsPage() {
 
   const loadClients = () => {
     const savedClients = localStorage.getItem("clients");
+    const savedEntries = localStorage.getItem("timeEntries");
+    const savedAllocations = localStorage.getItem("monthlyAllocations");
+    const savedManualRollovers = localStorage.getItem("manualRollovers");
+    
     if (savedClients) {
       setClients(JSON.parse(savedClients));
+    }
+    if (savedEntries) {
+      setTimeEntries(JSON.parse(savedEntries));
+    }
+    if (savedAllocations) {
+      setMonthlyAllocations(JSON.parse(savedAllocations));
+    }
+    if (savedManualRollovers) {
+      setManualRollovers(JSON.parse(savedManualRollovers));
     }
   };
 
@@ -192,6 +210,20 @@ export default function ClientsPage() {
     }
   };
 
+  const getCurrentMonthStats = (client: Client) => {
+    const now = new Date();
+    const currentMonth = (now.getMonth() + 1).toString().padStart(2, "0");
+    const currentYear = now.getFullYear();
+    
+    return calculateClientStats(
+      client,
+      currentMonth,
+      currentYear,
+      timeEntries,
+      monthlyAllocations
+    );
+  };
+
   const filteredClients = clients.filter(client => {
     if (statusFilter === "active") return !client.archived;
     if (statusFilter === "archived") return client.archived;
@@ -265,7 +297,10 @@ export default function ClientsPage() {
         ) : (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {filteredClients.map((client) => (
+              {filteredClients.map((client) => {
+                const stats = getCurrentMonthStats(client);
+                
+                return (
                 <Card 
                   key={client.id} 
                   className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 cursor-pointer ${client.archived ? "opacity-75" : ""}`}
@@ -329,7 +364,7 @@ export default function ClientsPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       {client.tags.length > 0 ? (
                         client.tags.map((tag, index) => (
@@ -341,9 +376,25 @@ export default function ClientsPage() {
                         <p className="text-sm text-slate-500">No tags</p>
                       )}
                     </div>
+                    
+                    <div className="pt-2 border-t border-slate-200">
+                      <div className="text-xs font-medium text-slate-600 mb-2">Current Month</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-600 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                          <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            Remaining: {stats.remainingHours.toFixed(2)}h
+                          </span>
+                        </div>
+                        <Progress 
+                          value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
+                          className={`h-2 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
+                        />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
 
             <div className="flex justify-center pb-8">
