@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -169,94 +168,9 @@ export default function ClientsPage() {
       <AppHeader currentUser={currentUser} />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">Clients</h2>
-            <p className="text-slate-600">Manage your client relationships</p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800">
-                <Plus className="w-4 h-4" />
-                Add Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
-                <DialogDescription>
-                  {editingClient ? "Update client information" : "Create a new client with allocated hours and tags"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Client Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Acme Corporation"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
-                    <Input
-                      id="allocatedHours"
-                      type="number"
-                      step="0.25"
-                      min="0"
-                      value={formData.allocatedHours}
-                      onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
-                      placeholder="40"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tags">Tags</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="tags"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleTagInputKeyDown}
-                        placeholder="Enter a tag and press Enter"
-                      />
-                      <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        {tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200">
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    {tags.length === 0 && (
-                      <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
-                    )}
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {editingClient ? "Update Client" : "Add Client"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">Clients</h2>
+          <p className="text-slate-600">Manage your client relationships</p>
         </div>
 
         {clients.length > 0 && (
@@ -265,18 +179,20 @@ export default function ClientsPage() {
               <CardTitle className="text-sm font-medium text-slate-600">Filter Clients</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
-                  <SelectTrigger className="w-full max-w-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -311,87 +227,175 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClients.map((client) => (
-              <Card 
-                key={client.id} 
-                className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 cursor-pointer ${client.archived ? "opacity-75" : ""}`}
-                onClick={() => handleClientClick(client.id)}
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-xl">{client.name}</CardTitle>
-                        {client.archived && (
-                          <Badge variant="secondary" className="bg-slate-200 text-slate-600">
-                            Archived
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {filteredClients.map((client) => (
+                <Card 
+                  key={client.id} 
+                  className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 cursor-pointer ${client.archived ? "opacity-75" : ""}`}
+                  onClick={() => handleClientClick(client.id)}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CardTitle className="text-xl">{client.name}</CardTitle>
+                          {client.archived && (
+                            <Badge variant="secondary" className="bg-slate-200 text-slate-600">
+                              Archived
+                            </Badge>
+                          )}
+                        </div>
+                        <CardDescription className="text-base font-semibold text-blue-600">
+                          {client.allocatedHours} hours/month
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="default"
+                          size="icon"
+                          onClick={(e) => handleAddTimeLog(client.id, e)}
+                          title="Add time log"
+                          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-full h-9 w-9"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => handleEdit(client, e)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
+                              {client.archived ? (
+                                <>
+                                  <ArchiveRestore className="w-4 h-4 mr-2" />
+                                  Unarchive
+                                </>
+                              ) : (
+                                <>
+                                  <Archive className="w-4 h-4 mr-2" />
+                                  Archive
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {client.tags.length > 0 ? (
+                        client.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                            {tag}
                           </Badge>
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-500">No tags</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex justify-center pb-8">
+              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800">
+                    <Plus className="w-5 h-5" />
+                    Add New Client
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
+                    <DialogDescription>
+                      {editingClient ? "Update client information" : "Create a new client with allocated hours and tags"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Client Name *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Acme Corporation"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
+                        <Input
+                          id="allocatedHours"
+                          type="number"
+                          step="0.25"
+                          min="0"
+                          value={formData.allocatedHours}
+                          onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
+                          placeholder="40"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="tags">Tags</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="tags"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleTagInputKeyDown}
+                            placeholder="Enter a tag and press Enter"
+                          />
+                          <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            {tags.map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                {tag}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveTag(tag)}
+                                  className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {tags.length === 0 && (
+                          <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
                         )}
                       </div>
-                      <CardDescription className="text-base font-semibold text-blue-600">
-                        {client.allocatedHours} hours/month
-                      </CardDescription>
                     </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="default"
-                        size="icon"
-                        onClick={(e) => handleAddTimeLog(client.id, e)}
-                        title="Add time log"
-                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-full h-9 w-9"
-                      >
-                        <Plus className="w-5 h-5" />
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
+                        Cancel
                       </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleEdit(client, e)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
-                            {client.archived ? (
-                              <>
-                                <ArchiveRestore className="w-4 h-4 mr-2" />
-                                Unarchive
-                              </>
-                            ) : (
-                              <>
-                                <Archive className="w-4 h-4 mr-2" />
-                                Archive
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {client.tags.length > 0 ? (
-                      client.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
-                          {tag}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-sm text-slate-500">No tags</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <Button type="submit">
+                        {editingClient ? "Update Client" : "Add Client"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </>
         )}
       </main>
     </div>

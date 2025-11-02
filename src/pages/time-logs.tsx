@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
 import { calculateClientStats, processMonthlyRollover } from "@/lib/timeCalculations";
@@ -358,6 +358,15 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                 )}
               </CardContent>
             </Card>
+
+            <div className="flex justify-center pt-8 pb-8">
+              <Link href={`/log-time${selectedClientId ? `?clientId=${selectedClientId}` : ""}`}>
+                <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800">
+                  <Plus className="w-5 h-5" />
+                  Add New Log
+                </Button>
+              </Link>
+            </div>
           </>
         )}
 
