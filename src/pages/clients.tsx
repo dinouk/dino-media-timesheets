@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Clock } from "lucide-react";
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
+
+type StatusFilter = "active" | "archived" | "all";
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -17,6 +22,7 @@ export default function ClientsPage() {
   const [currentUser, setCurrentUser] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [formData, setFormData] = useState({
     name: "",
     allocatedHours: "",
@@ -95,7 +101,8 @@ export default function ClientsPage() {
     resetForm();
   };
 
-  const handleEdit = (client: Client) => {
+  const handleEdit = (client: Client, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEditingClient(client);
     setFormData({
       name: client.name,
@@ -105,7 +112,8 @@ export default function ClientsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (clientId: string) => {
+  const handleDelete = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm("Are you sure you want to delete this client?")) {
       const updatedClients = clients.filter(client => client.id !== clientId);
       setClients(updatedClients);
@@ -113,12 +121,24 @@ export default function ClientsPage() {
     }
   };
 
-  const handleToggleArchive = (clientId: string) => {
+  const handleToggleArchive = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const updatedClients = clients.map(client =>
       client.id === clientId ? { ...client, archived: !client.archived } : client
     );
     setClients(updatedClients);
     localStorage.setItem("clients", JSON.stringify(updatedClients));
+  };
+
+  const handleClientClick = (clientId: string) => {
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+    router.push(`/time-logs?clientId=${clientId}&period=${currentPeriod}`);
+  };
+
+  const handleAddTimeLog = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/log-time?clientId=${clientId}`);
   };
 
   const resetForm = () => {
@@ -134,6 +154,12 @@ export default function ClientsPage() {
       resetForm();
     }
   };
+
+  const filteredClients = clients.filter(client => {
+    if (statusFilter === "active") return !client.archived;
+    if (statusFilter === "archived") return client.archived;
+    return true;
+  });
 
   if (!mounted) return null;
 
@@ -232,6 +258,20 @@ export default function ClientsPage() {
           </Dialog>
         </div>
 
+        {clients.length > 0 && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                <TabsList className="grid w-full max-w-md grid-cols-3">
+                  <TabsTrigger value="active">Active</TabsTrigger>
+                  <TabsTrigger value="archived">Archived</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
         {clients.length === 0 ? (
           <Card className="max-w-md mx-auto text-center py-12">
             <CardContent>
@@ -248,10 +288,26 @@ export default function ClientsPage() {
               </Button>
             </CardContent>
           </Card>
+        ) : filteredClients.length === 0 ? (
+          <Card className="max-w-md mx-auto text-center py-12">
+            <CardContent>
+              <div className="mb-4 flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                  <Archive className="w-8 h-8 text-slate-600" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No {statusFilter} clients</h3>
+              <p className="text-slate-600">Try changing the filter to see more clients</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {clients.map((client) => (
-              <Card key={client.id} className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 ${client.archived ? "opacity-60" : ""}`}>
+            {filteredClients.map((client) => (
+              <Card 
+                key={client.id} 
+                className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 cursor-pointer ${client.archived ? "opacity-75" : ""}`}
+                onClick={() => handleClientClick(client.id)}
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -267,25 +323,46 @@ export default function ClientsPage() {
                         {client.allocatedHours} hours/month
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleToggleArchive(client.id)}
-                        title={client.archived ? "Unarchive" : "Archive"}
+                        onClick={(e) => handleAddTimeLog(client.id, e)}
+                        title="Add time log"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       >
-                        {client.archived ? (
-                          <ArchiveRestore className="w-4 h-4 text-blue-600" />
-                        ) : (
-                          <Archive className="w-4 h-4 text-slate-600" />
-                        )}
+                        <Plus className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(client)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(client.id)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleEdit(client, e)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
+                            {client.archived ? (
+                              <>
+                                <ArchiveRestore className="w-4 h-4 mr-2" />
+                                Unarchive
+                              </>
+                            ) : (
+                              <>
+                                <Archive className="w-4 h-4 mr-2" />
+                                Archive
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardHeader>
