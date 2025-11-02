@@ -255,7 +255,7 @@ export default function ClientsPage() {
                           size="icon"
                           onClick={(e) => handleAddTimeLog(client.id, e)}
                           title="Add time log"
-                          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-full h-9 w-9"
+                          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-md h-9 w-9"
                         >
                           <Plus className="w-5 h-5" />
                         </Button>

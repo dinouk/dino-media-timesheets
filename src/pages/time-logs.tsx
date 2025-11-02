@@ -130,11 +130,6 @@ export default function TimeLogsPage() {
     doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
     yPos += 15;
 
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Client: ${selectedClient.name}`, 14, yPos);
-    yPos += 10;
-
     const entriesSortedAsc = [...filteredEntries].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
@@ -177,8 +172,7 @@ export default function TimeLogsPage() {
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(`Total Entries: ${entriesSortedAsc.length}`, 14, finalY);
-    doc.text(`Total Hours: ${stats.usedHours.toFixed(2)}`, 14, finalY + 7);
+    doc.text(`Total Hours: ${stats.usedHours.toFixed(2)}`, 14, finalY);
 
     const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
     const filename = `${sanitizedClientName}-${year}-${month}.pdf`;
