@@ -178,6 +178,7 @@ export default function LogTimePage() {
                     onChange={(e) => setSelectedDate(e.target.value)}
                     min={minDate}
                     max={maxDate}
+                    className="h-10"
                   />
                 </div>
 
