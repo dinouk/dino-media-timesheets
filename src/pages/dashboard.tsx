@@ -59,20 +59,7 @@ export default function DashboardPage() {
           <p className="text-slate-600">Welcome back! Here's an overview of your time tracking.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-white">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Clients</CardTitle>
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{clients.length}</div>
-              <p className="text-xs text-slate-500 mt-1">Active clients</p>
-            </CardContent>
-          </Card>
-
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <Card className="border-2 border-green-100 bg-gradient-to-br from-green-50 to-white">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -86,22 +73,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-purple-100 bg-gradient-to-br from-purple-50 to-white">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Entries</CardTitle>
-                <FileText className="w-5 h-5 text-purple-600" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{timeEntries.length}</div>
-              <p className="text-xs text-slate-500 mt-1">Time entries</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
@@ -145,50 +117,6 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-
-          <div className="space-y-6">
-            <Card className="border-2 border-blue-100 hover:border-blue-300 transition-all hover:shadow-lg cursor-pointer group">
-              <Link href="/clients">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">Manage Clients</CardTitle>
-                      <CardDescription>Add, edit, and view your clients</CardDescription>
-                    </div>
-                    <Users className="w-10 h-10 text-blue-600 group-hover:scale-110 transition-transform" />
-                  </div>
-                </CardHeader>
-              </Link>
-            </Card>
-
-            <Card className="border-2 border-green-100 hover:border-green-300 transition-all hover:shadow-lg cursor-pointer group">
-              <Link href="/log-time">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg group-hover:text-green-600 transition-colors">Log Time</CardTitle>
-                      <CardDescription>Record time spent on client work</CardDescription>
-                    </div>
-                    <Plus className="w-10 h-10 text-green-600 group-hover:scale-110 transition-transform" />
-                  </div>
-                </CardHeader>
-              </Link>
-            </Card>
-
-            <Card className="border-2 border-purple-100 hover:border-purple-300 transition-all hover:shadow-lg cursor-pointer group">
-              <Link href="/time-logs">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">View Time Logs</CardTitle>
-                      <CardDescription>Review and export time entries</CardDescription>
-                    </div>
-                    <Clock className="w-10 h-10 text-purple-600 group-hover:scale-110 transition-transform" />
-                  </div>
-                </CardHeader>
-              </Link>
-            </Card>
-          </div>
         </div>
       </main>
     </div>
