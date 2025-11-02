@@ -168,11 +168,6 @@ export default function ClientsPage() {
       <AppHeader currentUser={currentUser} />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Clients</h2>
-          <p className="text-slate-600">Manage your client relationships</p>
-        </div>
-
         {clients.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
