@@ -24,7 +24,7 @@ export default function LogTimePage() {
   const [hours, setHours] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<Array<{ id: string; name: string; data: string; type: string; size: number }>>([]);
+  const [files, setFiles] = useState<Array<{ id: string; name: string; displayName: string; data: string; type: string; size: number }>>([]);
   const [success, setSuccess] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
 
@@ -75,6 +75,7 @@ export default function LogTimePage() {
         const newFile = {
           id: Date.now().toString() + Math.random().toString(),
           name: file.name,
+          displayName: file.name,
           data: event.target?.result as string,
           type: file.type,
           size: file.size,
