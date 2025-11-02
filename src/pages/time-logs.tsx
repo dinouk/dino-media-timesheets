@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
@@ -54,7 +54,7 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
-    files: [] as Array<{ id: string; name: string; data: string; type: string; size: number }>,
+    files: [] as Array<{ id: string; name: string; displayName: string; data: string; type: string; size: number }>,
   });
   const [editingRollover, setEditingRollover] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(false);
@@ -131,7 +131,7 @@ export default function TimeLogsPage() {
       hours: parseFloat(editForm.hours),
       tags: editForm.tags,
       description: editForm.description.trim(),
-      files: editForm.files,
+      files: editForm.files.length > 0 ? editForm.files : undefined,
       month: monthKey,
       year: date.getFullYear(),
     };
@@ -219,6 +219,7 @@ export default function TimeLogsPage() {
         const fileData = {
           id: Date.now().toString() + Math.random(),
           name: file.name,
+          displayName: file.name,
           data: event.target?.result as string,
           type: file.type,
           size: file.size,
@@ -238,6 +239,15 @@ export default function TimeLogsPage() {
     setEditForm(prev => ({
       ...prev,
       files: prev.files.filter(f => f.id !== fileId),
+    }));
+  };
+
+  const handleUpdateFileDisplayName = (fileId: string, newDisplayName: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      files: prev.files.map(f => 
+        f.id === fileId ? { ...f, displayName: newDisplayName } : f
+      ),
     }));
   };
 
@@ -315,6 +325,42 @@ export default function TimeLogsPage() {
     doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
     yPos += 15;
 
+    const boxWidth = (pageWidth - 40) / 4;
+    const boxHeight = 25;
+    const boxY = yPos;
+    const boxPadding = 3;
+
+    const statBoxes = [
+      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), icon: "↗", color: [147, 51, 234] },
+      { label: "Allocated", value: stats.allocatedHours.toFixed(2), icon: "⏰", color: [1, 136, 169] },
+      { label: "Used", value: stats.usedHours.toFixed(2), icon: "✓", color: [34, 197, 94] },
+      { label: "Remaining", value: stats.remainingHours.toFixed(2), icon: stats.remainingHours >= 0 ? "ℹ" : "⚠", color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68] }
+    ];
+
+    statBoxes.forEach((box, index) => {
+      const x = 14 + (index * (boxWidth + boxPadding));
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(x, boxY, boxWidth, boxHeight, 3, 3, "FD");
+      
+      doc.setFontSize(20);
+      doc.setTextColor(box.color[0], box.color[1], box.color[2]);
+      doc.text(box.icon, x + boxWidth / 2 - 5, boxY + 10);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(box.label, x + boxWidth / 2, boxY + 15, { align: "center" });
+      
+      doc.setFontSize(11);
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + 22, { align: "center" });
+      doc.setFont("helvetica", "normal");
+    });
+
+    yPos = boxY + boxHeight + 15;
+
     const entriesSortedAsc = [...filteredEntries].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
@@ -325,7 +371,7 @@ export default function TimeLogsPage() {
       entry.description,
       entry.tags.join(", "),
       entry.files && entry.files.length > 0 
-        ? entry.files.map(f => f.name).join(", ")
+        ? entry.files.map(f => f.displayName).join(", ")
         : "No files"
     ]);
 
@@ -354,13 +400,32 @@ export default function TimeLogsPage() {
         3: { cellWidth: 35 },
         4: { cellWidth: 45 }
       },
-      margin: { left: 14, right: 14 }
+      margin: { left: 14, right: 14 },
+      didDrawCell: (data) => {
+        if (data.column.index === 4 && data.section === "body" && data.row.index < entriesSortedAsc.length) {
+          const entry = entriesSortedAsc[data.row.index];
+          if (entry.files && entry.files.length > 0) {
+            const cell = data.cell;
+            const files = entry.files;
+            
+            files.forEach((file, fileIndex) => {
+              const linkY = cell.y + 5 + (fileIndex * 6);
+              
+              doc.setTextColor(1, 136, 169);
+              doc.textWithLink(file.displayName, cell.x + 2, linkY, {
+                url: file.data
+              });
+            });
+          }
+        }
+      }
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 15;
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
+    doc.setTextColor(51, 65, 85);
     doc.text(`Total Hours: ${stats.usedHours.toFixed(2)}`, 14, finalY);
 
     const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
@@ -482,7 +547,6 @@ export default function TimeLogsPage() {
     const isCurrentMonth = selectedPeriod === currentPeriod;
 
     if (isCurrentMonth) {
-      // Update the client's base allocated hours (affects future months)
       const updatedClients = clients.map(c =>
         c.id === selectedClientId ? { ...c, allocatedHoursPerMonth: newAllocation } : c
       );
@@ -494,7 +558,6 @@ export default function TimeLogsPage() {
         description: "Base allocated hours updated for this client (affects current and future months)",
       });
     } else {
-      // Update only this specific month's allocation
       const existingIndex = monthlyAllocations.findIndex(
         a => a.clientId === selectedClientId && a.month === selectedPeriod
       );
@@ -508,7 +571,6 @@ export default function TimeLogsPage() {
           allocatedHours: newAllocation,
         };
       } else {
-        // Create new monthly allocation entry
         const newEntry: MonthlyAllocation = {
           clientId: selectedClientId,
           month: selectedPeriod,
@@ -820,7 +882,7 @@ export default function TimeLogsPage() {
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <Download className="w-3 h-3" />
-                                      {file.name}
+                                      {file.displayName}
                                     </a>
                                   ))}
                                 </div>
@@ -968,11 +1030,15 @@ export default function TimeLogsPage() {
                       <p className="text-sm font-medium text-slate-700">Attached Files ({editForm.files.length})</p>
                       <div className="space-y-2">
                         {editForm.files.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <Download className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                              <span className="text-sm text-slate-700 truncate">{file.name}</span>
-                            </div>
+                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
+                            <Download className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <Input
+                              type="text"
+                              value={file.displayName}
+                              onChange={(e) => handleUpdateFileDisplayName(file.id, e.target.value)}
+                              className="h-8 text-sm flex-1"
+                              placeholder="Display name..."
+                            />
                             <Button
                               type="button"
                               variant="ghost"
