@@ -43,6 +43,10 @@
     --sidebar-accent-foreground: 0 0% 4.5%;
     --sidebar-border: 0 0% 92.2%;
     --sidebar-ring: 0 0% 70.8%;
+    --brand-primary: #0188a9;
+    --brand-primary-hover: #016d8a;
+    --brand-light: #e6f5f9;
+    --brand-lighter: #f0f9fc;
   }
 
   .dark {
@@ -79,6 +83,10 @@
     --sidebar-accent-foreground: 0 0% 97.5%;
     --sidebar-border: 0 0% 100% / 10%;
     --sidebar-ring: 0 0% 43.9%;
+    --brand-primary: #0188a9;
+    --brand-primary-hover: #016d8a;
+    --brand-light: #e6f5f9;
+    --brand-lighter: #f0f9fc;
   }
 }
 

@@ -61,6 +61,12 @@ const config: Config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        brand: {
+          primary: "var(--brand-primary)",
+          "primary-hover": "var(--brand-primary-hover)",
+          light: "var(--brand-light)",
+          lighter: "var(--brand-lighter)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

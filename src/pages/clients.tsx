@@ -172,7 +172,7 @@ export default function ClientsPage() {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-blue-600" />
+                <Filter className="w-5 h-5 text-brand-primary" />
                 Filter Clients
               </CardTitle>
               <CardDescription>Filter clients by their status</CardDescription>
@@ -201,8 +201,8 @@ export default function ClientsPage() {
           <Card className="max-w-md mx-auto text-center py-12">
             <CardContent>
               <div className="mb-4 flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <TagIcon className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
+                  <TagIcon className="w-8 h-8 text-brand-primary" />
                 </div>
               </div>
               <h3 className="text-xl font-semibold mb-2">No clients yet</h3>
@@ -245,7 +245,7 @@ export default function ClientsPage() {
                             </Badge>
                           )}
                         </div>
-                        <CardDescription className="text-base font-semibold text-blue-600">
+                        <CardDescription className="text-base font-semibold text-brand-primary">
                           {client.allocatedHours} hours/month
                         </CardDescription>
                       </div>
@@ -255,7 +255,7 @@ export default function ClientsPage() {
                           size="icon"
                           onClick={(e) => handleAddTimeLog(client.id, e)}
                           title="Add time log"
-                          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-md h-9 w-9"
+                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-md h-9 w-9"
                         >
                           <Plus className="w-5 h-5" />
                         </Button>
@@ -296,7 +296,7 @@ export default function ClientsPage() {
                     <div className="flex flex-wrap gap-2">
                       {client.tags.length > 0 ? (
                         client.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                          <Badge key={index} variant="secondary" className="bg-brand-light text-brand-primary hover:bg-brand-lighter">
                             {tag}
                           </Badge>
                         ))
@@ -312,7 +312,7 @@ export default function ClientsPage() {
             <div className="flex justify-center pb-8">
               <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800">
+                  <Button size="lg" className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
                     <Plus className="w-5 h-5" />
                     Add New Client
                   </Button>
@@ -364,12 +364,12 @@ export default function ClientsPage() {
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
                             {tags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                              <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
                                 {tag}
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveTag(tag)}
-                                  className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"
+                                  className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors"
                                 >
                                   <X className="w-3 h-3" />
                                 </button>

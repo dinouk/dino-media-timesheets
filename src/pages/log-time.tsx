@@ -128,7 +128,7 @@ export default function LogTimePage() {
         <Card className="max-w-2xl mx-auto shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="w-6 h-6 text-blue-600" />
+              <Clock className="w-6 h-6 text-brand-primary" />
               Record Time Entry
             </CardTitle>
             <CardDescription>Log time spent working on client projects</CardDescription>
@@ -219,7 +219,7 @@ export default function LogTimePage() {
                           variant={selectedTags.includes(tag) ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${
                             selectedTags.includes(tag)
-                              ? "bg-blue-600 hover:bg-blue-700"
+                              ? "bg-brand-primary hover:bg-brand-primary-hover"
                               : "hover:bg-slate-200"
                           }`}
                           onClick={() => toggleTag(tag)}
@@ -241,7 +241,7 @@ export default function LogTimePage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800"
+                  className="w-full bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
                   disabled={!selectedClient || selectedClient.tags.length === 0}
                 >
                   Log Time Entry

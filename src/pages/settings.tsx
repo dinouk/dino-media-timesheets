@@ -93,7 +93,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-blue-600" />
+                <ImageIcon className="w-5 h-5 text-brand-primary" />
                 Company Logo
               </CardTitle>
               <CardDescription>Upload a logo to include in PDF exports (max 2MB)</CardDescription>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
               ) : (
                 <div>
                   <Label htmlFor="logo-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-colors">
+                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-brand-primary hover:bg-brand-lighter transition-colors">
                       <Upload className="w-12 h-12 mx-auto mb-4 text-slate-400" />
                       <p className="text-sm font-medium text-slate-700 mb-1">
                         Click to upload logo

@@ -29,7 +29,7 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/dashboard">
           <div className="cursor-pointer">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-primary to-slate-700 bg-clip-text text-transparent">
               Timesheets
             </h1>
             {currentUser && (
@@ -40,7 +40,7 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
 
         <div className="flex items-center gap-3">
           <Link href="/log-time">
-            <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button className="gap-2 bg-brand-primary hover:bg-brand-primary-hover">
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Log Time</span>
             </Button>
