@@ -40,6 +40,12 @@ export default function LogTimePage() {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   }, [router]);
 
+  useEffect(() => {
+    if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
+      setSelectedClientId(router.query.clientId);
+    }
+  }, [router.query.clientId, clients]);
+
   const loadClients = () => {
     const savedClients = localStorage.getItem("clients");
     if (savedClients) {

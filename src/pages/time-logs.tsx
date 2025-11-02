@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -32,10 +31,22 @@ export default function TimeLogsPage() {
     }
     setCurrentUser(user);
     loadData();
-    const now = new Date();
-    const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-    setSelectedPeriod(currentPeriod);
+    
+    if (!router.query.period) {
+      const now = new Date();
+      const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+      setSelectedPeriod(currentPeriod);
+    }
   }, [router]);
+
+  useEffect(() => {
+    if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
+      setSelectedClientId(router.query.clientId);
+    }
+    if (router.query.period && typeof router.query.period === "string") {
+      setSelectedPeriod(router.query.period);
+    }
+  }, [router.query.clientId, router.query.period, clients]);
 
   const loadData = () => {
     const savedClients = localStorage.getItem("clients");

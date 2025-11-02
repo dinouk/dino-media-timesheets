@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Clock } from "lucide-react";
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type StatusFilter = "active" | "archived" | "all";
 
@@ -260,14 +261,23 @@ export default function ClientsPage() {
 
         {clients.length > 0 && (
           <Card className="mb-6">
-            <CardContent className="pt-6">
-              <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
-                <TabsList className="grid w-full max-w-md grid-cols-3">
-                  <TabsTrigger value="active">Active</TabsTrigger>
-                  <TabsTrigger value="archived">Archived</TabsTrigger>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-slate-600">Filter Clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -325,13 +335,13 @@ export default function ClientsPage() {
                     </div>
                     <div className="flex gap-1">
                       <Button
-                        variant="ghost"
+                        variant="default"
                         size="icon"
                         onClick={(e) => handleAddTimeLog(client.id, e)}
                         title="Add time log"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all rounded-full h-9 w-9"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-5 h-5" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
