@@ -466,7 +466,6 @@ export default function TimeLogsPage() {
           year: parseInt(year),
           allocatedHours: newAllocation,
           rolloverHours: 0,
-          usedHours: 0,
         };
         updatedAllocations = [...monthlyAllocations, newEntry];
       }
