@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ArrowLeft, Tag } from "lucide-react";
-import Link from "next/link";
+import { Plus, Edit, Trash2, X, Tag as TagIcon } from "lucide-react";
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -21,8 +21,9 @@ export default function ClientsPage() {
   const [formData, setFormData] = useState({
     name: "",
     allocatedHours: "",
-    tags: "",
   });
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -42,6 +43,25 @@ export default function ClientsPage() {
     }
   };
 
+  const handleAddTag = () => {
+    const trimmedTag = tagInput.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,8 +69,6 @@ export default function ClientsPage() {
       alert("Please fill in all required fields");
       return;
     }
-
-    const tags = formData.tags.split(",").map(tag => tag.trim()).filter(tag => tag);
 
     if (editingClient) {
       const updatedClients = clients.map(client =>
@@ -82,8 +100,8 @@ export default function ClientsPage() {
     setFormData({
       name: client.name,
       allocatedHours: client.allocatedHours.toString(),
-      tags: client.tags.join(", "),
     });
+    setTags(client.tags);
     setIsDialogOpen(true);
   };
 
@@ -96,7 +114,9 @@ export default function ClientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", allocatedHours: "", tags: "" });
+    setFormData({ name: "", allocatedHours: "" });
+    setTags([]);
+    setTagInput("");
     setEditingClient(null);
   };
 
@@ -157,13 +177,38 @@ export default function ClientsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="tags">Tags (comma-separated)</Label>
-                    <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                      placeholder="Development, Design, Consulting"
-                    />
+                    <Label htmlFor="tags">Tags</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="tags"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleTagInputKeyDown}
+                        placeholder="Enter a tag and press Enter"
+                      />
+                      <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        {tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(tag)}
+                              className="ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {tags.length === 0 && (
+                      <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
+                    )}
                   </div>
                 </div>
                 <DialogFooter>
@@ -184,7 +229,7 @@ export default function ClientsPage() {
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Tag className="w-8 h-8 text-blue-600" />
+                  <TagIcon className="w-8 h-8 text-blue-600" />
                 </div>
               </div>
               <h3 className="text-xl font-semibold mb-2">No clients yet</h3>
