@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
@@ -279,16 +279,19 @@ export default function TimeLogsPage() {
       new Date(entry.date).toLocaleDateString(),
       entry.hours.toString(),
       entry.description,
-      entry.tags.join(", ")
+      entry.tags.join(", "),
+      entry.files && entry.files.length > 0 
+        ? entry.files.map(f => f.name).join(", ")
+        : "No files"
     ]);
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Date", "Hours", "Description", "Tags"]],
+      head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
       body: tableData,
       theme: "striped",
       headStyles: {
-        fillColor: [59, 130, 246],
+        fillColor: [1, 136, 169],
         textColor: [255, 255, 255],
         fontStyle: "bold",
         fontSize: 11
@@ -301,10 +304,11 @@ export default function TimeLogsPage() {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 20, halign: "center" },
-        2: { cellWidth: 80 },
-        3: { cellWidth: 50 }
+        0: { cellWidth: 25 },
+        1: { cellWidth: 15, halign: "center" },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 45 }
       },
       margin: { left: 14, right: 14 }
     });
@@ -735,6 +739,7 @@ export default function TimeLogsPage() {
                           <TableHead>Hours</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Tags</TableHead>
+                          <TableHead>Files</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -758,6 +763,26 @@ export default function TimeLogsPage() {
                                   </Badge>
                                 ))}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {entry.files && entry.files.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {entry.files.map((file) => (
+                                    <a
+                                      key={file.id}
+                                      href={file.data}
+                                      download={file.name}
+                                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Download className="w-3 h-3" />
+                                      {file.name}
+                                    </a>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-slate-400">No files</span>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
                               <DropdownMenu>
