@@ -348,10 +348,10 @@ export default function TimeLogsPage() {
     const boxPadding = 3;
 
     const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [147, 51, 234] },
-      { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169] },
-      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94] },
-      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68] }
+      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [147, 51, 234], icon: "arrow" },
+      { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
+      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "check" },
+      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: stats.remainingHours >= 0 ? "check" : "alert" }
     ];
 
     statBoxes.forEach((box, index) => {
@@ -361,12 +361,39 @@ export default function TimeLogsPage() {
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 3, 3, "FD");
       
-      // Draw icon circle with color
       const iconCenterX = x + boxWidth / 2;
       const iconCenterY = boxY + 8;
-      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
-      doc.circle(iconCenterX, iconCenterY, 3, "F");
+      const iconSize = 2.5;
       
+      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
+      doc.setDrawColor(box.color[0], box.color[1], box.color[2]);
+      doc.setLineWidth(0.5);
+      
+      // Draw icons based on type
+      if (box.icon === "arrow") {
+        // Trending up arrow
+        doc.line(iconCenterX - iconSize, iconCenterY + iconSize/2, iconCenterX + iconSize, iconCenterY - iconSize/2);
+        doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2 + 1);
+        doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2);
+      } else if (box.icon === "clock") {
+        // Clock icon
+        doc.circle(iconCenterX, iconCenterY, iconSize, "S");
+        doc.line(iconCenterX, iconCenterY, iconCenterX, iconCenterY - iconSize * 0.6);
+        doc.line(iconCenterX, iconCenterY, iconCenterX + iconSize * 0.5, iconCenterY);
+      } else if (box.icon === "check") {
+        // Check mark
+        doc.setLineWidth(0.8);
+        doc.line(iconCenterX - iconSize, iconCenterY, iconCenterX - iconSize/2, iconCenterY + iconSize);
+        doc.line(iconCenterX - iconSize/2, iconCenterY + iconSize, iconCenterX + iconSize, iconCenterY - iconSize);
+      } else if (box.icon === "alert") {
+        // Alert/warning icon
+        doc.circle(iconCenterX, iconCenterY, iconSize, "S");
+        doc.setLineWidth(0.6);
+        doc.line(iconCenterX, iconCenterY - iconSize/2, iconCenterX, iconCenterY + iconSize/4);
+        doc.circle(iconCenterX, iconCenterY + iconSize * 0.7, 0.3, "F");
+      }
+      
+      doc.setLineWidth(0.2);
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       doc.text(box.label, x + boxWidth / 2, boxY + 15, { align: "center" });
@@ -430,6 +457,8 @@ export default function TimeLogsPage() {
             files.forEach((file, fileIndex) => {
               const linkY = cell.y + 5 + (fileIndex * 6);
               
+              doc.setFontSize(10);
+              doc.setFont("helvetica", "normal");
               doc.setTextColor(1, 136, 169);
               doc.textWithLink(file.displayName, cell.x + 2, linkY, {
                 url: file.data
