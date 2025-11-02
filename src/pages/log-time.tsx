@@ -1,0 +1,232 @@
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Client, TimeEntry, MonthlyAllocation } from "@/types";
+import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
+
+export default function LogTimePage() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [hours, setHours] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const user = localStorage.getItem("currentUser");
+    if (!user) {
+      router.push("/");
+      return;
+    }
+    loadClients();
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  }, [router]);
+
+  const loadClients = () => {
+    const savedClients = localStorage.getItem("clients");
+    if (savedClients) {
+      setClients(JSON.parse(savedClients));
+    }
+  };
+
+  const selectedClient = clients.find(c => c.id === selectedClientId);
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0) {
+      alert("Please fill in all fields and select at least one tag");
+      return;
+    }
+
+    const date = new Date(selectedDate);
+    const monthKey = getMonthKey(date);
+
+    const newEntry: TimeEntry = {
+      id: Date.now().toString(),
+      clientId: selectedClientId,
+      date: selectedDate,
+      hours: parseFloat(hours),
+      tags: selectedTags,
+      month: monthKey,
+      year: date.getFullYear(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const savedEntries = localStorage.getItem("timeEntries");
+    const timeEntries: TimeEntry[] = savedEntries ? JSON.parse(savedEntries) : [];
+    timeEntries.push(newEntry);
+    localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
+
+    const savedAllocations = localStorage.getItem("monthlyAllocations");
+    const monthlyAllocations: MonthlyAllocation[] = savedAllocations ? JSON.parse(savedAllocations) : [];
+    
+    const updatedAllocations = processMonthlyRollover(
+      clients,
+      timeEntries,
+      monthlyAllocations,
+      (date.getMonth() + 1).toString(),
+      date.getFullYear()
+    );
+    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+      setSelectedClientId("");
+      setHours("");
+      setSelectedTags([]);
+      setSelectedDate(new Date().toISOString().split("T")[0]);
+    }, 2000);
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
+            Log Time
+          </h1>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-6 h-6 text-blue-600" />
+              Record Time Entry
+            </CardTitle>
+            <CardDescription>Log time spent working on client projects</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {success ? (
+              <div className="text-center py-12">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle2 className="w-10 h-10 text-green-600" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-green-600 mb-2">Time Logged Successfully!</h3>
+                <p className="text-slate-600">Your time entry has been recorded</p>
+              </div>
+            ) : clients.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-600 mb-4">You need to add clients first</p>
+                <Link href="/clients">
+                  <Button>Go to Clients</Button>
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="client">Client *</Label>
+                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                    <SelectTrigger id="client">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hours">Hours (15-minute intervals) *</Label>
+                  <Select value={hours} onValueChange={setHours}>
+                    <SelectTrigger id="hours">
+                      <SelectValue placeholder="Select hours" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
+                        <SelectItem key={value} value={value.toString()}>
+                          {value} hours
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedClient && selectedClient.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Tags * (select at least one)</Label>
+                    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
+                      {selectedClient.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={selectedTags.includes(tag) ? "default" : "outline"}
+                          className={`cursor-pointer transition-all ${
+                            selectedTags.includes(tag)
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "hover:bg-slate-200"
+                          }`}
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedClient && selectedClient.tags.length === 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm text-yellow-800">
+                      This client has no tags. Add tags to the client first.
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800"
+                  disabled={!selectedClient || selectedClient.tags.length === 0}
+                >
+                  Log Time Entry
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}
