@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -310,92 +311,95 @@ export default function ClientsPage() {
             </div>
 
             <div className="flex justify-center pb-8">
-              <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
-                    <Plus className="w-5 h-5" />
-                    Add New Client
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
-                    <DialogDescription>
-                      {editingClient ? "Update client information" : "Create a new client with allocated hours and tags"}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit}>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Client Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Acme Corporation"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
-                        <Input
-                          id="allocatedHours"
-                          type="number"
-                          step="0.25"
-                          min="0"
-                          value={formData.allocatedHours}
-                          onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
-                          placeholder="40"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="tags">Tags</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="tags"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={handleTagInputKeyDown}
-                            placeholder="Enter a tag and press Enter"
-                          />
-                          <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        {tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            {tags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveTag(tag)}
-                                  className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        {tags.length === 0 && (
-                          <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
-                        )}
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit">
-                        {editingClient ? "Update Client" : "Add Client"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                size="lg" 
+                className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                <Plus className="w-5 h-5" />
+                Add New Client
+              </Button>
             </div>
           </>
         )}
+
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
+              <DialogDescription>
+                {editingClient ? "Update client information" : "Create a new client with allocated hours and tags"}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Client Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Acme Corporation"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
+                  <Input
+                    id="allocatedHours"
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    value={formData.allocatedHours}
+                    onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
+                    placeholder="40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="tags"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagInputKeyDown}
+                      placeholder="Enter a tag and press Enter"
+                    />
+                    <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      {tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {tags.length === 0 && (
+                    <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingClient ? "Update Client" : "Add Client"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
