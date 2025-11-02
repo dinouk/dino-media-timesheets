@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
@@ -54,6 +54,7 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
+    files: [] as Array<{ id: string; name: string; data: string }>,
   });
   const [editingRollover, setEditingRollover] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(false);
@@ -105,6 +106,7 @@ export default function TimeLogsPage() {
       hours: entry.hours.toString(),
       description: entry.description,
       tags: [...entry.tags],
+      files: entry.files ? [...entry.files] : [],
     });
   };
 
@@ -129,6 +131,7 @@ export default function TimeLogsPage() {
       hours: parseFloat(editForm.hours),
       tags: editForm.tags,
       description: editForm.description.trim(),
+      files: editForm.files,
       month: monthKey,
       year: date.getFullYear(),
     };
@@ -194,6 +197,45 @@ export default function TimeLogsPage() {
       tags: prev.tags.includes(tag)
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag],
+    }));
+  };
+
+  const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const fileData = {
+          id: Date.now().toString() + Math.random(),
+          name: file.name,
+          data: event.target?.result as string,
+        };
+        setEditForm(prev => ({
+          ...prev,
+          files: [...prev.files, fileData],
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = "";
+  };
+
+  const handleRemoveEditFile = (fileId: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      files: prev.files.filter(f => f.id !== fileId),
     }));
   };
 
@@ -894,6 +936,55 @@ export default function TimeLogsPage() {
                     rows={4}
                     className="resize-none"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-files">File Attachments (Optional)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="edit-files"
+                      type="file"
+                      onChange={handleEditFileUpload}
+                      multiple
+                      className="cursor-pointer"
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => document.getElementById("edit-files")?.click()}
+                      title="Upload files"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
+                  
+                  {editForm.files.length > 0 && (
+                    <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <p className="text-sm font-medium text-slate-700">Attached Files ({editForm.files.length})</p>
+                      <div className="space-y-2">
+                        {editForm.files.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Download className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              <span className="text-sm text-slate-700 truncate">{file.name}</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveEditFile(file.id)}
+                              className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {selectedClient && selectedClient.tags.length > 0 && (
