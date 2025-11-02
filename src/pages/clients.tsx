@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Clock, Filter } from "lucide-react";
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -176,7 +176,11 @@ export default function ClientsPage() {
         {clients.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">Filter Clients</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-blue-600" />
+                Filter Clients
+              </CardTitle>
+              <CardDescription>Filter clients by their status</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
