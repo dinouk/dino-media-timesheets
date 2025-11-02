@@ -5,13 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, Pencil } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
-import { calculateClientStats, processMonthlyRollover } from "@/lib/timeCalculations";
+import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function TimeLogsPage() {
   const router = useRouter();
@@ -23,6 +27,13 @@ export default function TimeLogsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [currentUser, setCurrentUser] = useState("");
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [editForm, setEditForm] = useState({
+    date: "",
+    hours: "",
+    description: "",
+    tags: [] as string[],
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -59,6 +70,70 @@ export default function TimeLogsPage() {
     if (savedEntries) setTimeEntries(JSON.parse(savedEntries));
     if (savedAllocations) setMonthlyAllocations(JSON.parse(savedAllocations));
   };
+
+  const handleEditEntry = (entry: TimeEntry) => {
+    setEditingEntry(entry);
+    setEditForm({
+      date: entry.date,
+      hours: entry.hours.toString(),
+      description: entry.description,
+      tags: [...entry.tags],
+    });
+  };
+
+  const handleUpdateEntry = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingEntry || !editForm.date || !editForm.hours || editForm.tags.length === 0 || !editForm.description.trim()) {
+      alert("Please fill in all fields including description and select at least one tag");
+      return;
+    }
+
+    const date = new Date(editForm.date);
+    const monthKey = getMonthKey(date);
+
+    const updatedEntry: TimeEntry = {
+      ...editingEntry,
+      date: editForm.date,
+      hours: parseFloat(editForm.hours),
+      tags: editForm.tags,
+      description: editForm.description.trim(),
+      month: monthKey,
+      year: date.getFullYear(),
+    };
+
+    const updatedEntries = timeEntries.map(entry =>
+      entry.id === editingEntry.id ? updatedEntry : entry
+    );
+
+    setTimeEntries(updatedEntries);
+    localStorage.setItem("timeEntries", JSON.stringify(updatedEntries));
+
+    const updatedAllocations = processMonthlyRollover(
+      clients,
+      updatedEntries,
+      monthlyAllocations,
+      (date.getMonth() + 1).toString(),
+      date.getFullYear()
+    );
+    setMonthlyAllocations(updatedAllocations);
+    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+
+    setEditingEntry(null);
+    loadData();
+  };
+
+  const toggleEditTag = (tag: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag],
+    }));
+  };
+
+  const minDate = "2025-10-01";
+  const maxDate = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     if (selectedClientId && selectedPeriod && clients.length > 0) {
@@ -362,6 +437,7 @@ export default function TimeLogsPage() {
                           <TableHead>Hours</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Tags</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -384,6 +460,17 @@ export default function TimeLogsPage() {
                                   </Badge>
                                 ))}
                               </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditEntry(entry)}
+                                className="gap-2"
+                              >
+                                <Pencil className="w-4 h-4" />
+                                Edit
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -424,6 +511,100 @@ export default function TimeLogsPage() {
               </Link>
             </CardContent>
           </Card>
+        )}
+
+        {editingEntry && selectedClient && (
+          <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Time Entry</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateEntry} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-date">Date *</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                    min={minDate}
+                    max={maxDate}
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-hours">Hours (15-minute intervals) *</Label>
+                  <Select
+                    value={editForm.hours}
+                    onValueChange={(value) => setEditForm({ ...editForm, hours: value })}
+                  >
+                    <SelectTrigger id="edit-hours">
+                      <SelectValue placeholder="Select hours" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
+                        <SelectItem key={value} value={value.toString()}>
+                          {value} hours
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Task Description *</Label>
+                  <Textarea
+                    id="edit-description"
+                    placeholder="Describe the work performed..."
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+
+                {selectedClient && selectedClient.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Tags * (select at least one)</Label>
+                    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
+                      {selectedClient.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={editForm.tags.includes(tag) ? "default" : "outline"}
+                          className={`cursor-pointer transition-all ${
+                            editForm.tags.includes(tag)
+                              ? "bg-brand-primary hover:bg-brand-primary-hover"
+                              : "hover:bg-slate-200"
+                          }`}
+                          onClick={() => toggleEditTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingEntry(null)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                  >
+                    Update Entry
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
       </main>
     </div>
