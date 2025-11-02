@@ -1,9 +1,9 @@
-
 export interface Client {
   id: string;
   name: string;
   allocatedHours: number;
   tags: string[];
+  archived: boolean;
   createdAt: string;
 }
 

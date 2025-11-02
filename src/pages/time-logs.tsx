@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
@@ -82,6 +82,9 @@ export default function TimeLogsPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
+
+  const activeClients = clients.filter(c => !c.archived);
+  const archivedClients = clients.filter(c => c.archived);
 
   const handleExportPDF = () => {
     if (!selectedClient || !stats) return;
@@ -185,11 +188,26 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
+                    {activeClients.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Active Clients</SelectLabel>
+                        {activeClients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                    {archivedClients.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Archived Clients</SelectLabel>
+                        {archivedClients.map(client => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

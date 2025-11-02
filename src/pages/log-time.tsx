@@ -25,6 +25,9 @@ export default function LogTimePage() {
   const [success, setSuccess] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
 
+  const minDate = "2025-10-01";
+  const maxDate = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     setMounted(true);
     const user = localStorage.getItem("currentUser");
@@ -40,7 +43,8 @@ export default function LogTimePage() {
   const loadClients = () => {
     const savedClients = localStorage.getItem("clients");
     if (savedClients) {
-      setClients(JSON.parse(savedClients));
+      const allClients: Client[] = JSON.parse(savedClients);
+      setClients(allClients.filter(client => !client.archived));
     }
   };
 
@@ -166,6 +170,8 @@ export default function LogTimePage() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
+                    min={minDate}
+                    max={maxDate}
                   />
                 </div>
 

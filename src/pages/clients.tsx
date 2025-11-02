@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, X, Tag as TagIcon } from "lucide-react";
+import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore } from "lucide-react";
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
 
@@ -84,6 +83,7 @@ export default function ClientsPage() {
         name: formData.name,
         allocatedHours: parseFloat(formData.allocatedHours),
         tags,
+        archived: false,
         createdAt: new Date().toISOString(),
       };
       const updatedClients = [...clients, newClient];
@@ -111,6 +111,14 @@ export default function ClientsPage() {
       setClients(updatedClients);
       localStorage.setItem("clients", JSON.stringify(updatedClients));
     }
+  };
+
+  const handleToggleArchive = (clientId: string) => {
+    const updatedClients = clients.map(client =>
+      client.id === clientId ? { ...client, archived: !client.archived } : client
+    );
+    setClients(updatedClients);
+    localStorage.setItem("clients", JSON.stringify(updatedClients));
   };
 
   const resetForm = () => {
@@ -243,16 +251,35 @@ export default function ClientsPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-all border-2 hover:border-blue-200">
+              <Card key={client.id} className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 ${client.archived ? "opacity-60" : ""}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl mb-2">{client.name}</CardTitle>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CardTitle className="text-xl">{client.name}</CardTitle>
+                        {client.archived && (
+                          <Badge variant="secondary" className="bg-slate-200 text-slate-600">
+                            Archived
+                          </Badge>
+                        )}
+                      </div>
                       <CardDescription className="text-base font-semibold text-blue-600">
                         {client.allocatedHours} hours/month
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleArchive(client.id)}
+                        title={client.archived ? "Unarchive" : "Archive"}
+                      >
+                        {client.archived ? (
+                          <ArchiveRestore className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Archive className="w-4 h-4 text-slate-600" />
+                        )}
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(client)}>
                         <Edit className="w-4 h-4" />
                       </Button>
