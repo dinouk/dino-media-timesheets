@@ -76,6 +76,11 @@ export default function ClientsPage() {
       return;
     }
 
+    if (tags.length === 0) {
+      alert("Please add at least one tag");
+      return;
+    }
+
     if (editingClient) {
       const updatedClients = clients.map(client =>
         client.id === editingClient.id
@@ -355,7 +360,7 @@ export default function ClientsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
+                  <Label htmlFor="tags">Tags *</Label>
                   <div className="flex gap-2">
                     <Input
                       id="tags"
@@ -385,7 +390,7 @@ export default function ClientsPage() {
                     </div>
                   )}
                   {tags.length === 0 && (
-                    <p className="text-sm text-slate-500 mt-1">No tags added yet</p>
+                    <p className="text-sm text-red-500 mt-1">At least one tag is required</p>
                   )}
                 </div>
               </div>
