@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +17,27 @@ interface AppHeaderProps {
 
 export function AppHeader({ currentUser }: AppHeaderProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("currentUser");
     router.push("/");
   };
+
+  const navItems = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/clients", label: "Clients" },
+    { href: "/time-logs", label: "Time Logs" },
+    { href: "/rollover-management", label: "Rollover Management" },
+    { href: "/settings", label: "Settings" },
+    { href: "/my-account", label: "My Account" },
+  ];
+
+  if (!mounted) return null;
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">

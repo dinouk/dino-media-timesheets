@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, Pencil, Trash2 } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical } from "lucide-react";
 import Link from "next/link";
-import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
+import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
@@ -27,6 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function TimeLogsPage() {
   const router = useRouter();
@@ -35,6 +41,7 @@ export default function TimeLogsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
+  const [manualRollovers, setManualRollovers] = useState<ManualRollover[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
@@ -78,10 +85,12 @@ export default function TimeLogsPage() {
     const savedClients = localStorage.getItem("clients");
     const savedEntries = localStorage.getItem("timeEntries");
     const savedAllocations = localStorage.getItem("monthlyAllocations");
+    const savedManualRollovers = localStorage.getItem("manualRollovers");
 
     if (savedClients) setClients(JSON.parse(savedClients));
     if (savedEntries) setTimeEntries(JSON.parse(savedEntries));
     if (savedAllocations) setMonthlyAllocations(JSON.parse(savedAllocations));
+    if (savedManualRollovers) setManualRollovers(JSON.parse(savedManualRollovers));
   };
 
   const handleEditEntry = (entry: TimeEntry) => {
@@ -131,7 +140,8 @@ export default function TimeLogsPage() {
       updatedEntries,
       monthlyAllocations,
       (date.getMonth() + 1).toString(),
-      date.getFullYear()
+      date.getFullYear(),
+      manualRollovers
     );
     setMonthlyAllocations(updatedAllocations);
     localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
@@ -158,7 +168,8 @@ export default function TimeLogsPage() {
       updatedEntries,
       monthlyAllocations,
       (date.getMonth() + 1).toString(),
-      date.getFullYear()
+      date.getFullYear(),
+      manualRollovers
     );
     setMonthlyAllocations(updatedAllocations);
     localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
@@ -194,7 +205,8 @@ export default function TimeLogsPage() {
           timeEntries,
           monthlyAllocations,
           month,
-          parseInt(year)
+          parseInt(year),
+          manualRollovers
         );
         setMonthlyAllocations(updatedAllocations);
         localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
@@ -209,7 +221,7 @@ export default function TimeLogsPage() {
         setStats(clientStats);
       }
     }
-  }, [selectedClientId, selectedPeriod, clients, timeEntries]);
+  }, [selectedClientId, selectedPeriod, clients, timeEntries, manualRollovers]);
 
   const filteredEntries = timeEntries
     .filter(entry => 
@@ -511,26 +523,24 @@ export default function TimeLogsPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditEntry(entry)}
-                                  className="gap-2"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeletingEntry(entry)}
-                                  className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => setDeletingEntry(entry)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))}

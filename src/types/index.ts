@@ -33,3 +33,14 @@ export interface ClientStats {
   usedHours: number;
   remainingHours: number;
 }
+
+export interface ManualRollover {
+  id: string;
+  clientId: string;
+  month: string;
+  year: number;
+  rolloverHours: number;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
