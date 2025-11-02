@@ -220,7 +220,7 @@ export default function TimeLogsPage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <Calendar className="w-5 h-5 text-brand-primary" />
               Filter Time Logs
             </CardTitle>
             <CardDescription>Select a client and period to view time entries</CardDescription>
@@ -279,12 +279,12 @@ export default function TimeLogsPage() {
         {stats && selectedClient && (
           <>
             <div className="grid md:grid-cols-4 gap-4 mb-6">
-              <Card className="border-2 border-blue-100">
+              <Card className="border-2 border-brand-light">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-slate-600">Allocated Hours</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{stats.allocatedHours.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-brand-primary">{stats.allocatedHours.toFixed(2)}</div>
                 </CardContent>
               </Card>
 
@@ -371,7 +371,7 @@ export default function TimeLogsPage() {
                               {new Date(entry.date).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <span className="font-semibold text-blue-600">{entry.hours} hours</span>
+                              <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
                             </TableCell>
                             <TableCell className="max-w-xs">
                               <p className="text-sm text-slate-700 truncate">{entry.description}</p>
@@ -396,7 +396,7 @@ export default function TimeLogsPage() {
 
             <div className="flex justify-center pt-8 pb-8">
               <Link href={`/log-time${selectedClientId ? `?clientId=${selectedClientId}` : ""}`}>
-                <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800">
+                <Button size="lg" className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
                   <Plus className="w-5 h-5" />
                   Add New Log
                 </Button>

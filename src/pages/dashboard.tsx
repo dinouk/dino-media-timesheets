@@ -76,7 +76,7 @@ export default function DashboardPage() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+                <Calendar className="w-5 h-5 text-brand-primary" />
                 Recent Activity
               </CardTitle>
               <CardDescription>Your latest time entries</CardDescription>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
                           <p className="text-sm text-slate-600">{new Date(entry.date).toLocaleDateString()}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-blue-600">{entry.hours}h</p>
+                          <p className="font-semibold text-brand-primary">{entry.hours}h</p>
                           <div className="flex gap-1 mt-1 justify-end">
                             {entry.tags.slice(0, 2).map((tag, i) => (
                               <Badge key={i} variant="secondary" className="text-xs px-1.5 py-0">

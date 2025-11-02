@@ -56,7 +56,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-4">
       <Card className="w-full max-w-md shadow-xl border-slate-200">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-primary to-slate-700 bg-clip-text text-transparent">
             Timesheets
           </CardTitle>
           <CardDescription className="text-base">
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="transition-all focus:ring-2 focus:ring-blue-500"
+                className="transition-all focus:ring-2 focus:ring-brand-primary"
               />
             </div>
             <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="transition-all focus:ring-2 focus:ring-blue-500"
+                className="transition-all focus:ring-2 focus:ring-brand-primary"
               />
             </div>
             {error && (
@@ -92,7 +92,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800 transition-all shadow-md">
+            <Button type="submit" className="w-full bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800 transition-all shadow-md">
               {isRegistering ? "Create Account" : "Sign In"}
             </Button>
             <div className="text-center">
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   setIsRegistering(!isRegistering);
                   setError("");
                 }}
-                className="text-sm text-blue-600 hover:text-blue-700 underline-offset-4 hover:underline transition-colors"
+                className="text-sm text-brand-primary hover:text-brand-primary-hover underline-offset-4 hover:underline transition-colors"
               >
                 {isRegistering ? "Already have an account? Sign in" : "Need an account? Register"}
               </button>

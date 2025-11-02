@@ -86,7 +86,7 @@ export default function MyAccountPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-blue-600" />
+                  <Mail className="w-5 h-5 text-brand-primary" />
                   Email Address
                 </CardTitle>
                 <CardDescription>Update your email address</CardDescription>
@@ -115,7 +115,7 @@ export default function MyAccountPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-blue-600" />
+                  <Lock className="w-5 h-5 text-brand-primary" />
                   Change Password
                 </CardTitle>
                 <CardDescription>Update your account password</CardDescription>
