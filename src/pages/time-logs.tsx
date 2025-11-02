@@ -104,6 +104,7 @@ TIME ENTRIES
 ${filteredEntries.map(entry => `
 Date: ${new Date(entry.date).toLocaleDateString()}
 Hours: ${entry.hours}
+Description: ${entry.description}
 Tags: ${entry.tags.join(", ")}
 `).join("\n")}
 
@@ -301,6 +302,7 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Hours</TableHead>
+                          <TableHead>Description</TableHead>
                           <TableHead>Tags</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -312,6 +314,9 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                             </TableCell>
                             <TableCell>
                               <span className="font-semibold text-blue-600">{entry.hours} hours</span>
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <p className="text-sm text-slate-700 truncate">{entry.description}</p>
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">

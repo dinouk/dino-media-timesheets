@@ -11,6 +11,7 @@ import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation } from "@/types";
 import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function LogTimePage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function LogTimePage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [hours, setHours] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [description, setDescription] = useState("");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -51,8 +53,8 @@ export default function LogTimePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0) {
-      alert("Please fill in all fields and select at least one tag");
+    if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0 || !description.trim()) {
+      alert("Please fill in all fields including description and select at least one tag");
       return;
     }
 
@@ -65,6 +67,7 @@ export default function LogTimePage() {
       date: selectedDate,
       hours: parseFloat(hours),
       tags: selectedTags,
+      description: description.trim(),
       month: monthKey,
       year: date.getFullYear(),
       createdAt: new Date().toISOString(),
@@ -93,6 +96,7 @@ export default function LogTimePage() {
       setSelectedClientId("");
       setHours("");
       setSelectedTags([]);
+      setDescription("");
       setSelectedDate(new Date().toISOString().split("T")[0]);
     }, 2000);
   };
@@ -183,6 +187,18 @@ export default function LogTimePage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Task Description *</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe the work performed..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
                 </div>
 
                 {selectedClient && selectedClient.tags.length > 0 && (

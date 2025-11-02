@@ -13,6 +13,7 @@ export interface TimeEntry {
   date: string;
   hours: number;
   tags: string[];
+  description: string;
   month: string;
   year: number;
   createdAt: string;
