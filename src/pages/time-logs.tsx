@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
 import { calculateClientStats, processMonthlyRollover } from "@/lib/timeCalculations";
@@ -18,8 +19,7 @@ export default function TimeLogsPage() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [currentUser, setCurrentUser] = useState("");
 
@@ -33,8 +33,8 @@ export default function TimeLogsPage() {
     setCurrentUser(user);
     loadData();
     const now = new Date();
-    setSelectedMonth((now.getMonth() + 1).toString());
-    setSelectedYear(now.getFullYear().toString());
+    const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+    setSelectedPeriod(currentPeriod);
   }, [router]);
 
   const loadData = () => {
@@ -48,35 +48,36 @@ export default function TimeLogsPage() {
   };
 
   useEffect(() => {
-    if (selectedClientId && selectedMonth && selectedYear && clients.length > 0) {
+    if (selectedClientId && selectedPeriod && clients.length > 0) {
       const client = clients.find(c => c.id === selectedClientId);
       if (client) {
+        const [year, month] = selectedPeriod.split("-");
         const updatedAllocations = processMonthlyRollover(
           clients,
           timeEntries,
           monthlyAllocations,
-          selectedMonth,
-          parseInt(selectedYear)
+          month,
+          parseInt(year)
         );
         setMonthlyAllocations(updatedAllocations);
         localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
 
         const clientStats = calculateClientStats(
           client,
-          selectedMonth,
-          parseInt(selectedYear),
+          month,
+          parseInt(year),
           timeEntries,
           updatedAllocations
         );
         setStats(clientStats);
       }
     }
-  }, [selectedClientId, selectedMonth, selectedYear, clients, timeEntries]);
+  }, [selectedClientId, selectedPeriod, clients, timeEntries]);
 
   const filteredEntries = timeEntries
     .filter(entry => 
       entry.clientId === selectedClientId &&
-      entry.month === `${selectedYear}-${selectedMonth.padStart(2, "0")}`
+      entry.month === selectedPeriod
     )
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -85,7 +86,8 @@ export default function TimeLogsPage() {
   const handleExportPDF = () => {
     if (!selectedClient || !stats) return;
 
-    const monthName = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    const [year, month] = selectedPeriod.split("-");
+    const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
     const companyLogo = localStorage.getItem("companyLogo");
     
     let content = `TIMESHEET REPORT\n================\n\n`;
@@ -121,32 +123,45 @@ Total Hours: ${stats.usedHours.toFixed(2)}
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `timesheet-${selectedClient.name}-${selectedYear}-${selectedMonth.padStart(2, "0")}.txt`;
+    link.download = `timesheet-${selectedClient.name}-${selectedPeriod}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
+  const generatePeriodOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    
+    const startYear = 2025;
+    const startMonth = 10;
+    
+    for (let year = startYear; year <= currentYear; year++) {
+      const monthStart = year === startYear ? startMonth : 1;
+      const monthEnd = year === currentYear ? currentMonth : 12;
+      
+      for (let month = monthStart; month <= monthEnd; month++) {
+        const value = `${year}-${month.toString().padStart(2, "0")}`;
+        const date = new Date(year, month - 1);
+        const label = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        options.push({ value, label });
+      }
+    }
+    
+    return options.reverse();
+  };
+
+  const periodOptions = generatePeriodOptions();
+  const getSelectedPeriodLabel = () => {
+    if (!selectedPeriod) return "";
+    const option = periodOptions.find(opt => opt.value === selectedPeriod);
+    return option ? option.label : "";
+  };
+
   if (!mounted) return null;
-
-  const months = [
-    { value: "1", label: "January" },
-    { value: "2", label: "February" },
-    { value: "3", label: "March" },
-    { value: "4", label: "April" },
-    { value: "5", label: "May" },
-    { value: "6", label: "June" },
-    { value: "7", label: "July" },
-    { value: "8", label: "August" },
-    { value: "9", label: "September" },
-    { value: "10", label: "October" },
-    { value: "11", label: "November" },
-    { value: "12", label: "December" },
-  ];
-
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
@@ -159,10 +174,10 @@ Total Hours: ${stats.usedHours.toFixed(2)}
               <Calendar className="w-5 h-5 text-blue-600" />
               Filter Time Logs
             </CardTitle>
-            <CardDescription>Select a client and month to view time entries</CardDescription>
+            <CardDescription>Select a client and period to view time entries</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Client</label>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>
@@ -179,30 +194,15 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Month</label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <label className="text-sm font-medium">Period</label>
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select month" />
+                    <SelectValue placeholder="Select period" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {months.map(month => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Year</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map(year => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
+                  <SelectContent className="max-h-[300px]">
+                    {periodOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -273,7 +273,7 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                     <CardTitle>Time Entries</CardTitle>
                     <CardDescription>
                       {filteredEntries.length} {filteredEntries.length === 1 ? "entry" : "entries"} for{" "}
-                      {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                      {getSelectedPeriodLabel()}
                     </CardDescription>
                   </div>
                   {filteredEntries.length > 0 && (
@@ -337,7 +337,7 @@ Total Hours: ${stats.usedHours.toFixed(2)}
             <CardContent>
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Select Filters</h3>
-              <p className="text-slate-600">Choose a client and month to view time logs</p>
+              <p className="text-slate-600">Choose a client and period to view time logs</p>
             </CardContent>
           </Card>
         )}
