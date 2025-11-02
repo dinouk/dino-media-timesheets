@@ -10,6 +10,8 @@ import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
 import { calculateClientStats, processMonthlyRollover } from "@/lib/timeCalculations";
 import { AppHeader } from "@/components/AppHeader";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function TimeLogsPage() {
   const router = useRouter();
@@ -101,47 +103,86 @@ export default function TimeLogsPage() {
     if (!selectedClient || !stats) return;
 
     const [year, month] = selectedPeriod.split("-");
-    const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
     const companyLogo = localStorage.getItem("companyLogo");
     
-    let content = `TIMESHEET REPORT\n================\n\n`;
-    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+
     if (companyLogo) {
-      content += `[Company Logo Included]\n\n`;
+      try {
+        doc.addImage(companyLogo, "PNG", pageWidth / 2 - 25, yPos, 50, 20);
+        yPos += 30;
+      } catch (error) {
+        console.error("Error adding logo to PDF:", error);
+        yPos += 10;
+      }
     }
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("TIMESHEET REPORT", pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 15;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Client: ${selectedClient.name}`, 14, yPos);
+    yPos += 10;
+
+    const entriesSortedAsc = [...filteredEntries].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const tableData = entriesSortedAsc.map(entry => [
+      new Date(entry.date).toLocaleDateString(),
+      entry.hours.toString(),
+      entry.description,
+      entry.tags.join(", ")
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [["Date", "Hours", "Description", "Tags"]],
+      body: tableData,
+      theme: "striped",
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 11
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: [51, 65, 85]
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 20, halign: "center" },
+        2: { cellWidth: 80 },
+        3: { cellWidth: 50 }
+      },
+      margin: { left: 14, right: 14 }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
     
-    content += `Client: ${selectedClient.name}
-Period: ${monthName}
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Entries: ${entriesSortedAsc.length}`, 14, finalY);
+    doc.text(`Total Hours: ${stats.usedHours.toFixed(2)}`, 14, finalY + 7);
 
-STATISTICS
-----------
-Allocated Hours: ${stats.allocatedHours.toFixed(2)}
-Rollover Hours: ${stats.rolloverHours.toFixed(2)}
-Used Hours: ${stats.usedHours.toFixed(2)}
-Remaining Hours: ${stats.remainingHours.toFixed(2)}
-
-TIME ENTRIES
-------------
-${filteredEntries.map(entry => `
-Date: ${new Date(entry.date).toLocaleDateString()}
-Hours: ${entry.hours}
-Description: ${entry.description}
-Tags: ${entry.tags.join(", ")}
-`).join("\n")}
-
-Total Entries: ${filteredEntries.length}
-Total Hours: ${stats.usedHours.toFixed(2)}
-    `.trim();
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `timesheet-${selectedClient.name}-${selectedPeriod}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
+    const filename = `${sanitizedClientName}-${year}-${month}.pdf`;
+    doc.save(filename);
   };
 
   const generatePeriodOptions = () => {
@@ -308,7 +349,7 @@ Total Hours: ${stats.usedHours.toFixed(2)}
                   {filteredEntries.length > 0 && (
                     <Button onClick={handleExportPDF} className="gap-2">
                       <FileDown className="w-4 h-4" />
-                      Export as Text
+                      Export PDF
                     </Button>
                   )}
                 </div>
