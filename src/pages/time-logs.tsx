@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
 
 export default function TimeLogsPage() {
   const router = useRouter();
@@ -565,7 +566,7 @@ export default function TimeLogsPage() {
 
         {stats && selectedClient && (
           <>
-            <div className="grid md:grid-cols-4 gap-4 mb-6">
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
               <Card className="border-2 border-brand-light">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
@@ -675,26 +676,29 @@ export default function TimeLogsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-green-100">
+              <Card className={`border-2 ${stats.remainingHours >= 0 ? "border-green-100" : "border-red-100"}`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600">Used Hours</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-600">Time Usage</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{stats.usedHours.toFixed(2)}</div>
-                </CardContent>
-              </Card>
-
-              <Card className={`border-2 ${stats.remainingHours >= 0 ? "border-emerald-100" : "border-red-100"}`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600">Remaining Hours</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <div className={`text-2xl font-bold ${stats.remainingHours >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                      {stats.remainingHours.toFixed(2)}
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-600 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                      <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        Remaining: {stats.remainingHours.toFixed(2)}h
+                      </span>
                     </div>
-                    {stats.remainingHours < 0 && <AlertCircle className="w-5 h-5 text-red-600" />}
+                    <Progress 
+                      value={stats.usedHours / (stats.allocatedHours + stats.rolloverHours) * 100} 
+                      className={`h-3 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
+                    />
                   </div>
+                  {stats.remainingHours < 0 && (
+                    <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-2 rounded">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Over budget by {Math.abs(stats.remainingHours).toFixed(2)} hours</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
