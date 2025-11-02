@@ -461,7 +461,6 @@ export default function TimeLogsPage() {
       } else {
         // Create new monthly allocation entry
         const newEntry: MonthlyAllocation = {
-          id: Date.now().toString(),
           clientId: selectedClientId,
           month: selectedPeriod,
           year: parseInt(year),
