@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, Upload, X, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation } from "@/types";
 import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
@@ -24,6 +24,7 @@ export default function LogTimePage() {
   const [hours, setHours] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [description, setDescription] = useState("");
+  const [files, setFiles] = useState<Array<{ id: string; name: string; data: string; type: string; size: number }>>([]);
   const [success, setSuccess] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
 
@@ -64,6 +65,41 @@ export default function LogTimePage() {
     );
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFiles = e.target.files;
+    if (!uploadedFiles) return;
+
+    Array.from(uploadedFiles).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const newFile = {
+          id: Date.now().toString() + Math.random().toString(),
+          name: file.name,
+          data: event.target?.result as string,
+          type: file.type,
+          size: file.size,
+        };
+        setFiles((prev) => [...prev, newFile]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset input
+    e.target.value = "";
+  };
+
+  const handleRemoveFile = (fileId: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== fileId));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -89,6 +125,7 @@ export default function LogTimePage() {
       month: monthKey,
       year: date.getFullYear(),
       createdAt: new Date().toISOString(),
+      files: files.length > 0 ? files : undefined,
     };
 
     const savedEntries = localStorage.getItem("timeEntries");
@@ -249,6 +286,56 @@ export default function LogTimePage() {
                     </p>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="files">Attachments (Optional)</Label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 hover:border-brand-primary transition-colors">
+                    <input
+                      id="files"
+                      type="file"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      multiple
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.txt"
+                    />
+                    <label
+                      htmlFor="files"
+                      className="flex flex-col items-center justify-center cursor-pointer"
+                    >
+                      <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                      <span className="text-sm font-medium text-slate-600">Click to upload files</span>
+                      <span className="text-xs text-slate-500 mt-1">PDF, DOC, XLS, Images, TXT</span>
+                    </label>
+                  </div>
+
+                  {files.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      {files.map((file) => (
+                        <div
+                          key={file.id}
+                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileIcon className="w-5 h-5 text-brand-primary flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
+                              <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFile(file.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <Button
                   type="submit"

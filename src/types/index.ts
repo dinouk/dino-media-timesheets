@@ -17,6 +17,13 @@ export interface TimeEntry {
   month: string;
   year: number;
   createdAt: string;
+  files?: Array<{
+    id: string;
+    name: string;
+    data: string;
+    type: string;
+    size: number;
+  }>;
 }
 
 export interface MonthlyAllocation {
