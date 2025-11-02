@@ -348,10 +348,10 @@ export default function TimeLogsPage() {
     const boxPadding = 3;
 
     const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), icon: "↗", color: [147, 51, 234] },
-      { label: "Allocated", value: stats.allocatedHours.toFixed(2), icon: "⏰", color: [1, 136, 169] },
-      { label: "Used", value: stats.usedHours.toFixed(2), icon: "✓", color: [34, 197, 94] },
-      { label: "Remaining", value: stats.remainingHours.toFixed(2), icon: stats.remainingHours >= 0 ? "ℹ" : "⚠", color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68] }
+      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [147, 51, 234] },
+      { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169] },
+      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94] },
+      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68] }
     ];
 
     statBoxes.forEach((box, index) => {
@@ -361,9 +361,11 @@ export default function TimeLogsPage() {
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 3, 3, "FD");
       
-      doc.setFontSize(20);
-      doc.setTextColor(box.color[0], box.color[1], box.color[2]);
-      doc.text(box.icon, x + boxWidth / 2 - 5, boxY + 10);
+      // Draw icon circle with color
+      const iconCenterX = x + boxWidth / 2;
+      const iconCenterY = boxY + 8;
+      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
+      doc.circle(iconCenterX, iconCenterY, 3, "F");
       
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
@@ -437,13 +439,6 @@ export default function TimeLogsPage() {
         }
       }
     });
-
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(51, 65, 85);
-    doc.text(`Total Hours: ${stats.usedHours.toFixed(2)}`, 14, finalY);
 
     const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
     const filename = `${sanitizedClientName}-${year}-${month}.pdf`;
