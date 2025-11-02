@@ -55,9 +55,13 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
 
         <div className="flex items-center gap-3">
           <Link href="/log-time">
-            <Button className="gap-2 bg-brand-primary hover:bg-brand-primary-hover">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Log Time</span>
+            <Button 
+              variant="default"
+              size="icon" 
+              className="bg-brand-primary hover:bg-brand-primary-hover"
+              title="Log Time"
+            >
+              <Plus className="w-5 h-5" />
             </Button>
           </Link>
 
