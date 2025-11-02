@@ -311,24 +311,35 @@ export default function LogTimePage() {
 
                   {files.length > 0 && (
                     <div className="space-y-2 mt-4">
+                      <p className="text-sm font-medium text-slate-700">Attached Files ({files.length})</p>
                       {files.map((file) => (
                         <div
                           key={file.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                          className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200"
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <FileIcon className="w-5 h-5 text-brand-primary flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
-                              <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
-                            </div>
+                          <FileIcon className="w-5 h-5 text-brand-primary flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <Input
+                              type="text"
+                              value={file.displayName}
+                              onChange={(e) => {
+                                setFiles(prev => 
+                                  prev.map(f => 
+                                    f.id === file.id ? { ...f, displayName: e.target.value } : f
+                                  )
+                                );
+                              }}
+                              placeholder="Display name..."
+                              className="h-9 text-sm mb-1"
+                            />
+                            <p className="text-xs text-slate-500">Original: {file.name} ({formatFileSize(file.size)})</p>
                           </div>
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveFile(file.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="flex-shrink-0 h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <X className="w-4 h-4" />
                           </Button>
