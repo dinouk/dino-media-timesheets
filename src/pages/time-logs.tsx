@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, Pencil } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Client, TimeEntry, MonthlyAllocation, ClientStats } from "@/types";
 import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
@@ -16,9 +16,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function TimeLogsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
@@ -28,6 +40,7 @@ export default function TimeLogsPage() {
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [currentUser, setCurrentUser] = useState("");
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<TimeEntry | null>(null);
   const [editForm, setEditForm] = useState({
     date: "",
     hours: "",
@@ -85,7 +98,11 @@ export default function TimeLogsPage() {
     e.preventDefault();
 
     if (!editingEntry || !editForm.date || !editForm.hours || editForm.tags.length === 0 || !editForm.description.trim()) {
-      alert("Please fill in all fields including description and select at least one tag");
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all fields including description and select at least one tag",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -119,7 +136,39 @@ export default function TimeLogsPage() {
     setMonthlyAllocations(updatedAllocations);
     localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
 
+    toast({
+      title: "Time Entry Updated",
+      description: "Your time entry has been successfully updated",
+    });
+
     setEditingEntry(null);
+    loadData();
+  };
+
+  const handleDeleteEntry = () => {
+    if (!deletingEntry) return;
+
+    const updatedEntries = timeEntries.filter(entry => entry.id !== deletingEntry.id);
+    setTimeEntries(updatedEntries);
+    localStorage.setItem("timeEntries", JSON.stringify(updatedEntries));
+
+    const date = new Date(deletingEntry.date);
+    const updatedAllocations = processMonthlyRollover(
+      clients,
+      updatedEntries,
+      monthlyAllocations,
+      (date.getMonth() + 1).toString(),
+      date.getFullYear()
+    );
+    setMonthlyAllocations(updatedAllocations);
+    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+
+    toast({
+      title: "Time Entry Deleted",
+      description: "Your time entry has been successfully deleted",
+    });
+
+    setDeletingEntry(null);
     loadData();
   };
 
@@ -462,15 +511,26 @@ export default function TimeLogsPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditEntry(entry)}
-                                className="gap-2"
-                              >
-                                <Pencil className="w-4 h-4" />
-                                Edit
-                              </Button>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditEntry(entry)}
+                                  className="gap-2"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeletingEntry(entry)}
+                                  className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -605,6 +665,28 @@ export default function TimeLogsPage() {
               </form>
             </DialogContent>
           </Dialog>
+        )}
+
+        {deletingEntry && (
+          <AlertDialog open={!!deletingEntry} onOpenChange={() => setDeletingEntry(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Time Entry</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this time entry? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteEntry}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </main>
     </div>

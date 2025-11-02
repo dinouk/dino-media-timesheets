@@ -12,9 +12,11 @@ import { Client, TimeEntry, MonthlyAllocation } from "@/types";
 import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
 import { Textarea } from "@/components/ui/textarea";
 import { AppHeader } from "@/components/AppHeader";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LogTimePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
@@ -66,7 +68,11 @@ export default function LogTimePage() {
     e.preventDefault();
 
     if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0 || !description.trim()) {
-      alert("Please fill in all fields including description and select at least one tag");
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all fields including description and select at least one tag",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -102,12 +108,17 @@ export default function LogTimePage() {
     );
     localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
 
+    toast({
+      title: "Time Entry Created",
+      description: "Your time entry has been successfully logged",
+    });
+
     // Redirect to time-logs page with client and month pre-selected
     router.push({
       pathname: "/time-logs",
       query: {
         clientId: selectedClientId,
-        month: monthKey,
+        period: monthKey,
       },
     });
   };

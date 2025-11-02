@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -13,11 +12,13 @@ import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVer
 import { Client } from "@/types";
 import { AppHeader } from "@/components/AppHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 type StatusFilter = "active" | "archived" | "all";
 
 export default function ClientsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [currentUser, setCurrentUser] = useState("");
@@ -72,12 +73,20 @@ export default function ClientsPage() {
     e.preventDefault();
     
     if (!formData.name || !formData.allocatedHours) {
-      alert("Please fill in all required fields");
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
     if (tags.length === 0) {
-      alert("Please add at least one tag");
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one tag",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -89,6 +98,11 @@ export default function ClientsPage() {
       );
       setClients(updatedClients);
       localStorage.setItem("clients", JSON.stringify(updatedClients));
+      
+      toast({
+        title: "Client Updated",
+        description: `${formData.name} has been successfully updated`,
+      });
     } else {
       const newClient: Client = {
         id: Date.now().toString(),
@@ -101,6 +115,11 @@ export default function ClientsPage() {
       const updatedClients = [...clients, newClient];
       setClients(updatedClients);
       localStorage.setItem("clients", JSON.stringify(updatedClients));
+      
+      toast({
+        title: "Client Created",
+        description: `${formData.name} has been successfully added`,
+      });
     }
 
     setIsDialogOpen(false);
@@ -120,20 +139,32 @@ export default function ClientsPage() {
 
   const handleDelete = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const clientToDelete = clients.find(c => c.id === clientId);
     if (confirm("Are you sure you want to delete this client?")) {
       const updatedClients = clients.filter(client => client.id !== clientId);
       setClients(updatedClients);
       localStorage.setItem("clients", JSON.stringify(updatedClients));
+      
+      toast({
+        title: "Client Deleted",
+        description: `${clientToDelete?.name || "Client"} has been successfully deleted`,
+      });
     }
   };
 
   const handleToggleArchive = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const client = clients.find(c => c.id === clientId);
     const updatedClients = clients.map(client =>
       client.id === clientId ? { ...client, archived: !client.archived } : client
     );
     setClients(updatedClients);
     localStorage.setItem("clients", JSON.stringify(updatedClients));
+    
+    toast({
+      title: client?.archived ? "Client Unarchived" : "Client Archived",
+      description: `${client?.name || "Client"} has been ${client?.archived ? "unarchived" : "archived"}`,
+    });
   };
 
   const handleClientClick = (clientId: string) => {
