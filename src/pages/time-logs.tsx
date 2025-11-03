@@ -69,15 +69,15 @@ export default function TimeLogsPage() {
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([]);
-  const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
+  const [clients, setClients] = useState&lt;Client[]&gt;([]);
+  const [timeEntries, setTimeEntries] = useState&lt;TimeEntry[]&gt;([]);
+  const [fileAttachments, setFileAttachments] = useState&lt;FileAttachment[]&gt;([]);
+  const [monthlyAllocations, setMonthlyAllocations] = useState&lt;MonthlyAllocation[]&gt;([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
-  const [stats, setStats] = useState<ClientStats | null>(null);
-  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
-  const [deletingEntry, setDeletingEntry] = useState<TimeEntry | null>(null);
+  const [stats, setStats] = useState&lt;ClientStats | null&gt;(null);
+  const [editingEntry, setEditingEntry] = useState&lt;TimeEntry | null&gt;(null);
+  const [deletingEntry, setDeletingEntry] = useState&lt;TimeEntry | null&gt;(null);
   const [editForm, setEditForm] = useState({
     date: "",
     hours: "",
@@ -90,7 +90,7 @@ export default function TimeLogsPage() {
   const [rolloverValue, setRolloverValue] = useState("");
   const [allocationValue, setAllocationValue] = useState("");
   const [loadingData, setLoadingData] = useState(true);
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [companyLogo, setCompanyLogo] = useState&lt;string | null&gt;(null);
   const [isAddingTimeLog, setIsAddingTimeLog] = useState(false);
   const [addForm, setAddForm] = useState({
     clientId: "",
@@ -101,16 +101,12 @@ export default function TimeLogsPage() {
     files: [] as FileUpload[]
   });
 
-  // Refs to track dialog state
-  const isEditDialogClosing = useRef(false);
-  const isAddDialogClosing = useRef(false);
-
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
 
-  useEffect(() => {
+  useEffect(() =&gt; {
     setMounted(true);
-    if (!loading && !user) {
+    if (!loading &amp;&amp; !user) {
       router.push("/");
       return;
     }
@@ -125,8 +121,8 @@ export default function TimeLogsPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
+  useEffect(() =&gt; {
+    if (clients.length &gt; 0 &amp;&amp; router.query.clientId &amp;&amp; typeof router.query.clientId === "string") {
       setSelectedClientId(router.query.clientId);
 
       // Check if we should open add dialog
@@ -139,14 +135,14 @@ export default function TimeLogsPage() {
         });
       }
     }
-    if (router.query.period && typeof router.query.period === "string") {
+    if (router.query.period &amp;&amp; typeof router.query.period === "string") {
       setSelectedPeriod(router.query.period);
     }
   }, [router.query.clientId, router.query.period, router.query.add, clients]);
 
   // Separate effect to handle add dialog without clientId
-  useEffect(() => {
-    if (router.query.add === "true" && !router.query.clientId && clients.length > 0) {
+  useEffect(() =&gt; {
+    if (router.query.add === "true" &amp;&amp; !router.query.clientId &amp;&amp; clients.length &gt; 0) {
       handleOpenAddDialog();
       // Clean up URL
       router.replace({
@@ -157,13 +153,13 @@ export default function TimeLogsPage() {
   }, [router.query.add, router.query.clientId, clients.length]);
 
   // Calculate stats when client, period, or data changes
-  useEffect(() => {
+  useEffect(() =&gt; {
     if (!selectedClientId || !selectedPeriod) {
       setStats(null);
       return;
     }
 
-    const client = clients.find((c) => c.id === selectedClientId);
+    const client = clients.find((c) =&gt; c.id === selectedClientId);
     if (!client) {
       setStats(null);
       return;
@@ -171,14 +167,14 @@ export default function TimeLogsPage() {
 
     // Get monthly allocation for this period
     const allocation = monthlyAllocations.find(
-      (a) => a.client_id === selectedClientId && a.month === selectedPeriod
+      (a) =&gt; a.client_id === selectedClientId &amp;&amp; a.month === selectedPeriod
     );
 
     // Calculate used hours from time entries
     const monthEntries = timeEntries.filter(
-      (entry) => entry.client_id === selectedClientId && entry.month === selectedPeriod
+      (entry) =&gt; entry.client_id === selectedClientId &amp;&amp; entry.month === selectedPeriod
     );
-    const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+    const usedHours = monthEntries.reduce((sum, entry) =&gt; sum + (entry.hours || 0), 0);
 
     // Determine allocated hours (from monthly allocation or client default)
     const allocatedHours = Number(allocation?.allocated_hours ?? client.allocated_hours_per_month);
@@ -197,7 +193,7 @@ export default function TimeLogsPage() {
     });
   }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations]);
 
-  const loadData = async () => {
+  const loadData = async () =&gt; {
     if (!user) return;
 
     try {
@@ -217,7 +213,7 @@ export default function TimeLogsPage() {
         setCompanyLogo(settingsData.company_logo_url);
       }
 
-      const allFilePromises = entriesData.map((entry) =>
+      const allFilePromises = entriesData.map((entry) =&gt;
       fileAttachmentService.getFileAttachments(entry.id)
       );
       const allFiles = await Promise.all(allFilePromises);
@@ -234,11 +230,11 @@ export default function TimeLogsPage() {
     }
   };
 
-  const handleEditEntry = async (entry: TimeEntry) => {
+  const handleEditEntry = async (entry: TimeEntry) =&gt; {
     setEditingEntry(entry);
 
     const entryFiles = await fileAttachmentService.getFileAttachments(entry.id);
-    const filesForForm: FileUpload[] = entryFiles.map((f) => ({
+    const filesForForm: FileUpload[] = entryFiles.map((f) =&gt; ({
       id: f.id,
       name: f.file_name,
       displayName: f.display_name,
@@ -257,7 +253,7 @@ export default function TimeLogsPage() {
     });
   };
 
-  const handleUpdateEntry = async (e: React.FormEvent) => {
+  const handleUpdateEntry = async (e: React.FormEvent) =&gt; {
     e.preventDefault();
 
     if (!editingEntry || !editForm.date || !editForm.hours || editForm.tags.length === 0 || !editForm.description.trim() || !user) {
@@ -268,9 +264,6 @@ export default function TimeLogsPage() {
       });
       return;
     }
-
-    if (isEditDialogClosing.current) return;
-    isEditDialogClosing.current = true;
 
     try {
       const date = new Date(editForm.date);
@@ -285,11 +278,11 @@ export default function TimeLogsPage() {
         year: date.getFullYear()
       });
 
-      const currentFiles = editForm.files.filter((f) => !f.file);
+      const currentFiles = editForm.files.filter((f) =&gt; !f.file);
       const existingFileAttachments = await fileAttachmentService.getFileAttachments(editingEntry.id);
 
       for (const existingFile of existingFileAttachments) {
-        if (!currentFiles.find((f) => f.id === existingFile.id)) {
+        if (!currentFiles.find((f) =&gt; f.id === existingFile.id)) {
           if (existingFile.file_path) {
             await storageService.deleteFile("time-entry-files", existingFile.file_path);
           }
@@ -297,7 +290,7 @@ export default function TimeLogsPage() {
         }
       }
 
-      const newFiles = editForm.files.filter((f) => f.file);
+      const newFiles = editForm.files.filter((f) =&gt; f.file);
       for (const fileUpload of newFiles) {
         if (fileUpload.file) {
           const filePath = `${user.id}/${editingEntry.id}/${Date.now()}-${fileUpload.file.name}`;
@@ -316,36 +309,23 @@ export default function TimeLogsPage() {
             file_type: fileUpload.file.type,
             file_size: fileUpload.file.size
           });
-        } else if (fileUpload.id && fileUpload.displayName !== fileUpload.name) {
+        } else if (fileUpload.id &amp;&amp; fileUpload.displayName !== fileUpload.name) {
           await fileAttachmentService.updateFileAttachment(fileUpload.id, {
             display_name: fileUpload.displayName
           });
         }
       }
-
-      // Close dialog and clean up state
-      setEditingEntry(null);
-      setEditForm({
-        date: "",
-        hours: "",
-        description: "",
-        tags: [],
-        files: []
-      });
-
-      // Show toast
+      
       toast({
         title: "Time Entry Updated",
         description: "Your time entry has been successfully updated"
       });
-
-      // Wait for dialog to fully unmount and clean up DOM
-      setTimeout(() => {
-        isEditDialogClosing.current = false;
+      
+      closeEditDialog(() =&gt; {
         loadData();
-      }, 500);
+      });
+
     } catch (error: any) {
-      isEditDialogClosing.current = false;
       console.error("Error updating time entry:", error);
       toast({
         title: "Error",
@@ -355,7 +335,7 @@ export default function TimeLogsPage() {
     }
   };
 
-  const handleDeleteEntry = async () => {
+  const handleDeleteEntry = async () =&gt; {
     if (!deletingEntry) return;
 
     try {
@@ -387,21 +367,21 @@ export default function TimeLogsPage() {
     }
   };
 
-  const toggleEditTag = (tag: string) => {
-    setEditForm((prev) => ({
+  const toggleEditTag = (tag: string) =&gt; {
+    setEditForm((prev) =&gt; ({
       ...prev,
       tags: prev.tags.includes(tag) ?
-      prev.tags.filter((t) => t !== tag) :
+      prev.tags.filter((t) =&gt; t !== tag) :
       [...prev.tags, tag]
     }));
   };
 
-  const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditFileUpload = (e: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
+    Array.from(files).forEach((file) =&gt; {
+      if (file.size &gt; 5 * 1024 * 1024) {
         toast({
           title: "File Too Large",
           description: `${file.name} exceeds 5MB limit`,
@@ -419,7 +399,7 @@ export default function TimeLogsPage() {
         size: file.size
       };
 
-      setEditForm((prev) => ({
+      setEditForm((prev) =&gt; ({
         ...prev,
         files: [...prev.files, fileData]
       }));
@@ -428,36 +408,24 @@ export default function TimeLogsPage() {
     e.target.value = "";
   };
 
-  const handleRemoveEditFile = (fileId: string) => {
-    setEditForm((prev) => ({
+  const handleRemoveEditFile = (fileId: string) =&gt; {
+    setEditForm((prev) =&gt; ({
       ...prev,
-      files: prev.files.filter((f) => f.id !== fileId)
+      files: prev.files.filter((f) =&gt; f.id !== fileId)
     }));
   };
 
-  const handleUpdateFileDisplayName = (fileId: string, newDisplayName: string) => {
-    setEditForm((prev) => ({
+  const handleUpdateFileDisplayName = (fileId: string, newDisplayName: string) =&gt; {
+    setEditForm((prev) =&gt; ({
       ...prev,
-      files: prev.files.map((f) =>
+      files: prev.files.map((f) =&gt;
       f.id === fileId ? { ...f, displayName: newDisplayName } : f
       )
     }));
   };
 
-  const handleOpenAddDialog = (preselectedClientId?: string) => {
-    // Ensure edit dialog is completely closed
-    setEditingEntry(null);
-    setEditForm({
-      date: "",
-      hours: "",
-      description: "",
-      tags: [],
-      files: []
-    });
-
-    // Small delay to ensure DOM cleanup
-    setTimeout(() => {
-      // Set up fresh add form
+  const handleOpenAddDialog = (preselectedClientId?: string) =&gt; {
+    const setupAddDialog = () =&gt; {
       setAddForm({
         clientId: preselectedClientId || selectedClientId || "",
         date: new Date().toISOString().split("T")[0],
@@ -467,15 +435,21 @@ export default function TimeLogsPage() {
         files: []
       });
       setIsAddingTimeLog(true);
-    }, 50);
+    };
+
+    if (editingEntry) {
+      closeEditDialog(setupAddDialog);
+    } else {
+      setupAddDialog();
+    }
   };
 
-  const handleAddFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddFileUpload = (e: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
+    Array.from(files).forEach((file) =&gt; {
+      if (file.size &gt; 5 * 1024 * 1024) {
         toast({
           title: "File Too Large",
           description: `${file.name} exceeds 5MB limit`,
@@ -493,7 +467,7 @@ export default function TimeLogsPage() {
         size: file.size
       };
 
-      setAddForm((prev) => ({
+      setAddForm((prev) =&gt; ({
         ...prev,
         files: [...prev.files, fileData]
       }));
@@ -502,35 +476,50 @@ export default function TimeLogsPage() {
     e.target.value = "";
   };
 
-  const handleRemoveAddFile = (fileId: string) => {
-    setAddForm((prev) => ({
+  const handleRemoveAddFile = (fileId: string) =&gt; {
+    setAddForm((prev) =&gt; ({
       ...prev,
-      files: prev.files.filter((f) => f.id !== fileId)
+      files: prev.files.filter((f) =&gt; f.id !== fileId)
     }));
   };
 
-  const handleUpdateAddFileDisplayName = (fileId: string, newDisplayName: string) => {
-    setAddForm((prev) => ({
+  const handleUpdateAddFileDisplayName = (fileId: string, newDisplayName: string) =&gt; {
+    setAddForm((prev) =&gt; ({
       ...prev,
-      files: prev.files.map((f) =>
+      files: prev.files.map((f) =&gt;
       f.id === fileId ? { ...f, displayName: newDisplayName } : f
       )
     }));
   };
 
-  const toggleAddTag = (tag: string) => {
-    setAddForm((prev) => ({
+  const toggleAddTag = (tag: string) =&gt; {
+    setAddForm((prev) =&gt; ({
       ...prev,
       tags: prev.tags.includes(tag) ?
-      prev.tags.filter((t) => t !== tag) :
+      prev.tags.filter((t) =&gt; t !== tag) :
       [...prev.tags, tag]
     }));
   };
+  
+  const closeEditDialog = (callback?: () =&gt; void) =&gt; {
+    setEditingEntry(null);
+    if (callback) {
+      setTimeout(callback, 300); // Wait for animation
+    }
+  };
 
-  const handleSubmitTimeEntry = async (e: React.FormEvent) => {
+  const closeAddDialog = (callback?: () =&gt; void) =&gt; {
+    setIsAddingTimeLog(false);
+    if (callback) {
+      setTimeout(callback, 300); // Wait for animation
+    }
+  };
+
+
+  const handleSubmitTimeEntry = async (e: React.FormEvent) =&gt; {
     e.preventDefault();
 
-    const addClient = clients.find((c) => c.id === addForm.clientId);
+    const addClient = clients.find((c) =&gt; c.id === addForm.clientId);
     if (!addClient) return;
 
     const clientTags = addClient.tags as string[] || [];
@@ -544,9 +533,6 @@ export default function TimeLogsPage() {
       });
       return;
     }
-
-    if (isAddDialogClosing.current) return;
-    isAddDialogClosing.current = true;
 
     try {
       const date = new Date(addForm.date);
@@ -563,7 +549,7 @@ export default function TimeLogsPage() {
         year: date.getFullYear()
       });
 
-      if (addForm.files.length > 0) {
+      if (addForm.files.length &gt; 0) {
         for (const fileUpload of addForm.files) {
           if (fileUpload.file) {
             const filePath = `${user.id}/${newEntry.id}/${Date.now()}-${fileUpload.file.name}`;
@@ -585,43 +571,28 @@ export default function TimeLogsPage() {
           }
         }
       }
-
-      // Save navigation targets
+      
       const targetClientId = addForm.clientId;
       const targetPeriod = monthKey;
-      
-      // Close dialog and clean up state
-      setIsAddingTimeLog(false);
-      setAddForm({
-        clientId: "",
-        date: "",
-        hours: "",
-        description: "",
-        tags: [],
-        files: []
-      });
 
-      // Show toast
       toast({
         title: "Time Entry Created",
         description: "Your time entry has been successfully logged"
       });
+      
+      closeAddDialog(() =&gt; {
+          setSelectedClientId(targetClientId);
+          setSelectedPeriod(targetPeriod);
+          
+          router.push({
+            pathname: "/time-logs",
+            query: { clientId: targetClientId, period: targetPeriod }
+          }, undefined, { shallow: true });
 
-      // Wait for dialog to fully unmount and clean up DOM
-      setTimeout(() => {
-        isAddDialogClosing.current = false;
-        setSelectedClientId(targetClientId);
-        setSelectedPeriod(targetPeriod);
-        
-        router.push({
-          pathname: "/time-logs",
-          query: { clientId: targetClientId, period: targetPeriod }
-        }, undefined, { shallow: true });
+          loadData();
+      });
 
-        loadData();
-      }, 500);
     } catch (error: any) {
-      isAddDialogClosing.current = false;
       console.error("Error creating time entry:", error);
       toast({
         title: "Error",
@@ -631,23 +602,23 @@ export default function TimeLogsPage() {
     }
   };
 
-  const selectedAddClient = clients.find((c) => c.id === addForm.clientId);
+  const selectedAddClient = clients.find((c) =&gt; c.id === addForm.clientId);
   const addClientTags = selectedAddClient ? selectedAddClient.tags as string[] || [] : [];
-  const shouldShowAddTags = addClientTags.length > 1;
+  const shouldShowAddTags = addClientTags.length &gt; 1;
 
   const filteredEntries = timeEntries.
-  filter((entry) =>
-  entry.client_id === selectedClientId &&
+  filter((entry) =&gt;
+  entry.client_id === selectedClientId &amp;&amp;
   entry.month === selectedPeriod
   ).
-  sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  sort((a, b) =&gt; new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const selectedClient = clients.find((c) => c.id === selectedClientId);
+  const selectedClient = clients.find((c) =&gt; c.id === selectedClientId);
 
-  const activeClients = clients.filter((c) => !c.archived);
-  const archivedClients = clients.filter((c) => c.archived);
+  const activeClients = clients.filter((c) =&gt; !c.archived);
+  const archivedClients = clients.filter((c) =&gt; c.archived);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async () =&gt; {
     if (!selectedClient || !stats) return;
 
     const [year, month] = selectedPeriod.split("-");
@@ -676,7 +647,7 @@ export default function TimeLogsPage() {
         img.crossOrigin = "anonymous";
         img.src = companyLogo;
 
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) =&gt; {
           img.onload = resolve;
           img.onerror = reject;
         });
@@ -691,7 +662,7 @@ export default function TimeLogsPage() {
         let logoWidth = maxLogoWidth;
         let logoHeight = logoWidth / aspectRatio;
 
-        if (logoHeight > maxLogoHeight) {
+        if (logoHeight &gt; maxLogoHeight) {
           logoHeight = maxLogoHeight;
           logoWidth = logoHeight * aspectRatio;
         }
@@ -702,7 +673,7 @@ export default function TimeLogsPage() {
 
         // Update yPos if logo extends below the date
         const logoBottom = logoYPos + logoHeight;
-        if (logoBottom > yPos) {
+        if (logoBottom &gt; yPos) {
           yPos = logoBottom;
         }
       } catch (error) {
@@ -721,10 +692,10 @@ export default function TimeLogsPage() {
     { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
     { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
     { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "alert-circle" },
-    { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: "trending-down" }];
+    { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours &gt;= 0 ? [16, 185, 129] : [239, 68, 68], icon: "trending-down" }];
 
 
-    statBoxes.forEach((box, index) => {
+    statBoxes.forEach((box, index) =&gt; {
       const x = 14 + index * (boxWidth + boxSpacing);
 
       doc.setDrawColor(200, 200, 200);
@@ -744,23 +715,23 @@ export default function TimeLogsPage() {
 
     yPos = boxY + boxHeight + 10;
 
-    const entriesSortedAsc = [...filteredEntries].sort((a, b) =>
+    const entriesSortedAsc = [...filteredEntries].sort((a, b) =&gt;
     new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
     const entriesWithFiles = await Promise.all(
-      entriesSortedAsc.map(async (entry) => {
+      entriesSortedAsc.map(async (entry) =&gt; {
         const files = await fileAttachmentService.getFileAttachments(entry.id);
         return { entry, files };
       })
     );
 
-    const tableData = entriesWithFiles.map(({ entry, files }) => [
+    const tableData = entriesWithFiles.map(({ entry, files }) =&gt; [
     new Date(entry.date).toLocaleDateString(),
     entry.hours.toString(),
     entry.description,
     (entry.tags as string[]).join(", "),
-    files.length > 0 ? files.map((f) => f.display_name).join(", ") : "No files"]
+    files.length &gt; 0 ? files.map((f) =&gt; f.display_name).join(", ") : "No files"]
     );
 
     autoTable(doc, {
@@ -799,13 +770,13 @@ export default function TimeLogsPage() {
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
-      didDrawCell: (data) => {
-        if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
+      didDrawCell: (data) =&gt; {
+        if (data.column.index === 4 &amp;&amp; data.section === "body" &amp;&amp; data.row.index &lt; entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
-          if (files.length > 0) {
+          if (files.length &gt; 0) {
             const cell = data.cell;
 
-            files.forEach((file, fileIndex) => {
+            files.forEach((file, fileIndex) =&gt; {
               const linkY = cell.y + 5 + fileIndex * 6;
 
               doc.setFontSize(7.5);
@@ -825,7 +796,7 @@ export default function TimeLogsPage() {
     doc.save(filename);
   };
 
-  const generatePeriodOptions = () => {
+  const generatePeriodOptions = () =&gt; {
     const options = [];
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -834,11 +805,11 @@ export default function TimeLogsPage() {
     const startYear = 2025;
     const startMonth = 10;
 
-    for (let year = startYear; year <= currentYear; year++) {
+    for (let year = startYear; year &lt;= currentYear; year++) {
       const monthStart = year === startYear ? startMonth : 1;
       const monthEnd = year === currentYear ? currentMonth : 12;
 
-      for (let month = monthStart; month <= monthEnd; month++) {
+      for (let month = monthStart; month &lt;= monthEnd; month++) {
         const value = `${year}-${month.toString().padStart(2, "0")}`;
         const date = new Date(year, month - 1);
         const label = date.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -850,16 +821,16 @@ export default function TimeLogsPage() {
   };
 
   const periodOptions = generatePeriodOptions();
-  const getSelectedPeriodLabel = () => {
+  const getSelectedPeriodLabel = () =&gt; {
     if (!selectedPeriod) return "";
-    const option = periodOptions.find((opt) => opt.value === selectedPeriod);
+    const option = periodOptions.find((opt) =&gt; opt.value === selectedPeriod);
     return option ? option.label : "";
   };
 
   // Handle client filter change with URL sync
-  const handleClientFilterChange = (value: string) => {
+  const handleClientFilterChange = (value: string) =&gt; {
     setSelectedClientId(value);
-    const newQuery: Record<string, string> = {};
+    const newQuery: Record&lt;string, string&gt; = {};
     if (value) {
       newQuery.clientId = value;
     }
@@ -873,9 +844,9 @@ export default function TimeLogsPage() {
   };
 
   // Handle period filter change with URL sync
-  const handlePeriodFilterChange = (value: string) => {
+  const handlePeriodFilterChange = (value: string) =&gt; {
     setSelectedPeriod(value);
-    const newQuery: Record<string, string> = {};
+    const newQuery: Record&lt;string, string&gt; = {};
     if (selectedClientId) {
       newQuery.clientId = selectedClientId;
     }
@@ -888,7 +859,7 @@ export default function TimeLogsPage() {
     }, undefined, { shallow: true });
   };
 
-  const handleSaveRollover = async () => {
+  const handleSaveRollover = async () =&gt; {
     if (!selectedClient || !selectedPeriod || !user || !stats) return;
 
     const newRollover = parseFloat(rolloverValue);
@@ -928,11 +899,11 @@ export default function TimeLogsPage() {
     }
   };
 
-  const handleSaveAllocation = async () => {
+  const handleSaveAllocation = async () =&gt; {
     if (!selectedClient || !selectedPeriod || !user || !stats) return;
 
     const newAllocation = parseFloat(allocationValue);
-    if (isNaN(newAllocation) || newAllocation < 0) {
+    if (isNaN(newAllocation) || newAllocation &lt; 0) {
       toast({
         title: "Invalid Input",
         description: "Please enter a valid positive number",
@@ -983,14 +954,14 @@ export default function TimeLogsPage() {
     }
   };
 
-  const handleStartEditRollover = () => {
+  const handleStartEditRollover = () =&gt; {
     if (stats) {
       setRolloverValue(stats.rolloverHours.toString());
       setEditingRollover(true);
     }
   };
 
-  const handleStartEditAllocation = () => {
+  const handleStartEditAllocation = () =&gt; {
     if (stats) {
       setAllocationValue(stats.allocatedHours.toString());
       setEditingAllocation(true);
@@ -999,485 +970,473 @@ export default function TimeLogsPage() {
 
   if (!mounted || loading || loadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
-          <p className="mt-4 text-slate-600">Loading...</p>
-        </div>
-      </div>);
+      &lt;div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100"&gt;
+        &lt;div className="text-center"&gt;
+          &lt;div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"&gt;&lt;/div&gt;
+          &lt;p className="mt-4 text-slate-600"&gt;Loading...&lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;);
 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={user?.email || ""} />
+    &lt;div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100"&gt;
+      &lt;AppHeader currentUser={user?.email || ""} /&gt;
 
-      <main className="container mx-auto px-4 py-8">
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-brand-primary" />
+      &lt;main className="container mx-auto px-4 py-8"&gt;
+        &lt;Card className="mb-6"&gt;
+          &lt;CardHeader&gt;
+            &lt;CardTitle className="flex items-center gap-2"&gt;
+              &lt;Filter className="w-5 h-5 text-brand-primary" /&gt;
               Filter Time Logs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Select value={selectedClientId} onValueChange={handleClientFilterChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeClients.length > 0 &&
-                    <SelectGroup>
-                        <SelectLabel>Active Clients</SelectLabel>
-                        {activeClients.map((client) =>
-                      <SelectItem key={client.id} value={client.id}>
+            &lt;/CardTitle&gt;
+          &lt;/CardHeader&gt;
+          &lt;CardContent&gt;
+            &lt;div className="grid md:grid-cols-2 gap-4"&gt;
+              &lt;div&gt;
+                &lt;Select value={selectedClientId} onValueChange={handleClientFilterChange}&gt;
+                  &lt;SelectTrigger&gt;
+                    &lt;SelectValue placeholder="Select client" /&gt;
+                  &lt;/SelectTrigger&gt;
+                  &lt;SelectContent&gt;
+                    {activeClients.length &gt; 0 &amp;&amp;
+                    &lt;SelectGroup&gt;
+                        &lt;SelectLabel&gt;Active Clients&lt;/SelectLabel&gt;
+                        {activeClients.map((client) =&gt;
+                      &lt;SelectItem key={client.id} value={client.id}&gt;
                             {client.name}
-                          </SelectItem>
+                          &lt;/SelectItem&gt;
                       )}
-                      </SelectGroup>
+                      &lt;/SelectGroup&gt;
                     }
-                    {archivedClients.length > 0 &&
-                    <SelectGroup>
-                        <SelectLabel>Archived Clients</SelectLabel>
-                        {archivedClients.map((client) =>
-                      <SelectItem key={client.id} value={client.id}>
+                    {archivedClients.length &gt; 0 &amp;&amp;
+                    &lt;SelectGroup&gt;
+                        &lt;SelectLabel&gt;Archived Clients&lt;/SelectLabel&gt;
+                        {archivedClients.map((client) =&gt;
+                      &lt;SelectItem key={client.id} value={client.id}&gt;
                             {client.name}
-                          </SelectItem>
+                          &lt;/SelectItem&gt;
                       )}
-                      </SelectGroup>
+                      &lt;/SelectGroup&gt;
                     }
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Select value={selectedPeriod} onValueChange={handlePeriodFilterChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {periodOptions.map((option) =>
-                    <SelectItem key={option.value} value={option.value}>
+                  &lt;/SelectContent&gt;
+                &lt;/Select&gt;
+              &lt;/div&gt;
+              &lt;div&gt;
+                &lt;Select value={selectedPeriod} onValueChange={handlePeriodFilterChange}&gt;
+                  &lt;SelectTrigger&gt;
+                    &lt;SelectValue placeholder="Select period" /&gt;
+                  &lt;/SelectTrigger&gt;
+                  &lt;SelectContent className="max-h-[300px]"&gt;
+                    {periodOptions.map((option) =&gt;
+                    &lt;SelectItem key={option.value} value={option.value}&gt;
                         {option.label}
-                      </SelectItem>
+                      &lt;/SelectItem&gt;
                     )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  &lt;/SelectContent&gt;
+                &lt;/Select&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/CardContent&gt;
+        &lt;/Card&gt;
 
-        {stats && selectedClient &&
-        <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
-                    <ArrowUp className="w-4 h-4 text-black" />
-                    <span>Rolled Over</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+        {stats &amp;&amp; selectedClient &amp;&amp;
+        &lt;&gt;
+            &lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"&gt;
+              &lt;Card&gt;
+                &lt;CardHeader className="pb-3"&gt;
+                  &lt;CardTitle className="text-sm font-medium text-black flex items-center gap-2"&gt;
+                    &lt;ArrowUp className="w-4 h-4 text-black" /&gt;
+                    &lt;span&gt;Rolled Over&lt;/span&gt;
+                  &lt;/CardTitle&gt;
+                &lt;/CardHeader&gt;
+                &lt;CardContent&gt;
                   {editingRollover ?
-                <div className="flex items-center gap-2">
-                      <Input
+                &lt;div className="flex items-center gap-2"&gt;
+                      &lt;Input
                     type="number"
                     step="0.25"
                     value={rolloverValue}
-                    onChange={(e) => setRolloverValue(e.target.value)}
+                    onChange={(e) =&gt; setRolloverValue(e.target.value)}
                     className="h-8 text-sm"
-                    autoFocus />
+                    autoFocus /&gt;
 
-                      <Button
+                      &lt;Button
                     variant="ghost"
                     size="sm"
                     onClick={handleSaveRollover}
-                    className="h-8 w-8 p-0 text-green-600">
+                    className="h-8 w-8 p-0 text-green-600"&gt;
 
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button
+                        &lt;Save className="w-4 h-4" /&gt;
+                      &lt;/Button&gt;
+                      &lt;Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setEditingRollover(false)}
-                    className="h-8 w-8 p-0 text-red-600">
+                    onClick={() =&gt; setEditingRollover(false)}
+                    className="h-8 w-8 p-0 text-red-600"&gt;
 
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div> :
+                        &lt;X className="w-4 h-4" /&gt;
+                      &lt;/Button&gt;
+                    &lt;/div&gt; :
 
-                <div className="text-2xl font-bold text-black">{stats.rolloverHours.toFixed(2)}h</div>
+                &lt;div className="text-2xl font-bold text-black"&gt;{stats.rolloverHours.toFixed(2)}h&lt;/div&gt;
                 }
-                </CardContent>
-              </Card>
+                &lt;/CardContent&gt;
+              &lt;/Card&gt;
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-black" />
-                    <span>Allocated</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              &lt;Card&gt;
+                &lt;CardHeader className="pb-3"&gt;
+                  &lt;CardTitle className="text-sm font-medium text-black flex items-center gap-2"&gt;
+                    &lt;Clock className="w-4 h-4 text-black" /&gt;
+                    &lt;span&gt;Allocated&lt;/span&gt;
+                  &lt;/CardTitle&gt;
+                &lt;/CardHeader&gt;
+                &lt;CardContent&gt;
                   {editingAllocation ?
-                <div className="flex items-center gap-2">
-                      <Input
+                &lt;div className="flex items-center gap-2"&gt;
+                      &lt;Input
                     type="number"
                     step="0.25"
                     value={allocationValue}
-                    onChange={(e) => setAllocationValue(e.target.value)}
+                    onChange={(e) =&gt; setAllocationValue(e.target.value)}
                     className="h-8 text-sm"
-                    autoFocus />
+                    autoFocus /&gt;
 
-                      <Button
+                      &lt;Button
                     variant="ghost"
                     size="sm"
                     onClick={handleSaveAllocation}
-                    className="h-8 w-8 p-0 text-green-600">
+                    className="h-8 w-8 p-0 text-green-600"&gt;
 
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button
+                        &lt;Save className="w-4 h-4" /&gt;
+                      &lt;/Button&gt;
+                      &lt;Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setEditingAllocation(false)}
-                    className="h-8 w-8 p-0 text-red-600">
+                    onClick={() =&gt; setEditingAllocation(false)}
+                    className="h-8 w-8 p-0 text-red-600"&gt;
 
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div> :
+                        &lt;X className="w-4 h-4" /&gt;
+                      &lt;/Button&gt;
+                    &lt;/div&gt; :
 
-                <div className="text-2xl font-bold text-black">{stats.allocatedHours.toFixed(2)}h</div>
+                &lt;div className="text-2xl font-bold text-black"&gt;{stats.allocatedHours.toFixed(2)}h&lt;/div&gt;
                 }
-                </CardContent>
-              </Card>
+                &lt;/CardContent&gt;
+              &lt;/Card&gt;
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-black" />
-                    <span>Usage</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <div>
-                      <span className="text-black font-semibold">Used: </span>
-                      <span className="text-black">{stats.usedHours.toFixed(2)}h</span>
-                    </div>
-                    <div>
-                      <span className="text-black font-semibold">Remaining: </span>
-                      <span className={stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}>
+              &lt;Card&gt;
+                &lt;CardHeader className="pb-3"&gt;
+                  &lt;CardTitle className="text-sm font-medium text-black flex items-center gap-2"&gt;
+                    &lt;AlertCircle className="w-4 h-4 text-black" /&gt;
+                    &lt;span&gt;Usage&lt;/span&gt;
+                  &lt;/CardTitle&gt;
+                &lt;/CardHeader&gt;
+                &lt;CardContent className="space-y-3"&gt;
+                  &lt;div className="flex justify-between items-center text-sm"&gt;
+                    &lt;div&gt;
+                      &lt;span className="text-black font-semibold"&gt;Used: &lt;/span&gt;
+                      &lt;span className="text-black"&gt;{stats.usedHours.toFixed(2)}h&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;div&gt;
+                      &lt;span className="text-black font-semibold"&gt;Remaining: &lt;/span&gt;
+                      &lt;span className={stats.remainingHours &gt;= 0 ? "text-green-600" : "text-red-600"}&gt;
                         {stats.remainingHours.toFixed(2)}h
-                      </span>
-                    </div>
-                  </div>
-                  {(() => {
+                      &lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  {(() =&gt; {
                   const totalAvailable = stats.allocatedHours + stats.rolloverHours;
 
                   // Always show progress bar, even with 0 logs and negative rollover
                   let progressValue = 0;
                   let isOverBudget = false;
 
-                  if (totalAvailable > 0) {
+                  if (totalAvailable &gt; 0) {
                     // Normal case: positive total time available
                     progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
-                    isOverBudget = stats.usedHours > totalAvailable;
+                    isOverBudget = stats.usedHours &gt; totalAvailable;
                   } else if (totalAvailable === 0) {
                     // Edge case: exactly 0 available (negative rollover = allocated)
-                    progressValue = stats.usedHours > 0 ? 100 : 0;
-                    isOverBudget = stats.usedHours > 0;
+                    progressValue = stats.usedHours &gt; 0 ? 100 : 0;
+                    isOverBudget = stats.usedHours &gt; 0;
                   } else {
-                    // Negative available time (negative rollover > allocated)
+                    // Negative available time (negative rollover &gt; allocated)
                     // Show as over budget even with 0 usage
                     progressValue = 100;
                     isOverBudget = true;
                   }
 
                   return (
-                    <Progress
+                    &lt;Progress
                       value={progressValue}
                       className="h-3 bg-slate-100"
-                      indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />);
+                      indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} /&gt;);
 
 
                 })()}
-                </CardContent>
-              </Card>
-            </div>
+                &lt;/CardContent&gt;
+              &lt;/Card&gt;
+            &lt;/div&gt;
 
-            <Card>
-              <CardContent className="pt-6">
+            &lt;Card&gt;
+              &lt;CardContent className="pt-6"&gt;
                 {filteredEntries.length === 0 ?
-              <div className="text-center py-12">
-                    <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No Time Entries</h3>
-                    <p className="text-slate-600 mb-6">No time entries found for this period</p>
-                    <Button
+              &lt;div className="text-center py-12"&gt;
+                    &lt;Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" /&gt;
+                    &lt;h3 className="text-xl font-semibold mb-2"&gt;No Time Entries&lt;/h3&gt;
+                    &lt;p className="text-slate-600 mb-6"&gt;No time entries found for this period&lt;/p&gt;
+                    &lt;Button
                   size="lg"
                   className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                  onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}>
+                  onClick={() =&gt; handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}&gt;
 
-                      <Plus className="w-5 h-5" />
+                      &lt;Plus className="w-5 h-5" /&gt;
                       Add New Log
-                    </Button>
-                  </div> :
+                    &lt;/Button&gt;
+                  &lt;/div&gt; :
 
-              <>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Hours</TableHead>
-                            <TableHead style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}>Description</TableHead>
-                            <TableHead>Tags</TableHead>
-                            <TableHead>Files</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredEntries.map((entry) => {
-                        const entryFiles = fileAttachments.filter((f) => f.time_entry_id === entry.id);
+              &lt;&gt;
+                    &lt;div className="overflow-x-auto"&gt;
+                      &lt;Table&gt;
+                        &lt;TableHeader&gt;
+                          &lt;TableRow&gt;
+                            &lt;TableHead&gt;Date&lt;/TableHead&gt;
+                            &lt;TableHead&gt;Hours&lt;/TableHead&gt;
+                            &lt;TableHead style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}&gt;Description&lt;/TableHead&gt;
+                            &lt;TableHead&gt;Tags&lt;/TableHead&gt;
+                            &lt;TableHead&gt;Files&lt;/TableHead&gt;
+                            &lt;TableHead className="text-right"&gt;Actions&lt;/TableHead&gt;
+                          &lt;/TableRow&gt;
+                        &lt;/TableHeader&gt;
+                        &lt;TableBody&gt;
+                          {filteredEntries.map((entry) =&gt; {
+                        const entryFiles = fileAttachments.filter((f) =&gt; f.time_entry_id === entry.id);
 
                         return (
-                          <TableRow key={entry.id}>
-                                <TableCell className="font-medium">
+                          &lt;TableRow key={entry.id}&gt;
+                                &lt;TableCell className="font-medium"&gt;
                                   {new Date(entry.date).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>
-                                  <span className="font-semibold text-brand-primary">{entry.hours}</span>
-                                </TableCell>
-                                <TableCell style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}>
-                                  <p className="text-sm text-slate-700 break-words">{entry.description}</p>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex flex-wrap gap-1">
-                                    {(entry.tags as string[]).map((tag, index) =>
-                                <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap">
+                                &lt;/TableCell&gt;
+                                &lt;TableCell&gt;
+                                  &lt;span className="font-semibold text-brand-primary"&gt;{entry.hours}&lt;/span&gt;
+                                &lt;/TableCell&gt;
+                                &lt;TableCell style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}&gt;
+                                  &lt;p className="text-sm text-slate-700 break-words"&gt;{entry.description}&lt;/p&gt;
+                                &lt;/TableCell&gt;
+                                &lt;TableCell&gt;
+                                  &lt;div className="flex flex-wrap gap-1"&gt;
+                                    {(entry.tags as string[]).map((tag, index) =&gt;
+                                &lt;Badge key={index} variant="secondary" className="text-xs whitespace-nowrap"&gt;
                                         {tag}
-                                      </Badge>
+                                      &lt;/Badge&gt;
                                 )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  {entryFiles.length > 0 ?
-                              <div className="flex flex-wrap gap-1">
-                                      {entryFiles.map((file) =>
-                                <a
+                                  &lt;/div&gt;
+                                &lt;/TableCell&gt;
+                                &lt;TableCell&gt;
+                                  {entryFiles.length &gt; 0 ?
+                              &lt;div className="flex flex-wrap gap-1"&gt;
+                                      {entryFiles.map((file) =&gt;
+                                &lt;a
                                   key={file.id}
                                   href={file.file_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
-                                  onClick={(e) => e.stopPropagation()}>
+                                  onClick={(e) =&gt; e.stopPropagation()}&gt;
 
-                                          <Download className="w-3 h-3" />
+                                          &lt;Download className="w-3 h-3" /&gt;
                                           {file.display_name}
-                                        </a>
+                                        &lt;/a&gt;
                                 )}
-                                    </div> :
+                                    &lt;/div&gt; :
 
-                              <span className="text-xs text-slate-400">No files</span>
+                              &lt;span className="text-xs text-slate-400"&gt;No files&lt;/span&gt;
                               }
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <MoreVertical className="w-4 h-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
+                                &lt;/TableCell&gt;
+                                &lt;TableCell className="text-right"&gt;
+                                  &lt;DropdownMenu&gt;
+                                    &lt;DropdownMenuTrigger asChild&gt;
+                                      &lt;Button variant="ghost" size="sm" className="h-8 w-8 p-0"&gt;
+                                        &lt;MoreVertical className="w-4 h-4" /&gt;
+                                      &lt;/Button&gt;
+                                    &lt;/DropdownMenuTrigger&gt;
+                                    &lt;DropdownMenuContent align="end"&gt;
+                                      &lt;DropdownMenuItem onClick={() =&gt; handleEditEntry(entry)}&gt;
                                         Edit
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                    onClick={() => setDeletingEntry(entry)}
-                                    className="text-red-600 focus:text-red-600">
+                                      &lt;/DropdownMenuItem&gt;
+                                      &lt;DropdownMenuItem
+                                    onClick={() =&gt; setDeletingEntry(entry)}
+                                    className="text-red-600 focus:text-red-600"&gt;
 
                                         Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
-                              </TableRow>);
+                                      &lt;/DropdownMenuItem&gt;
+                                    &lt;/DropdownMenuContent&gt;
+                                  &lt;/DropdownMenu&gt;
+                                &lt;/TableCell&gt;
+                              &lt;/TableRow&gt;);
 
                       })}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        &lt;/TableBody&gt;
+                      &lt;/Table&gt;
+                    &lt;/div&gt;
                     
-                    <div className="flex justify-center gap-4 pt-6 border-t mt-6">
-                      <Button
+                    &lt;div className="flex justify-center gap-4 pt-6 border-t mt-6"&gt;
+                      &lt;Button
                     size="lg"
                     className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                    onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}>
+                    onClick={() =&gt; handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}&gt;
 
-                        <Plus className="w-5 h-5" />
+                        &lt;Plus className="w-5 h-5" /&gt;
                         Add New Log
-                      </Button>
-                      <Button
+                      &lt;/Button&gt;
+                      &lt;Button
                     size="lg"
                     onClick={handleExportPDF}
                     className="gap-2"
-                    variant="outline" style={{ backgroundImage: "none", backgroundColor: "rgb(248, 248, 248)" }}>
+                    variant="outline" style={{ backgroundImage: "none", backgroundColor: "rgb(248, 248, 248)" }}&gt;
 
-                        <FileDown className="w-4 h-4" />
+                        &lt;FileDown className="w-4 h-4" /&gt;
                         Export PDF
-                      </Button>
-                    </div>
-                  </>
+                      &lt;/Button&gt;
+                    &lt;/div&gt;
+                  &lt;/&gt;
               }
-              </CardContent>
-            </Card>
-          </>
+              &lt;/CardContent&gt;
+            &lt;/Card&gt;
+          &lt;/&gt;
         }
 
-        {!selectedClientId && clients.length > 0 &&
-        <Card className="text-center py-12">
-            <CardContent>
-              <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Select Filters</h3>
-              <p className="text-slate-600">Choose a client and period to view time logs</p>
-            </CardContent>
-          </Card>
+        {!selectedClientId &amp;&amp; clients.length &gt; 0 &amp;&amp;
+        &lt;Card className="text-center py-12"&gt;
+            &lt;CardContent&gt;
+              &lt;Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" /&gt;
+              &lt;h3 className="text-xl font-semibold mb-2"&gt;Select Filters&lt;/h3&gt;
+              &lt;p className="text-slate-600"&gt;Choose a client and period to view time logs&lt;/p&gt;
+            &lt;/CardContent&gt;
+          &lt;/Card&gt;
         }
 
-        {clients.length === 0 &&
-        <Card className="text-center py-12">
-            <CardContent>
-              <p className="text-slate-600 mb-4">You need to add clients first</p>
-              <Link href="/clients">
-                <Button>Go to Clients</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {clients.length === 0 &amp;&amp;
+        &lt;Card className="text-center py-12"&gt;
+            &lt;CardContent&gt;
+              &lt;p className="text-slate-600 mb-4"&gt;You need to add clients first&lt;/p&gt;
+              &lt;Link href="/clients"&gt;
+                &lt;Button&gt;Go to Clients&lt;/Button&gt;
+              &lt;/Link&gt;
+            &lt;/CardContent&gt;
+          &lt;/Card&gt;
         }
 
-        {editingEntry && selectedClient &&
-        <Dialog open={!!editingEntry} onOpenChange={(open) => {
-            if (!open) {
-              setEditingEntry(null);
-              setEditForm({
-                date: "",
-                hours: "",
-                description: "",
-                tags: [],
-                files: []
-              });
-            }
-          }}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Edit Time Entry</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleUpdateEntry} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-date">Date *</Label>
-                  <Input
+        &lt;Dialog open={!!editingEntry} onOpenChange={(open) =&gt; !open &amp;&amp; closeEditDialog()}&gt;
+            &lt;DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"&gt;
+              &lt;DialogHeader&gt;
+                &lt;DialogTitle&gt;Edit Time Entry&lt;/DialogTitle&gt;
+              &lt;/DialogHeader&gt;
+              &lt;form onSubmit={handleUpdateEntry} className="space-y-6"&gt;
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="edit-date"&gt;Date *&lt;/Label&gt;
+                  &lt;Input
                   id="edit-date"
                   type="date"
                   value={editForm.date}
-                  onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  onChange={(e) =&gt; setEditForm({ ...editForm, date: e.target.value })}
                   min={minDate}
                   max={maxDate}
-                  className="h-10" />
+                  className="h-10" /&gt;
 
-                </div>
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-hours">Hours *</Label>
-                  <Select
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="edit-hours"&gt;Hours *&lt;/Label&gt;
+                  &lt;Select
                   value={editForm.hours}
-                  onValueChange={(value) => setEditForm({ ...editForm, hours: value })}>
+                  onValueChange={(value) =&gt; setEditForm({ ...editForm, hours: value })}&gt;
 
-                    <SelectTrigger id="edit-hours">
-                      <SelectValue placeholder="Select hours" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) =>
-                    <SelectItem key={value} value={value.toString()}>
+                    &lt;SelectTrigger id="edit-hours"&gt;
+                      &lt;SelectValue placeholder="Select hours" /&gt;
+                    &lt;/SelectTrigger&gt;
+                    &lt;SelectContent&gt;
+                      {Array.from({ length: 33 }, (_, i) =&gt; i * 0.25).map((value) =&gt;
+                    &lt;SelectItem key={value} value={value.toString()}&gt;
                           {value} hours
-                        </SelectItem>
+                        &lt;/SelectItem&gt;
                     )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    &lt;/SelectContent&gt;
+                  &lt;/Select&gt;
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-description">Task Description *</Label>
-                  <Textarea
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="edit-description"&gt;Task Description *&lt;/Label&gt;
+                  &lt;Textarea
                   id="edit-description"
                   placeholder="Describe the work performed..."
                   value={editForm.description}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  onChange={(e) =&gt; setEditForm({ ...editForm, description: e.target.value })}
                   rows={4}
-                  className="resize-none" />
+                  className="resize-none" /&gt;
 
-                </div>
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-files">Attachments</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="edit-files"&gt;Attachments&lt;/Label&gt;
+                  &lt;div className="flex items-center gap-2"&gt;
+                    &lt;Input
                     id="edit-files"
                     type="file"
                     onChange={handleEditFileUpload}
                     multiple
                     className="cursor-pointer"
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" />
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" /&gt;
 
-                    <Button
+                    &lt;Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    onClick={() => document.getElementById("edit-files")?.click()}
-                    title="Upload files">
+                    onClick={() =&gt; document.getElementById("edit-files")?.click()}
+                    title="Upload files"&gt;
 
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
+                      &lt;Upload className="w-4 h-4" /&gt;
+                    &lt;/Button&gt;
+                  &lt;/div&gt;
+                  &lt;p className="text-xs text-slate-500"&gt;Max 5MB per file. Supports PDF, images, documents, and spreadsheets.&lt;/p&gt;
                   
-                  {editForm.files.length > 0 &&
-                <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      <p className="text-sm font-medium text-slate-700">Attached Files ({editForm.files.length})</p>
-                      <div className="space-y-2">
-                        {editForm.files.map((file) =>
-                    <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
-                            <Download className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <Input
+                  {editForm.files.length &gt; 0 &amp;&amp;
+                &lt;div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200"&gt;
+                      &lt;p className="text-sm font-medium text-slate-700"&gt;Attached Files ({editForm.files.length})&lt;/p&gt;
+                      &lt;div className="space-y-2"&gt;
+                        {editForm.files.map((file) =&gt;
+                    &lt;div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200"&gt;
+                            &lt;Download className="w-4 h-4 text-blue-600 flex-shrink-0" /&gt;
+                            &lt;Input
                         type="text"
                         value={file.displayName}
-                        onChange={(e) => handleUpdateFileDisplayName(file.id, e.target.value)}
+                        onChange={(e) =&gt; handleUpdateFileDisplayName(file.id, e.target.value)}
                         className="h-8 text-sm flex-1"
-                        placeholder="Display name..." />
+                        placeholder="Display name..." /&gt;
 
-                            <Button
+                            &lt;Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveEditFile(file.id)}
-                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                        onClick={() =&gt; handleRemoveEditFile(file.id)}
+                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"&gt;
 
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
+                              &lt;X className="w-4 h-4" /&gt;
+                            &lt;/Button&gt;
+                          &lt;/div&gt;
                     )}
-                      </div>
-                    </div>
+                      &lt;/div&gt;
+                    &lt;/div&gt;
                 }
-                </div>
+                &lt;/div&gt;
 
-                {selectedClient && (selectedClient.tags as string[]).length > 0 &&
-              <div className="space-y-2">
-                    <Label>Tags *</Label>
-                    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {(selectedClient.tags as string[]).map((tag) =>
-                  <Badge
+                {selectedClient &amp;&amp; (selectedClient.tags as string[]).length &gt; 0 &amp;&amp;
+              &lt;div className="space-y-2"&gt;
+                    &lt;Label&gt;Tags *&lt;/Label&gt;
+                    &lt;div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50"&gt;
+                      {(selectedClient.tags as string[]).map((tag) =&gt;
+                  &lt;Badge
                     key={tag}
                     variant={editForm.tags.includes(tag) ? "default" : "outline"}
                     className={`cursor-pointer transition-all ${
@@ -1485,196 +1444,182 @@ export default function TimeLogsPage() {
                     "bg-brand-primary hover:bg-brand-primary-hover" :
                     "hover:bg-slate-200"}`
                     }
-                    onClick={() => toggleEditTag(tag)}>
+                    onClick={() =&gt; toggleEditTag(tag)}&gt;
 
                           {tag}
-                        </Badge>
+                        &lt;/Badge&gt;
                   )}
-                    </div>
-                  </div>
+                    &lt;/div&gt;
+                  &lt;/div&gt;
               }
 
-                <div className="flex gap-2">
-                  <Button
+                &lt;div className="flex gap-2"&gt;
+                  &lt;Button
                   type="button"
                   variant="outline"
-                  onClick={() => setEditingEntry(null)}
-                  className="flex-1">
+                  onClick={() =&gt; closeEditDialog()}
+                  className="flex-1"&gt;
 
                     Cancel
-                  </Button>
-                  <Button
+                  &lt;/Button&gt;
+                  &lt;Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
+                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"&gt;
 
                     Update Entry
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        }
+                  &lt;/Button&gt;
+                &lt;/div&gt;
+              &lt;/form&gt;
+            &lt;/DialogContent&gt;
+          &lt;/Dialog&gt;
 
-        {deletingEntry &&
-        <AlertDialog open={!!deletingEntry} onOpenChange={() => setDeletingEntry(null)}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Time Entry</AlertDialogTitle>
-                <AlertDialogDescription>
+        {deletingEntry &amp;&amp;
+        &lt;AlertDialog open={!!deletingEntry} onOpenChange={() =&gt; setDeletingEntry(null)}&gt;
+            &lt;AlertDialogContent&gt;
+              &lt;AlertDialogHeader&gt;
+                &lt;AlertDialogTitle&gt;Delete Time Entry&lt;/AlertDialogTitle&gt;
+                &lt;AlertDialogDescription&gt;
                   Are you sure you want to delete this time entry? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
+                &lt;/AlertDialogDescription&gt;
+              &lt;/AlertDialogHeader&gt;
+              &lt;AlertDialogFooter&gt;
+                &lt;AlertDialogCancel&gt;Cancel&lt;/AlertDialogCancel&gt;
+                &lt;AlertDialogAction
                 onClick={handleDeleteEntry}
-                className="bg-red-600 hover:bg-red-700">
+                className="bg-red-600 hover:bg-red-700"&gt;
 
                   Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                &lt;/AlertDialogAction&gt;
+              &lt;/AlertDialogFooter&gt;
+            &lt;/AlertDialogContent&gt;
+          &lt;/AlertDialog&gt;
         }
 
-        {isAddingTimeLog &&
-        <Dialog open={isAddingTimeLog} onOpenChange={(open) => {
-            if (!open) {
-              setIsAddingTimeLog(false);
-              setAddForm({
-                clientId: "",
-                date: "",
-                hours: "",
-                description: "",
-                tags: [],
-                files: []
-              });
-            }
-          }}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Log Time Entry</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmitTimeEntry} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="add-client">Client *</Label>
-                  <Select value={addForm.clientId} onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}>
-                    <SelectTrigger id="add-client">
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeClients.map((client) =>
-                    <SelectItem key={client.id} value={client.id}>
+        &lt;Dialog open={isAddingTimeLog} onOpenChange={(open) =&gt; !open &amp;&amp; closeAddDialog()}&gt;
+            &lt;DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"&gt;
+              &lt;DialogHeader&gt;
+                &lt;DialogTitle&gt;Log Time Entry&lt;/DialogTitle&gt;
+              &lt;/DialogHeader&gt;
+              &lt;form onSubmit={handleSubmitTimeEntry} className="space-y-6"&gt;
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="add-client"&gt;Client *&lt;/Label&gt;
+                  &lt;Select value={addForm.clientId} onValueChange={(value) =&gt; setAddForm({ ...addForm, clientId: value, tags: [] })}&gt;
+                    &lt;SelectTrigger id="add-client"&gt;
+                      &lt;SelectValue placeholder="Select a client" /&gt;
+                    &lt;/SelectTrigger&gt;
+                    &lt;SelectContent&gt;
+                      {activeClients.map((client) =&gt;
+                    &lt;SelectItem key={client.id} value={client.id}&gt;
                           {client.name}
-                        </SelectItem>
+                        &lt;/SelectItem&gt;
                     )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    &lt;/SelectContent&gt;
+                  &lt;/Select&gt;
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="add-date">Date *</Label>
-                  <Input
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="add-date"&gt;Date *&lt;/Label&gt;
+                  &lt;Input
                   id="add-date"
                   type="date"
                   value={addForm.date}
-                  onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                  onChange={(e) =&gt; setAddForm({ ...addForm, date: e.target.value })}
                   min={minDate}
                   max={maxDate}
-                  className="h-10" />
+                  className="h-10" /&gt;
 
-                </div>
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="add-hours">Hours *</Label>
-                  <Select
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="add-hours"&gt;Hours *&lt;/Label&gt;
+                  &lt;Select
                   value={addForm.hours}
-                  onValueChange={(value) => setAddForm({ ...addForm, hours: value })}>
+                  onValueChange={(value) =&gt; setAddForm({ ...addForm, hours: value })}&gt;
 
-                    <SelectTrigger id="add-hours">
-                      <SelectValue placeholder="Select hours" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) =>
-                    <SelectItem key={value} value={value.toString()}>
+                    &lt;SelectTrigger id="add-hours"&gt;
+                      &lt;SelectValue placeholder="Select hours" /&gt;
+                    &lt;/SelectTrigger&gt;
+                    &lt;SelectContent&gt;
+                      {Array.from({ length: 33 }, (_, i) =&gt; i * 0.25).map((value) =&gt;
+                    &lt;SelectItem key={value} value={value.toString()}&gt;
                           {value} hours
-                        </SelectItem>
+                        &lt;/SelectItem&gt;
                     )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    &lt;/SelectContent&gt;
+                  &lt;/Select&gt;
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="add-description">Task Description *</Label>
-                  <Textarea
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="add-description"&gt;Task Description *&lt;/Label&gt;
+                  &lt;Textarea
                   id="add-description"
                   placeholder="Describe the work performed..."
                   value={addForm.description}
-                  onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                  onChange={(e) =&gt; setAddForm({ ...addForm, description: e.target.value })}
                   rows={4}
-                  className="resize-none" />
+                  className="resize-none" /&gt;
 
-                </div>
+                &lt;/div&gt;
 
-                <div className="space-y-2">
-                  <Label htmlFor="add-files">Attachments (Optional)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
+                &lt;div className="space-y-2"&gt;
+                  &lt;Label htmlFor="add-files"&gt;Attachments (Optional)&lt;/Label&gt;
+                  &lt;div className="flex items-center gap-2"&gt;
+                    &lt;Input
                     id="add-files"
                     type="file"
                     onChange={handleAddFileUpload}
                     multiple
                     className="cursor-pointer"
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" />
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" /&gt;
 
-                    <Button
+                    &lt;Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    onClick={() => document.getElementById("add-files")?.click()}
-                    title="Upload files">
+                    onClick={() =&gt; document.getElementById("add-files")?.click()}
+                    title="Upload files"&gt;
 
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
+                      &lt;Upload className="w-4 h-4" /&gt;
+                    &lt;/Button&gt;
+                  &lt;/div&gt;
+                  &lt;p className="text-xs text-slate-500"&gt;Max 5MB per file. Supports PDF, images, documents, and spreadsheets.&lt;/p&gt;
                   
-                  {addForm.files.length > 0 &&
-                <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      <p className="text-sm font-medium text-slate-700">Attached Files ({addForm.files.length})</p>
-                      <div className="space-y-2">
-                        {addForm.files.map((file) =>
-                    <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
-                            <FileIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                            <Input
+                  {addForm.files.length &gt; 0 &amp;&amp;
+                &lt;div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200"&gt;
+                      &lt;p className="text-sm font-medium text-slate-700"&gt;Attached Files ({addForm.files.length})&lt;/p&gt;
+                      &lt;div className="space-y-2"&gt;
+                        {addForm.files.map((file) =&gt;
+                    &lt;div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200"&gt;
+                            &lt;FileIcon className="w-4 h-4 text-blue-600 flex-shrink-0" /&gt;
+                            &lt;Input
                         type="text"
                         value={file.displayName}
-                        onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
+                        onChange={(e) =&gt; handleUpdateAddFileDisplayName(file.id, e.target.value)}
                         className="h-8 text-sm flex-1"
-                        placeholder="Display name..." />
+                        placeholder="Display name..." /&gt;
 
-                            <Button
+                            &lt;Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveAddFile(file.id)}
-                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                        onClick={() =&gt; handleRemoveAddFile(file.id)}
+                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"&gt;
 
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
+                              &lt;X className="w-4 h-4" /&gt;
+                            &lt;/Button&gt;
+                          &lt;/div&gt;
                     )}
-                      </div>
-                    </div>
+                      &lt;/div&gt;
+                    &lt;/div&gt;
                 }
-                </div>
+                &lt;/div&gt;
 
-                {shouldShowAddTags && selectedAddClient &&
-              <div className="space-y-2">
-                    <Label>Tags *</Label>
-                    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {addClientTags.map((tag) =>
-                  <Badge
+                {shouldShowAddTags &amp;&amp; selectedAddClient &amp;&amp;
+              &lt;div className="space-y-2"&gt;
+                    &lt;Label&gt;Tags *&lt;/Label&gt;
+                    &lt;div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50"&gt;
+                      {addClientTags.map((tag) =&gt;
+                  &lt;Badge
                     key={tag}
                     variant={addForm.tags.includes(tag) ? "default" : "outline"}
                     className={`cursor-pointer transition-all ${
@@ -1682,55 +1627,36 @@ export default function TimeLogsPage() {
                     "bg-brand-primary hover:bg-brand-primary-hover" :
                     "hover:bg-slate-200"}`
                     }
-                    onClick={() => toggleAddTag(tag)}>
+                    onClick={() =&gt; toggleAddTag(tag)}&gt;
 
                           {tag}
-                        </Badge>
+                        &lt;/Badge&gt;
                   )}
-                    </div>
-                  </div>
+                    &lt;/div&gt;
+                  &lt;/div&gt;
               }
 
-                <div className="flex gap-2">
-                  <Button
+                &lt;div className="flex gap-2"&gt;
+                  &lt;Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsAddingTimeLog(false)}
-                  className="flex-1">
+                  onClick={() =&gt; closeAddDialog()}
+                  className="flex-1"&gt;
 
                     Cancel
-                  </Button>
-                  <Button
+                  &lt;/Button&gt;
+                  &lt;Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
+                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"&gt;
 
                     Log Time Entry
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        }
+                  &lt;/Button&gt;
+                &lt;/div&gt;
+              &lt;/form&gt;
+            &lt;/DialogContent&gt;
+          &lt;/Dialog&gt;
 
-        // Cleanup effect to remove any lingering modal backdrops
-        useEffect(() => {
-          const cleanupBackdrops = () => {
-            // Remove any lingering Radix UI portals/overlays
-            const overlays = document.querySelectorAll('[data-radix-portal]');
-            overlays.forEach(overlay => {
-              if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
-                overlay.remove();
-              }
-            });
-          };
-
-          // Run cleanup when no modals should be open
-          if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
-            const timer = setTimeout(cleanupBackdrops, 100);
-            return () => clearTimeout(timer);
-          }
-        }, [editingEntry, isAddingTimeLog, deletingEntry]);
-      </main>
-    </div>);
+      &lt;/main&gt;
+    &lt;/div&gt;);
 
 }
