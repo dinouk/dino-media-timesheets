@@ -759,11 +759,11 @@ export default function TimeLogsPage() {
         0: { cellWidth: 18 },
         1: { cellWidth: 15 },
         2: { cellWidth: 60 },
-        3: { cellWidth: 28, overflow: 'linebreak' },
+        3: { cellWidth: 35, overflow: 'linebreak' },
         4: { cellWidth: 31 }
       },
       margin: { left: 14, right: 14 },
-      tableWidth: "auto",
+      tableWidth: pageWidth - 28,
       didDrawCell: (data) => {
         if (data.column.index === 3 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { entry } = entriesWithFiles[data.row.index];
@@ -777,8 +777,10 @@ export default function TimeLogsPage() {
             doc.setTextColor(51, 65, 85);
 
             const textLines = doc.splitTextToSize(tagsText, cell.width - 4);
-            textLines.forEach((line: string, lineIndex: number) => {
-              doc.text(line, cell.x + 2, cell.y + 5 + lineIndex * 4);
+            let yOffset = 5;
+            textLines.forEach((line: string) => {
+              doc.text(line, cell.x + 2, cell.y + yOffset);
+              yOffset += 4;
             });
           }
         }
