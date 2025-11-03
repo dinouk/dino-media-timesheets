@@ -1281,7 +1281,7 @@ export default function TimeLogsPage() {
                       <Button
                     size="lg"
                     className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                    onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "rgb(1, 109, 138)", backgroundImage: "none" }}>
+                    onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}>
 
                         <Plus className="w-5 h-5" />
                         Add New Log
