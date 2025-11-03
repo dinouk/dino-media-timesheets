@@ -739,7 +739,7 @@ export default function TimeLogsPage() {
       },
       columnStyles: {
         0: { cellWidth: 25 },
-        1: { cellWidth: 15, halign: "center" },
+        1: { cellWidth: 15, halign: "left" },
         2: { cellWidth: "auto" },
         3: { cellWidth: 30 },
         4: { cellWidth: 35 }
