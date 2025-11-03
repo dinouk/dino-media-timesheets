@@ -49,10 +49,11 @@ async function handler(req: Request): Promise<Response> {
     const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, "0")}`;
 
     // Get previous month for rollover calculation
-    const prevDate = new Date(currentYear, currentMonth - 2); // -2 because month is 1-indexed
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const prevYear = prevDate.getFullYear();
     const prevMonth = prevDate.getMonth() + 1;
     const prevMonthStr = `${prevYear}-${prevMonth.toString().padStart(2, "0")}`;
+
 
     console.log(`Generating allocations for ${currentMonthStr}, using previous month ${prevMonthStr}`);
 
@@ -83,7 +84,7 @@ async function handler(req: Request): Promise<Response> {
         .select("*")
         .eq("client_id", client.id)
         .eq("month", currentMonthStr)
-        .single();
+        .maybeSingle();
 
       if (existingAllocation) {
         console.log(`Allocation already exists for client ${client.name} (${currentMonthStr})`);
@@ -101,14 +102,16 @@ async function handler(req: Request): Promise<Response> {
         .select("*")
         .eq("client_id", client.id)
         .eq("month", prevMonthStr)
-        .single();
+        .maybeSingle();
 
       // Get previous month's time entries
-      const { data: prevEntries } = await supabase
+      const { data: prevEntries, error: prevEntriesError } = await supabase
         .from("time_entries")
         .select("hours")
         .eq("client_id", client.id)
         .eq("month", prevMonthStr);
+      
+      if (prevEntriesError) throw prevEntriesError;
 
       // Calculate rollover
       const prevUsedHours = (prevEntries as TimeEntry[] || []).reduce(
