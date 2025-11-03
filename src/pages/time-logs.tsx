@@ -741,8 +741,8 @@ export default function TimeLogsPage() {
         0: { cellWidth: 25 },
         1: { cellWidth: 15, halign: "center" },
         2: { cellWidth: "auto" },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 45 }
+        3: { cellWidth: 30 },
+        4: { cellWidth: 35 }
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
