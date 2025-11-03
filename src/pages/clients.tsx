@@ -320,8 +320,7 @@ export default function ClientsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
+                <div>
                   <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
                     <SelectTrigger>
                       <SelectValue />
@@ -333,8 +332,7 @@ export default function ClientsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Budget Status</label>
+                <div>
                   <Select value={budgetFilter} onValueChange={(value) => setBudgetFilter(value as BudgetFilter)}>
                     <SelectTrigger>
                       <SelectValue />
