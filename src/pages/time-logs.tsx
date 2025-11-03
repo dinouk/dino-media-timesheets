@@ -398,21 +398,42 @@ export default function TimeLogsPage() {
     if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
       // Small delay to ensure modal animations complete
       const cleanup = setTimeout(() => {
-        // Remove any lingering Radix UI portal overlays
-        const portals = document.querySelectorAll('[data-radix-dialog-overlay]');
-        portals.forEach(portal => portal.remove());
+        // Force remove ALL Radix UI portal overlays
+        const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+        overlays.forEach(overlay => {
+          overlay.remove();
+        });
         
-        // Also remove any stray portals
-        const allPortals = document.querySelectorAll('[data-radix-portal]');
-        allPortals.forEach(portal => {
-          // Only remove if it's empty or contains overlay/content
-          if (portal.children.length === 0 || 
-              portal.querySelector('[data-radix-dialog-overlay]') ||
-              portal.querySelector('[data-radix-dialog-content]')) {
-            portal.remove();
+        // Remove ALL portal containers
+        const portals = document.querySelectorAll('[data-radix-portal]');
+        portals.forEach(portal => {
+          portal.remove();
+        });
+        
+        // Remove any elements with radix dialog content
+        const contents = document.querySelectorAll('[data-radix-dialog-content]');
+        contents.forEach(content => {
+          const parent = content.parentElement;
+          if (parent) {
+            parent.remove();
           }
         });
-      }, 100);
+        
+        // Force restore pointer events on body
+        document.body.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'auto';
+        
+        // Remove any data-state attributes that might block interactions
+        document.querySelectorAll('[data-state]').forEach(el => {
+          if (el.getAttribute('data-state') === 'open') {
+            el.removeAttribute('data-state');
+          }
+        });
+        
+        // Clear any lingering aria-hidden on body
+        document.body.removeAttribute('aria-hidden');
+        
+      }, 150);
       
       return () => clearTimeout(cleanup);
     }
@@ -424,7 +445,7 @@ export default function TimeLogsPage() {
       const timer = setTimeout(() => {
         loadData();
         setPendingReload(false);
-      }, 400);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [pendingReload, editingEntry, isAddingTimeLog, deletingEntry]);
