@@ -316,7 +316,12 @@ export default function TimeLogsPage() {
         }
       }
 
-      // Complete state cleanup
+      toast({
+        title: "Time Entry Updated",
+        description: "Your time entry has been successfully updated"
+      });
+
+      // Complete state cleanup - critical to prevent modal blocking
       setEditingEntry(null);
       setEditForm({
         date: "",
@@ -326,15 +331,10 @@ export default function TimeLogsPage() {
         files: []
       });
 
-      // Ensure add dialog state is also clean
-      setIsAddingTimeLog(false);
-
-      await loadData();
-
-      toast({
-        title: "Time Entry Updated",
-        description: "Your time entry has been successfully updated"
-      });
+      // Reload data after a brief delay to ensure modal unmounts
+      setTimeout(async () => {
+        await loadData();
+      }, 100);
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({
@@ -578,16 +578,32 @@ export default function TimeLogsPage() {
         description: "Your time entry has been successfully logged"
       });
 
+      // Complete state cleanup
+      const targetClientId = addForm.clientId;
+      const targetPeriod = monthKey;
+      
       setIsAddingTimeLog(false);
-      setSelectedClientId(addForm.clientId);
-      setSelectedPeriod(monthKey);
-
-      router.push({
-        pathname: "/time-logs",
-        query: { clientId: addForm.clientId, period: monthKey }
+      setAddForm({
+        clientId: "",
+        date: "",
+        hours: "",
+        description: "",
+        tags: [],
+        files: []
       });
 
-      await loadData();
+      // Brief delay to ensure modal unmounts before navigation
+      setTimeout(() => {
+        setSelectedClientId(targetClientId);
+        setSelectedPeriod(targetPeriod);
+        
+        router.push({
+          pathname: "/time-logs",
+          query: { clientId: targetClientId, period: targetPeriod }
+        }, undefined, { shallow: true });
+
+        loadData();
+      }, 100);
     } catch (error: any) {
       console.error("Error creating time entry:", error);
       toast({
