@@ -405,15 +405,6 @@ export default function ClientsPage() {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          variant="default"
-                          size="icon"
-                          onClick={(e) => handleAddTimeLog(client.id, e)}
-                          title="Add time log"
-                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9"
-                        >
-                          <Plus className="w-5 h-5" />
-                        </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon">
@@ -444,22 +435,19 @@ export default function ClientsPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <Button
+                          variant="default"
+                          size="icon"
+                          onClick={(e) => handleAddTimeLog(client.id, e)}
+                          title="Add time log"
+                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {clientTags.length > 0 ? (
-                        clientTags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="bg-brand-light text-brand-primary hover:bg-brand-lighter">
-                            {tag}
-                          </Badge>
-                        ))
-                      ) : (
-                        <p className="text-sm text-slate-500">No tags</p>
-                      )}
-                    </div>
-                    
                     <div className="pt-2 border-t border-slate-200">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
