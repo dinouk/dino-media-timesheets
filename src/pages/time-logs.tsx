@@ -674,10 +674,10 @@ export default function TimeLogsPage() {
     const boxPadding = 3;
 
     const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow" },
+      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
       { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
-      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "check" },
-      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: stats.remainingHours >= 0 ? "check" : "alert" }
+      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "alert-circle" },
+      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: "trending-down" }
     ];
 
     statBoxes.forEach((box, index) => {
@@ -695,23 +695,45 @@ export default function TimeLogsPage() {
       doc.setDrawColor(box.color[0], box.color[1], box.color[2]);
       doc.setLineWidth(0.5);
       
-      if (box.icon === "arrow") {
-        doc.line(iconCenterX - iconSize, iconCenterY + iconSize/2, iconCenterX + iconSize, iconCenterY - iconSize/2);
-        doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2 + 1);
-        doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2);
+      if (box.icon === "arrow-up") {
+        // TrendingUp/ArrowUp icon - diagonal arrow pointing up-right
+        const startX = iconCenterX - iconSize;
+        const startY = iconCenterY + iconSize;
+        const endX = iconCenterX + iconSize;
+        const endY = iconCenterY - iconSize;
+        
+        // Main diagonal line
+        doc.line(startX, startY, endX, endY);
+        // Arrow head - two lines forming the arrow tip
+        doc.line(endX, endY, endX - 1.2, endY + 0.3);
+        doc.line(endX, endY, endX - 0.3, endY + 1.2);
       } else if (box.icon === "clock") {
+        // Clock icon - circle with clock hands
         doc.circle(iconCenterX, iconCenterY, iconSize, "S");
+        // Hour hand (pointing up)
         doc.line(iconCenterX, iconCenterY, iconCenterX, iconCenterY - iconSize * 0.6);
+        // Minute hand (pointing right)
         doc.line(iconCenterX, iconCenterY, iconCenterX + iconSize * 0.5, iconCenterY);
-      } else if (box.icon === "check") {
-        doc.setLineWidth(0.8);
-        doc.line(iconCenterX - iconSize, iconCenterY, iconCenterX - iconSize/2, iconCenterY + iconSize);
-        doc.line(iconCenterX - iconSize/2, iconCenterY + iconSize, iconCenterX + iconSize, iconCenterY - iconSize);
-      } else if (box.icon === "alert") {
+      } else if (box.icon === "alert-circle") {
+        // AlertCircle icon - circle with exclamation mark
         doc.circle(iconCenterX, iconCenterY, iconSize, "S");
         doc.setLineWidth(0.6);
+        // Exclamation line
         doc.line(iconCenterX, iconCenterY - iconSize/2, iconCenterX, iconCenterY + iconSize/4);
+        // Exclamation dot
         doc.circle(iconCenterX, iconCenterY + iconSize * 0.7, 0.3, "F");
+      } else if (box.icon === "trending-down") {
+        // TrendingDown icon - diagonal arrow pointing down-right
+        const startX = iconCenterX - iconSize;
+        const startY = iconCenterY - iconSize;
+        const endX = iconCenterX + iconSize;
+        const endY = iconCenterY + iconSize;
+        
+        // Main diagonal line
+        doc.line(startX, startY, endX, endY);
+        // Arrow head - two lines forming the arrow tip
+        doc.line(endX, endY, endX - 1.2, endY - 0.3);
+        doc.line(endX, endY, endX - 0.3, endY - 1.2);
       }
       
       doc.setLineWidth(0.2);
