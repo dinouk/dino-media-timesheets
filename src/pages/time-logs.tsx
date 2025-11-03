@@ -624,6 +624,19 @@ export default function TimeLogsPage() {
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 20;
 
+    // Add client name and date on the left
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(selectedClient.name, 14, yPos);
+    yPos += 8;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${monthName} ${year}`, 14, yPos);
+    
+    // Reset yPos for logo positioning
+    const logoYPos = 20;
+
     if (companyLogo) {
       try {
         const img = new Image();
@@ -650,22 +663,20 @@ export default function TimeLogsPage() {
           logoWidth = logoHeight * aspectRatio;
         }
         
-        doc.addImage(companyLogo, "PNG", (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight);
-        yPos += logoHeight + 10;
+        // Position logo on the right side
+        const logoX = pageWidth - logoWidth - 14;
+        doc.addImage(companyLogo, "PNG", logoX, logoYPos, logoWidth, logoHeight);
+        
+        // Update yPos if logo extends below the date
+        const logoBottom = logoYPos + logoHeight;
+        if (logoBottom > yPos) {
+          yPos = logoBottom;
+        }
       } catch (error) {
         console.error("Error adding logo to PDF:", error);
-        yPos += 10;
       }
     }
 
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(selectedClient.name, pageWidth / 2, yPos, { align: "center" });
-    yPos += 10;
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
     yPos += 15;
 
     const boxWidth = (pageWidth - 28 - 9) / 4;
