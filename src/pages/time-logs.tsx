@@ -100,6 +100,7 @@ export default function TimeLogsPage() {
     tags: [] as string[],
     files: [] as FileUpload[]
   });
+  const [pendingReload, setPendingReload] = useState(false);
 
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
@@ -287,7 +288,7 @@ export default function TimeLogsPage() {
         }
       }
       toast({ title: "Time Entry Updated", description: "Your time entry has been successfully updated" });
-      closeEditDialog(loadData);
+      closeEditDialog(() => setPendingReload(true));
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({ title: "Error", description: error.message || "Failed to update time entry", variant: "destructive" });
@@ -372,7 +373,9 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
-    if (callback) setTimeout(callback, 300);
+    if (callback) {
+      setTimeout(callback, 500);
+    }
   };
 
   const closeAddDialog = (callback?: () => void) => {
@@ -385,7 +388,9 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
-    if (callback) setTimeout(callback, 300);
+    if (callback) {
+      setTimeout(callback, 500);
+    }
   };
 
   // Cleanup effect to remove any lingering modal overlays
@@ -412,6 +417,17 @@ export default function TimeLogsPage() {
       return () => clearTimeout(cleanup);
     }
   }, [editingEntry, isAddingTimeLog, deletingEntry]);
+
+  // Handle pending reload after modals are closed
+  useEffect(() => {
+    if (pendingReload && !editingEntry && !isAddingTimeLog && !deletingEntry) {
+      const timer = setTimeout(() => {
+        loadData();
+        setPendingReload(false);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingReload, editingEntry, isAddingTimeLog, deletingEntry]);
 
   const handleSubmitTimeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -450,7 +466,7 @@ export default function TimeLogsPage() {
         setSelectedClientId(targetClientId);
         setSelectedPeriod(targetPeriod);
         router.push({ pathname: "/time-logs", query: { clientId: targetClientId, period: targetPeriod } }, undefined, { shallow: true });
-        loadData();
+        setPendingReload(true);
       });
     } catch (error: any) {
       console.error("Error creating time entry:", error);
