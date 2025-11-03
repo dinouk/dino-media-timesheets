@@ -786,7 +786,6 @@ export default function TimeLogsPage() {
         const tableWidth = pageWidth - 28;
         const finalTableHeight = (data as any).cursor.y - yPos;
         
-        // Draw border around the entire table with rounded corners
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.5);
         doc.roundedRect(14, yPos, tableWidth, finalTableHeight, 1.5, 1.5, "S");
