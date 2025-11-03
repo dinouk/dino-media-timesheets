@@ -942,15 +942,8 @@ export default function TimeLogsPage() {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Time Entries</CardTitle>
-                    <CardDescription>
-                      {filteredEntries.length} {filteredEntries.length === 1 ? "entry" : "entries"} for{" "}
-                      {getSelectedPeriodLabel()}
-                    </CardDescription>
-                  </div>
                   {filteredEntries.length > 0 && (
-                    <Button onClick={handleExportPDF} className="gap-2">
+                    <Button onClick={handleExportPDF} className="gap-2 ml-auto">
                       <FileDown className="w-4 h-4" />
                       Export PDF
                     </Button>
