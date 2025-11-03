@@ -277,6 +277,22 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
           </Link>
 
           <div className="flex items-center gap-3">
+            {/* Desktop navigation links */}
+            <div className="hidden md:flex items-center gap-2">
+              <Link href="/clients">
+                <Button variant="ghost" className="gap-2">
+                  <Users className="w-4 h-4" />
+                  Clients
+                </Button>
+              </Link>
+              <Link href="/time-logs">
+                <Button variant="ghost" className="gap-2">
+                  <Clock className="w-4 h-4" />
+                  Time Logs
+                </Button>
+              </Link>
+            </div>
+
             <Button 
               variant="default"
               className="bg-brand-primary hover:bg-brand-primary-hover h-10 gap-2"
