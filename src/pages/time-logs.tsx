@@ -803,7 +803,7 @@ export default function TimeLogsPage() {
         {stats && selectedClient && (
           <>
             <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card className="border-2 border-brand-light">
+              <Card className="border-2 border-brand-light md:col-span-1">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
                     Allocated Hours
@@ -853,7 +853,7 @@ export default function TimeLogsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-purple-100">
+              <Card className="border-2 border-purple-100 md:col-span-1">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
                     Rollover Hours
@@ -912,7 +912,7 @@ export default function TimeLogsPage() {
                 </CardContent>
               </Card>
 
-              <Card className={`border-2 ${stats.remainingHours >= 0 ? "border-green-100" : "border-red-100"}`}>
+              <Card className={`border-2 ${stats.remainingHours >= 0 ? "border-green-100" : "border-red-100"} md:col-span-1`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-slate-600">Time Usage</CardTitle>
                 </CardHeader>

@@ -57,17 +57,17 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
           <Link href="/log-time">
             <Button 
               variant="default"
-              size="icon" 
-              className="bg-brand-primary hover:bg-brand-primary-hover"
+              className="bg-brand-primary hover:bg-brand-primary-hover h-10 gap-2"
               title="Log Time"
             >
               <Plus className="w-5 h-5" />
+              <span className="hidden md:inline">Log Time</span>
             </Button>
           </Link>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="relative">
+              <Button variant="outline" size="icon" className="relative h-10 w-10">
                 <Menu className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>

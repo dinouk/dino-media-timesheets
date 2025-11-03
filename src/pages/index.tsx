@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { authService } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -24,8 +26,31 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
-      setError("Please fill in all fields");
+    if (!email) {
+      setError("Please enter your email");
+      return;
+    }
+
+    if (isForgotPassword) {
+      try {
+        const { error: resetError } = await authService.resetPassword(email);
+        if (resetError) {
+          setError(resetError.message);
+        } else {
+          setError("Password reset email sent! Please check your inbox.");
+          setTimeout(() => {
+            setIsForgotPassword(false);
+            setError("");
+          }, 3000);
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to send reset email");
+      }
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
       return;
     }
 
@@ -77,35 +102,51 @@ export default function LoginPage() {
                 className="transition-all focus:ring-2 focus:ring-brand-primary"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="transition-all focus:ring-2 focus:ring-brand-primary"
-              />
-            </div>
+            {!isForgotPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="transition-all focus:ring-2 focus:ring-brand-primary"
+                />
+              </div>
+            )}
             {error && (
-              <div className={`text-sm ${error.includes("check your email") ? "text-green-600 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200"} border rounded-md p-3`}>
+              <div className={`text-sm ${error.includes("check your email") || error.includes("reset email sent") ? "text-green-600 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200"} border rounded-md p-3`}>
                 {error}
               </div>
             )}
             <Button type="submit" className="w-full bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800 transition-all shadow-md">
-              {isRegistering ? "Create Account" : "Sign In"}
+              {isForgotPassword ? "Send Reset Link" : isRegistering ? "Create Account" : "Sign In"}
             </Button>
-            <div className="text-center">
+            <div className="text-center space-y-2">
+              {!isForgotPassword && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setError("");
+                  }}
+                  className="text-sm text-brand-primary hover:text-brand-primary-hover underline-offset-4 hover:underline transition-colors block w-full"
+                >
+                  {isRegistering ? "Already have an account? Sign in" : "Need an account? Register"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  setIsRegistering(!isRegistering);
+                  setIsForgotPassword(!isForgotPassword);
+                  setIsRegistering(false);
                   setError("");
+                  setPassword("");
                 }}
-                className="text-sm text-brand-primary hover:text-brand-primary-hover underline-offset-4 hover:underline transition-colors"
+                className="text-sm text-slate-600 hover:text-brand-primary underline-offset-4 hover:underline transition-colors block w-full"
               >
-                {isRegistering ? "Already have an account? Sign in" : "Need an account? Register"}
+                {isForgotPassword ? "Back to sign in" : "Forgot password?"}
               </button>
             </div>
           </form>
