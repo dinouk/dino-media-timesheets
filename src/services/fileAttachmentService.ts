@@ -3,6 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type FileAttachment = Database["public"]["Tables"]["file_attachments"]["Row"];
 type FileAttachmentInsert = Database["public"]["Tables"]["file_attachments"]["Insert"];
+type FileAttachmentUpdate = Database["public"]["Tables"]["file_attachments"]["Update"];
 
 export const fileAttachmentService = {
   async getFileAttachments(timeEntryId: string) {
@@ -20,6 +21,18 @@ export const fileAttachmentService = {
     const { data, error } = await supabase
       .from("file_attachments")
       .insert([attachment])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as FileAttachment;
+  },
+
+  async updateFileAttachment(id: string, updates: FileAttachmentUpdate) {
+    const { data, error } = await supabase
+      .from("file_attachments")
+      .update(updates)
+      .eq("id", id)
       .select()
       .single();
 

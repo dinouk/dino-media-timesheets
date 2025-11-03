@@ -56,6 +56,7 @@ export type Database = {
           file_path: string
           file_size: number
           file_type: string
+          file_url: string | null
           id: string
           time_entry_id: string
           user_id: string
@@ -67,6 +68,7 @@ export type Database = {
           file_path: string
           file_size: number
           file_type: string
+          file_url?: string | null
           id?: string
           time_entry_id: string
           user_id: string
@@ -78,6 +80,7 @@ export type Database = {
           file_path?: string
           file_size?: number
           file_type?: string
+          file_url?: string | null
           id?: string
           time_entry_id?: string
           user_id?: string
@@ -260,6 +263,7 @@ export type Database = {
       user_settings: {
         Row: {
           company_logo_path: string | null
+          company_logo_url: string | null
           created_at: string | null
           id: string
           updated_at: string | null
@@ -267,6 +271,7 @@ export type Database = {
         }
         Insert: {
           company_logo_path?: string | null
+          company_logo_url?: string | null
           created_at?: string | null
           id?: string
           updated_at?: string | null
@@ -274,6 +279,7 @@ export type Database = {
         }
         Update: {
           company_logo_path?: string | null
+          company_logo_url?: string | null
           created_at?: string | null
           id?: string
           updated_at?: string | null
