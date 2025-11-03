@@ -1041,21 +1041,9 @@ export default function TimeLogsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <ArrowUp className="w-4 h-4 text-black" />
-                      <span>Rolled Over</span>
-                    </div>
-                    {!editingRollover ?
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEditRollover}
-                    className="h-6 w-6 p-0">
-
-                        <Edit2 className="w-3 h-3" />
-                      </Button> :
-                  null}
+                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
+                    <ArrowUp className="w-4 h-4 text-black" />
+                    <span>Rolled Over</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1094,21 +1082,9 @@ export default function TimeLogsPage() {
 
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-black" />
-                      <span>Allocated</span>
-                    </div>
-                    {!editingAllocation ?
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEditAllocation}
-                    className="h-6 w-6 p-0">
-
-                        <Edit2 className="w-3 h-3" />
-                      </Button> :
-                  null}
+                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-black" />
+                    <span>Allocated</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1165,11 +1141,21 @@ export default function TimeLogsPage() {
                       </span>
                     </div>
                   </div>
-                  <Progress
-                  value={Math.min(stats.usedHours / (stats.allocatedHours + stats.rolloverHours) * 100, 100)}
-                  className="h-3 bg-slate-100"
-                  indicatorClassName={stats.usedHours <= stats.allocatedHours + stats.rolloverHours ? "bg-green-600" : "bg-red-600"} />
-
+                  {(() => {
+                    const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                    const progressValue = totalAvailable > 0 
+                      ? Math.min((stats.usedHours / totalAvailable) * 100, 100)
+                      : (stats.usedHours > 0 ? 100 : 0);
+                    const isOverBudget = stats.usedHours > totalAvailable;
+                    
+                    return (
+                      <Progress
+                        value={progressValue}
+                        className="h-3 bg-slate-100"
+                        indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
+                      />
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </div>
