@@ -1149,16 +1149,6 @@ export default function TimeLogsPage() {
             </div>
 
             <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  {filteredEntries.length > 0 && (
-                    <Button onClick={handleExportPDF} className="gap-2 ml-auto">
-                      <FileDown className="w-4 h-4" />
-                      Export PDF
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
               <CardContent>
                 {filteredEntries.length === 0 ? (
                   <div className="text-center py-12">
