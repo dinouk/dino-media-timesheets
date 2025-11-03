@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -7,43 +6,67 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppHeader } from "@/components/AppHeader";
 import { Upload, Image as ImageIcon, X, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { storageService } from "@/services/storageService";
+import { userSettingsService } from "@/services/userSettingsService";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
-  const [currentUser, setCurrentUser] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [currentLogoPath, setCurrentLogoPath] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    
-    const savedLogo = localStorage.getItem("companyLogo");
-    if (savedLogo) {
-      setLogoUrl(savedLogo);
-      setLogoPreview(savedLogo);
+    if (user) {
+      loadUserSettings();
     }
-  }, [router]);
+  }, [user, loading, router]);
+
+  const loadUserSettings = async () => {
+    if (!user) return;
+    
+    try {
+      const settings = await userSettingsService.getUserSettings(user.id);
+      if (settings?.company_logo_url) {
+        setLogoPreview(settings.company_logo_url);
+        setCurrentLogoPath(settings.company_logo_path || "");
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert("File size must be less than 2MB");
+        toast({
+          title: "File Too Large",
+          description: "File size must be less than 2MB",
+          variant: "destructive",
+        });
         return;
       }
       if (!file.type.startsWith("image/")) {
-        alert("Please upload an image file");
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload an image file",
+          variant: "destructive",
+        });
         return;
       }
       
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
@@ -53,28 +76,108 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveLogo = () => {
-    if (logoPreview) {
-      localStorage.setItem("companyLogo", logoPreview);
-      setLogoUrl(logoPreview);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+  const handleSaveLogo = async () => {
+    if (!selectedFile || !user) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a logo to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Delete old logo if exists
+      if (currentLogoPath) {
+        try {
+          await storageService.deleteFile("company-logos", currentLogoPath);
+        } catch (error) {
+          console.error("Error deleting old logo:", error);
+        }
+      }
+
+      // Upload new logo
+      const fileExt = selectedFile.name.split(".").pop();
+      const fileName = `${user.id}/logo.${fileExt}`;
+      
+      await storageService.uploadFile("company-logos", fileName, selectedFile);
+      const publicUrl = storageService.getPublicUrl("company-logos", fileName);
+
+      // Save to user settings
+      await userSettingsService.upsertUserSettings({
+        user_id: user.id,
+        company_logo_url: publicUrl,
+        company_logo_path: fileName,
+      });
+
+      setCurrentLogoPath(fileName);
+      setSelectedFile(null);
+
+      toast({
+        title: "Logo Saved",
+        description: "Your company logo has been successfully uploaded",
+      });
+    } catch (error: any) {
+      console.error("Error saving logo:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload logo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleRemoveLogo = () => {
-    localStorage.removeItem("companyLogo");
-    setLogoUrl("");
-    setLogoPreview("");
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+  const handleRemoveLogo = async () => {
+    if (!user || !currentLogoPath) return;
+
+    setUploading(true);
+
+    try {
+      await storageService.deleteFile("company-logos", currentLogoPath);
+      
+      await userSettingsService.updateUserSettings(user.id, {
+        company_logo_url: null,
+        company_logo_path: null,
+      });
+
+      setLogoPreview("");
+      setCurrentLogoPath("");
+      setSelectedFile(null);
+
+      toast({
+        title: "Logo Removed",
+        description: "Your company logo has been successfully removed",
+      });
+    } catch (error: any) {
+      console.error("Error removing logo:", error);
+      toast({
+        title: "Remove Failed",
+        description: error.message || "Failed to remove logo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
-  if (!mounted) return null;
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
@@ -82,13 +185,6 @@ export default function SettingsPage() {
             <h2 className="text-3xl font-bold text-slate-800 mb-2">Settings</h2>
             <p className="text-slate-600">Customize your timesheet preferences</p>
           </div>
-
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-800">
-              <CheckCircle className="w-5 h-5" />
-              <p className="font-medium">Settings saved successfully!</p>
-            </div>
-          )}
 
           <Card>
             <CardHeader>
@@ -107,22 +203,44 @@ export default function SettingsPage() {
                       alt="Company logo preview" 
                       className="max-h-32 mx-auto object-contain"
                     />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-white hover:bg-red-50 hover:text-red-600"
-                      onClick={() => setLogoPreview("")}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                    {!selectedFile && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 bg-white hover:bg-red-50 hover:text-red-600"
+                        onClick={() => setLogoPreview("")}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                   <div className="flex gap-3 justify-center">
-                    <Button onClick={handleSaveLogo} className="gap-2">
-                      <Upload className="w-4 h-4" />
-                      Save Logo
-                    </Button>
-                    {logoUrl && (
-                      <Button variant="destructive" onClick={handleRemoveLogo} className="gap-2">
+                    {selectedFile && (
+                      <Button 
+                        onClick={handleSaveLogo} 
+                        className="gap-2"
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            Save Logo
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {currentLogoPath && !selectedFile && (
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleRemoveLogo} 
+                        className="gap-2"
+                        disabled={uploading}
+                      >
                         <X className="w-4 h-4" />
                         Remove Logo
                       </Button>
