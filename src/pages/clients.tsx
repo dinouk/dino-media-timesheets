@@ -62,6 +62,42 @@ export default function ClientsPage() {
     }
   }, [user, loading, router]);
 
+  // Sync filters with URL query params on mount
+  useEffect(() => {
+    if (router.isReady) {
+      const { status, budgetStatus } = router.query;
+      
+      if (status && typeof status === "string") {
+        if (["active", "archived", "all"].includes(status)) {
+          setStatusFilter(status as StatusFilter);
+        }
+      }
+      
+      if (budgetStatus && typeof budgetStatus === "string") {
+        if (["all", "remaining", "over"].includes(budgetStatus)) {
+          setBudgetFilter(budgetStatus as BudgetFilter);
+        }
+      }
+    }
+  }, [router.isReady]);
+
+  // Update URL when filters change
+  const handleStatusFilterChange = (value: StatusFilter) => {
+    setStatusFilter(value);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, status: value }
+    }, undefined, { shallow: true });
+  };
+
+  const handleBudgetFilterChange = (value: BudgetFilter) => {
+    setBudgetFilter(value);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, budgetStatus: value }
+    }, undefined, { shallow: true });
+  };
+
   const loadData = async () => {
     if (!user) return;
     
@@ -321,7 +357,7 @@ export default function ClientsPage() {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                  <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -333,7 +369,7 @@ export default function ClientsPage() {
                   </Select>
                 </div>
                 <div>
-                  <Select value={budgetFilter} onValueChange={(value) => setBudgetFilter(value as BudgetFilter)}>
+                  <Select value={budgetFilter} onValueChange={handleBudgetFilterChange}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

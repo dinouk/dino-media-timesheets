@@ -828,6 +828,24 @@ export default function TimeLogsPage() {
     return option ? option.label : "";
   };
 
+  // Handle client filter change with URL sync
+  const handleClientFilterChange = (value: string) => {
+    setSelectedClientId(value);
+    router.push({
+      pathname: router.pathname,
+      query: { clientId: value, period: selectedPeriod }
+    }, undefined, { shallow: true });
+  };
+
+  // Handle period filter change with URL sync
+  const handlePeriodFilterChange = (value: string) => {
+    setSelectedPeriod(value);
+    router.push({
+      pathname: router.pathname,
+      query: { clientId: selectedClientId, period: value }
+    }, undefined, { shallow: true });
+  };
+
   const handleSaveRollover = async () => {
     if (!selectedClient || !selectedPeriod || !user || !stats) return;
 
@@ -963,7 +981,7 @@ export default function TimeLogsPage() {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <Select value={selectedClientId} onValueChange={handleClientFilterChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
@@ -992,7 +1010,7 @@ export default function TimeLogsPage() {
                 </Select>
               </div>
               <div>
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <Select value={selectedPeriod} onValueChange={handlePeriodFilterChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select period" />
                   </SelectTrigger>
