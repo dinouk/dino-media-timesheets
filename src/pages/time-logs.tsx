@@ -841,7 +841,7 @@ export default function TimeLogsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    });
+    }, undefined, { shallow: true });
   };
 
   // Handle period filter change with URL sync
@@ -857,7 +857,7 @@ export default function TimeLogsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    });
+    }, undefined, { shallow: true });
   };
 
   const handleSaveRollover = async () => {

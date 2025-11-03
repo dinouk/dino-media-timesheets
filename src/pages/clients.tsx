@@ -94,7 +94,7 @@ export default function ClientsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    });
+    }, undefined, { shallow: true });
   };
 
   const handleBudgetFilterChange = (value: BudgetFilter) => {
@@ -109,7 +109,7 @@ export default function ClientsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    });
+    }, undefined, { shallow: true });
   };
 
   const loadData = async () => {
