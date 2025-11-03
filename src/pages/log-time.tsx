@@ -6,17 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, CheckCircle2, Upload, X, FileIcon } from "lucide-react";
+import { Clock, CheckCircle2, Upload, X, FileIcon } from "lucide-react";
 import Link from "next/link";
-import { Client, TimeEntry, MonthlyAllocation } from "@/types";
-import { getMonthKey, processMonthlyRollover, calculateClientStats } from "@/lib/timeCalculations";
 import { Textarea } from "@/components/ui/textarea";
 import { AppHeader } from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { clientService } from "@/services/clientService";
+import { timeEntryService } from "@/services/timeEntryService";
+import { storageService } from "@/services/storageService";
+import { fileAttachmentService } from "@/services/fileAttachmentService";
+import type { Database } from "@/integrations/supabase/types";
+
+type Client = Database["public"]["Tables"]["clients"]["Row"];
+
+interface FileUpload {
+  id: string;
+  name: string;
+  displayName: string;
+  file: File;
+  preview?: string;
+}
 
 export default function LogTimePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
@@ -24,24 +39,24 @@ export default function LogTimePage() {
   const [hours, setHours] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<Array<{ id: string; name: string; displayName: string; data: string; type: string; size: number }>>([]);
-  const [success, setSuccess] = useState(false);
-  const [currentUser, setCurrentUser] = useState("");
+  const [files, setFiles] = useState<FileUpload[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    loadClients();
+    if (user) {
+      loadClients();
+    }
     setSelectedDate(new Date().toISOString().split("T")[0]);
-  }, [router]);
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
@@ -49,11 +64,22 @@ export default function LogTimePage() {
     }
   }, [router.query.clientId, clients]);
 
-  const loadClients = () => {
-    const savedClients = localStorage.getItem("clients");
-    if (savedClients) {
-      const allClients: Client[] = JSON.parse(savedClients);
-      setClients(allClients.filter(client => !client.archived));
+  const loadClients = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingData(true);
+      const clientsData = await clientService.getClients(user.id);
+      setClients(clientsData.filter(client => !client.archived));
+    } catch (error) {
+      console.error("Error loading clients:", error);
+      toast({
+        title: "Error Loading Clients",
+        description: "Failed to load clients",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
     }
   };
 
@@ -70,22 +96,34 @@ export default function LogTimePage() {
     if (!uploadedFiles) return;
 
     Array.from(uploadedFiles).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const newFile = {
-          id: Date.now().toString() + Math.random().toString(),
-          name: file.name,
-          displayName: file.name,
-          data: event.target?.result as string,
-          type: file.type,
-          size: file.size,
-        };
-        setFiles((prev) => [...prev, newFile]);
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newFile: FileUpload = {
+        id: Date.now().toString() + Math.random().toString(),
+        name: file.name,
+        displayName: file.name,
+        file: file,
       };
-      reader.readAsDataURL(file);
+
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          newFile.preview = event.target?.result as string;
+          setFiles((prev) => [...prev, newFile]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setFiles((prev) => [...prev, newFile]);
+      }
     });
 
-    // Reset input
     e.target.value = "";
   };
 
@@ -93,18 +131,24 @@ export default function LogTimePage() {
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
+  const updateFileDisplayName = (fileId: string, newDisplayName: string) => {
+    setFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, displayName: newDisplayName } : f))
+    );
+  };
+
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0 || !description.trim()) {
+    if (!selectedClientId || !selectedDate || !hours || selectedTags.length === 0 || !description.trim() || !user) {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields including description and select at least one tag",
@@ -113,59 +157,90 @@ export default function LogTimePage() {
       return;
     }
 
-    const date = new Date(selectedDate);
-    const monthKey = getMonthKey(date);
+    try {
+      setSubmitting(true);
 
-    const newEntry: TimeEntry = {
-      id: Date.now().toString(),
-      clientId: selectedClientId,
-      date: selectedDate,
-      hours: parseFloat(hours),
-      tags: selectedTags,
-      description: description.trim(),
-      month: monthKey,
-      year: date.getFullYear(),
-      createdAt: new Date().toISOString(),
-      files: files.length > 0 ? files : undefined,
-    };
+      const date = new Date(selectedDate);
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
 
-    const savedEntries = localStorage.getItem("timeEntries");
-    const timeEntries: TimeEntry[] = savedEntries ? JSON.parse(savedEntries) : [];
-    timeEntries.push(newEntry);
-    localStorage.setItem("timeEntries", JSON.stringify(timeEntries));
+      const newEntry = await timeEntryService.createTimeEntry({
+        user_id: user.id,
+        client_id: selectedClientId,
+        date: selectedDate,
+        hours: parseFloat(hours),
+        tags: selectedTags,
+        description: description.trim(),
+        month: monthKey,
+        year: date.getFullYear(),
+      });
 
-    const savedAllocations = localStorage.getItem("monthlyAllocations");
-    const monthlyAllocations: MonthlyAllocation[] = savedAllocations ? JSON.parse(savedAllocations) : [];
-    
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      timeEntries,
-      monthlyAllocations,
-      (date.getMonth() + 1).toString(),
-      date.getFullYear()
-    );
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+      if (files.length > 0) {
+        for (const fileUpload of files) {
+          try {
+            const filePath = `${user.id}/${newEntry.id}/${Date.now()}-${fileUpload.file.name}`;
+            
+            await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
+            
+            const fileUrl = storageService.getPublicUrl("time-entry-files", filePath);
 
-    toast({
-      title: "Time Entry Created",
-      description: "Your time entry has been successfully logged",
-    });
+            await fileAttachmentService.createFileAttachment({
+              time_entry_id: newEntry.id,
+              file_name: fileUpload.name,
+              display_name: fileUpload.displayName,
+              file_url: fileUrl,
+              file_path: filePath,
+              file_type: fileUpload.file.type,
+              file_size: fileUpload.file.size,
+            });
+          } catch (fileError) {
+            console.error("Error uploading file:", fileError);
+            toast({
+              title: "File Upload Warning",
+              description: `Failed to upload ${fileUpload.name}`,
+              variant: "destructive",
+            });
+          }
+        }
+      }
 
-    // Redirect to time-logs page with client and month pre-selected
-    router.push({
-      pathname: "/time-logs",
-      query: {
-        clientId: selectedClientId,
-        period: monthKey,
-      },
-    });
+      toast({
+        title: "Time Entry Created",
+        description: "Your time entry has been successfully logged",
+      });
+
+      router.push({
+        pathname: "/time-logs",
+        query: {
+          clientId: selectedClientId,
+          period: monthKey,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error creating time entry:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create time entry",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (!mounted) return null;
+  if (!mounted || loading || loadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
@@ -182,17 +257,7 @@ export default function LogTimePage() {
             <CardDescription>Log time spent working on client projects</CardDescription>
           </CardHeader>
           <CardContent>
-            {success ? (
-              <div className="text-center py-12">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-semibold text-green-600 mb-2">Time Logged Successfully!</h3>
-                <p className="text-slate-600">Your time entry has been recorded</p>
-              </div>
-            ) : clients.length === 0 ? (
+            {clients.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-slate-600 mb-4">You need to add clients first</p>
                 <Link href="/clients">
@@ -258,11 +323,11 @@ export default function LogTimePage() {
                   />
                 </div>
 
-                {selectedClient && selectedClient.tags.length > 0 && (
+                {selectedClient && (selectedClient.tags as string[]).length > 0 && (
                   <div className="space-y-2">
                     <Label>Tags * (select at least one)</Label>
                     <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {selectedClient.tags.map((tag) => (
+                      {(selectedClient.tags as string[]).map((tag) => (
                         <Badge
                           key={tag}
                           variant={selectedTags.includes(tag) ? "default" : "outline"}
@@ -280,7 +345,7 @@ export default function LogTimePage() {
                   </div>
                 )}
 
-                {selectedClient && selectedClient.tags.length === 0 && (
+                {selectedClient && (selectedClient.tags as string[]).length === 0 && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                     <p className="text-sm text-yellow-800">
                       This client has no tags. Add tags to the client first.
@@ -305,7 +370,7 @@ export default function LogTimePage() {
                     >
                       <Upload className="w-8 h-8 text-slate-400 mb-2" />
                       <span className="text-sm font-medium text-slate-600">Click to upload files</span>
-                      <span className="text-xs text-slate-500 mt-1">PDF, DOC, XLS, Images, TXT</span>
+                      <span className="text-xs text-slate-500 mt-1">PDF, DOC, XLS, Images, TXT (Max 5MB)</span>
                     </label>
                   </div>
 
@@ -322,17 +387,13 @@ export default function LogTimePage() {
                             <Input
                               type="text"
                               value={file.displayName}
-                              onChange={(e) => {
-                                setFiles(prev => 
-                                  prev.map(f => 
-                                    f.id === file.id ? { ...f, displayName: e.target.value } : f
-                                  )
-                                );
-                              }}
+                              onChange={(e) => updateFileDisplayName(file.id, e.target.value)}
                               placeholder="Display name..."
                               className="h-9 text-sm mb-1"
                             />
-                            <p className="text-xs text-slate-500">Original: {file.name} ({formatFileSize(file.size)})</p>
+                            <p className="text-xs text-slate-500">
+                              Original: {file.name} ({formatFileSize(file.file.size)})
+                            </p>
                           </div>
                           <Button
                             type="button"
@@ -352,9 +413,9 @@ export default function LogTimePage() {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                  disabled={!selectedClient || selectedClient.tags.length === 0}
+                  disabled={!selectedClient || (selectedClient.tags as string[]).length === 0 || submitting}
                 >
-                  Log Time Entry
+                  {submitting ? "Logging..." : "Log Time Entry"}
                 </Button>
               </form>
             )}
