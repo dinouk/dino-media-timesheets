@@ -1303,7 +1303,7 @@ export default function TimeLogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-hours">Hours (15-minute intervals) *</Label>
+                  <Label htmlFor="edit-hours">Hours *</Label>
                   <Select
                     value={editForm.hours}
                     onValueChange={(value) => setEditForm({ ...editForm, hours: value })}
@@ -1334,7 +1334,7 @@ export default function TimeLogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-files">File Attachments (Optional)</Label>
+                  <Label htmlFor="edit-files">Attachments</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="edit-files"
@@ -1388,7 +1388,7 @@ export default function TimeLogsPage() {
 
                 {selectedClient && (selectedClient.tags as string[]).length > 0 && (
                   <div className="space-y-2">
-                    <Label>Tags * (select at least one)</Label>
+                    <Label>Tags *</Label>
                     <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
                       {(selectedClient.tags as string[]).map((tag) => (
                         <Badge
@@ -1488,7 +1488,7 @@ export default function TimeLogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="add-hours">Hours (15-minute intervals) *</Label>
+                  <Label htmlFor="add-hours">Hours *</Label>
                   <Select
                     value={addForm.hours}
                     onValueChange={(value) => setAddForm({ ...addForm, hours: value })}
@@ -1519,7 +1519,7 @@ export default function TimeLogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="add-files">File Attachments (Optional)</Label>
+                  <Label htmlFor="add-files">Attachments (Optional)</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="add-files"
