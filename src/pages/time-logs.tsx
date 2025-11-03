@@ -764,12 +764,13 @@ export default function TimeLogsPage() {
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
       willDrawPage: (data) => {
+        // This hook is called before the table is drawn.
+        // We can create a clipping region here.
+        (doc as any).saveGraphicsState();
         const tableWidth = pageWidth - 28;
         // A height large enough to contain the table on the page
         const tableRegionHeight = doc.internal.pageSize.getHeight() - yPos - data.settings.margin.bottom;
-        
-        (doc as any).saveGraphicsState();
-        doc.roundedRect(14, yPos, tableWidth, tableRegionHeight, 1.5, 1.5);
+        doc.roundedRect(14, yPos, tableWidth, tableRegionHeight, 1.5, 1.5, "F"); // 'F' for fill, creating a white background
         (doc as any).clip();
       },
       didDrawCell: (data) => {
@@ -792,7 +793,8 @@ export default function TimeLogsPage() {
         }
       },
       didDrawPage: (data) => {
-        (doc as any).restoreGraphicsState(); // Remove clipping
+        // This hook is called after the table is drawn.
+        (doc as any).restoreGraphicsState(); // Remove the clipping region
         
         // Draw border around the entire table with rounded corners AFTER table is drawn
         const tableWidth = pageWidth - 28;
@@ -800,7 +802,7 @@ export default function TimeLogsPage() {
         
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.5);
-        doc.roundedRect(14, yPos, tableWidth, finalTableHeight, 1.5, 1.5, "S");
+        doc.roundedRect(14, yPos, tableWidth, finalTableHeight, 1.5, 1.5, "S"); // 'S' for stroke
       }
     });
 
