@@ -756,10 +756,10 @@ export default function TimeLogsPage() {
       },
       columnStyles: {
         0: { cellWidth: 18 },
-        1: { cellWidth: 11 },
+        1: { cellWidth: 15 },
         2: { cellWidth: "auto" },
-        3: { cellWidth: 30 },
-        4: { cellWidth: 33 }
+        3: { cellWidth: 28 },
+        4: { cellWidth: 31 }
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
@@ -1004,7 +1004,7 @@ export default function TimeLogsPage() {
         {stats && selectedClient && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card className="border-2 border-slate-200">
+              <Card className="border-2 border-slate-200 rounded-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-black flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -1057,7 +1057,7 @@ export default function TimeLogsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-slate-200">
+              <Card className="border-2 border-slate-200 rounded-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-black flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -1110,7 +1110,7 @@ export default function TimeLogsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-slate-200">
+              <Card className="border-2 border-slate-200 rounded-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-black" />
@@ -1139,7 +1139,7 @@ export default function TimeLogsPage() {
               </Card>
             </div>
 
-            <Card className="border-2 border-slate-200">
+            <Card className="border-2 border-slate-200 rounded-lg">
               <CardContent className="pt-6">
                 {filteredEntries.length === 0 ? (
                   <div className="text-center py-12">
