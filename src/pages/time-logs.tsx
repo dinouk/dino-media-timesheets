@@ -687,64 +687,14 @@ export default function TimeLogsPage() {
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 3, 3, "FD");
       
-      const iconCenterX = x + boxWidth / 2;
-      const iconCenterY = boxY + 8;
-      const iconSize = 2.5;
-      
-      doc.setFillColor(box.color[0], box.color[1], box.color[2]);
-      doc.setDrawColor(box.color[0], box.color[1], box.color[2]);
-      doc.setLineWidth(0.5);
-      
-      if (box.icon === "arrow-up") {
-        // TrendingUp/ArrowUp icon - diagonal arrow pointing up-right
-        const startX = iconCenterX - iconSize;
-        const startY = iconCenterY + iconSize;
-        const endX = iconCenterX + iconSize;
-        const endY = iconCenterY - iconSize;
-        
-        // Main diagonal line
-        doc.line(startX, startY, endX, endY);
-        // Arrow head - two lines forming the arrow tip
-        doc.line(endX, endY, endX - 1.2, endY + 0.3);
-        doc.line(endX, endY, endX - 0.3, endY + 1.2);
-      } else if (box.icon === "clock") {
-        // Clock icon - circle with clock hands
-        doc.circle(iconCenterX, iconCenterY, iconSize, "S");
-        // Hour hand (pointing up)
-        doc.line(iconCenterX, iconCenterY, iconCenterX, iconCenterY - iconSize * 0.6);
-        // Minute hand (pointing right)
-        doc.line(iconCenterX, iconCenterY, iconCenterX + iconSize * 0.5, iconCenterY);
-      } else if (box.icon === "alert-circle") {
-        // AlertCircle icon - circle with exclamation mark
-        doc.circle(iconCenterX, iconCenterY, iconSize, "S");
-        doc.setLineWidth(0.6);
-        // Exclamation line
-        doc.line(iconCenterX, iconCenterY - iconSize/2, iconCenterX, iconCenterY + iconSize/4);
-        // Exclamation dot
-        doc.circle(iconCenterX, iconCenterY + iconSize * 0.7, 0.3, "F");
-      } else if (box.icon === "trending-down") {
-        // TrendingDown icon - diagonal arrow pointing down-right
-        const startX = iconCenterX - iconSize;
-        const startY = iconCenterY - iconSize;
-        const endX = iconCenterX + iconSize;
-        const endY = iconCenterY + iconSize;
-        
-        // Main diagonal line
-        doc.line(startX, startY, endX, endY);
-        // Arrow head - two lines forming the arrow tip
-        doc.line(endX, endY, endX - 1.2, endY - 0.3);
-        doc.line(endX, endY, endX - 0.3, endY - 1.2);
-      }
-      
-      doc.setLineWidth(0.2);
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text(box.label, x + boxWidth / 2, boxY + 15, { align: "center" });
+      doc.text(box.label, x + boxWidth / 2, boxY + 12, { align: "center" });
       
       doc.setFontSize(11);
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
-      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + 22, { align: "center" });
+      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + 19, { align: "center" });
       doc.setFont("helvetica", "normal");
     });
 
