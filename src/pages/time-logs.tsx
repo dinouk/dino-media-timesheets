@@ -230,6 +230,7 @@ export default function TimeLogsPage() {
           const fileUrl = await storageService.getPublicUrl("time-entry-files", filePath);
 
           await fileAttachmentService.createFileAttachment({
+            user_id: user.id,
             time_entry_id: editingEntry.id,
             file_name: fileUpload.name,
             display_name: fileUpload.displayName,
