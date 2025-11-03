@@ -46,7 +46,7 @@ export default function ClientsPage() {
   const [budgetFilter, setBudgetFilter] = useState<BudgetFilter>("all");
   const [formData, setFormData] = useState({
     name: "",
-    allocatedHours: "",
+    allocatedHours: ""
   });
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -66,13 +66,13 @@ export default function ClientsPage() {
   useEffect(() => {
     if (router.isReady) {
       const { status, budgetStatus } = router.query;
-      
+
       if (status && typeof status === "string") {
         if (["active", "archived", "all"].includes(status)) {
           setStatusFilter(status as StatusFilter);
         }
       }
-      
+
       if (budgetStatus && typeof budgetStatus === "string") {
         if (["all", "remaining", "over"].includes(budgetStatus)) {
           setBudgetFilter(budgetStatus as BudgetFilter);
@@ -114,15 +114,15 @@ export default function ClientsPage() {
 
   const loadData = async () => {
     if (!user) return;
-    
+
     try {
       setLoadingData(true);
       const [clientsData, entriesData, allocationsData] = await Promise.all([
-        clientService.getClients(user.id),
-        timeEntryService.getTimeEntries(user.id),
-        monthlyAllocationService.getMonthlyAllocations(user.id)
-      ]);
-      
+      clientService.getClients(user.id),
+      timeEntryService.getTimeEntries(user.id),
+      monthlyAllocationService.getMonthlyAllocations(user.id)]
+      );
+
       setClients(clientsData);
       setTimeEntries(entriesData);
       setMonthlyAllocations(allocationsData);
@@ -131,7 +131,7 @@ export default function ClientsPage() {
       toast({
         title: "Error Loading Data",
         description: "Failed to load clients and time entries",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoadingData(false);
@@ -147,7 +147,7 @@ export default function ClientsPage() {
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -159,12 +159,12 @@ export default function ClientsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.allocatedHours || !user) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -173,7 +173,7 @@ export default function ClientsPage() {
       toast({
         title: "Validation Error",
         description: "Please add at least one tag",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -183,12 +183,12 @@ export default function ClientsPage() {
         await clientService.updateClient(editingClient.id, {
           name: formData.name,
           allocated_hours_per_month: parseFloat(formData.allocatedHours),
-          tags: tags,
+          tags: tags
         });
-        
+
         toast({
           title: "Client Updated",
-          description: `${formData.name} has been successfully updated`,
+          description: `${formData.name} has been successfully updated`
         });
       } else {
         await clientService.createClient({
@@ -196,12 +196,12 @@ export default function ClientsPage() {
           name: formData.name,
           allocated_hours_per_month: parseFloat(formData.allocatedHours),
           tags: tags,
-          archived: false,
+          archived: false
         });
-        
+
         toast({
           title: "Client Created",
-          description: `${formData.name} has been successfully added`,
+          description: `${formData.name} has been successfully added`
         });
       }
 
@@ -213,7 +213,7 @@ export default function ClientsPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to save client",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -223,7 +223,7 @@ export default function ClientsPage() {
     setEditingClient(client);
     setFormData({
       name: client.name,
-      allocatedHours: client.allocated_hours_per_month.toString(),
+      allocatedHours: client.allocated_hours_per_month.toString()
     });
     setTags(client.tags as string[] || []);
     setIsDialogOpen(true);
@@ -231,48 +231,48 @@ export default function ClientsPage() {
 
   const handleDelete = async (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const clientToDelete = clients.find(c => c.id === clientId);
+    const clientToDelete = clients.find((c) => c.id === clientId);
     if (!confirm("Are you sure you want to delete this client?")) return;
 
     try {
       await clientService.deleteClient(clientId);
-      
+
       toast({
         title: "Client Deleted",
-        description: `${clientToDelete?.name || "Client"} has been successfully deleted`,
+        description: `${clientToDelete?.name || "Client"} has been successfully deleted`
       });
-      
+
       await loadData();
     } catch (error: any) {
       console.error("Error deleting client:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to delete client",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   const handleToggleArchive = async (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId);
     if (!client) return;
 
     try {
       await clientService.archiveClient(clientId, !client.archived);
-      
+
       toast({
         title: client.archived ? "Client Unarchived" : "Client Archived",
-        description: `${client.name} has been ${client.archived ? "unarchived" : "archived"}`,
+        description: `${client.name} has been ${client.archived ? "unarchived" : "archived"}`
       });
-      
+
       await loadData();
     } catch (error: any) {
       console.error("Error toggling archive:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update client",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -305,42 +305,42 @@ export default function ClientsPage() {
   const getCurrentMonthStats = (client: Client): ClientStats => {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-    
+
     const allocation = monthlyAllocations.find(
-      a => a.client_id === client.id && a.month === currentMonth
+      (a) => a.client_id === client.id && a.month === currentMonth
     );
-    
+
     const monthEntries = timeEntries.filter(
-      entry => entry.client_id === client.id && entry.month === currentMonth
+      (entry) => entry.client_id === client.id && entry.month === currentMonth
     );
-    
+
     const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
     const allocatedHours = allocation?.allocated_hours ?? client.allocated_hours_per_month;
     const rolloverHours = allocation?.rollover_hours ?? 0;
     const remainingHours = allocatedHours + rolloverHours - usedHours;
-    
+
     return {
       allocatedHours,
       rolloverHours,
       usedHours,
-      remainingHours,
+      remainingHours
     };
   };
 
-  const filteredClients = clients.filter(client => {
+  const filteredClients = clients.filter((client) => {
     if (statusFilter === "active") return !client.archived;
     if (statusFilter === "archived") return client.archived;
     return true;
   });
-  
-  const budgetFilteredClients = filteredClients.filter(client => {
+
+  const budgetFilteredClients = filteredClients.filter((client) => {
     if (budgetFilter === "all") return true;
-    
+
     const stats = getCurrentMonthStats(client);
-    
+
     if (budgetFilter === "remaining") return stats.remainingHours >= 0;
     if (budgetFilter === "over") return stats.remainingHours < 0;
-    
+
     return true;
   });
 
@@ -351,8 +351,8 @@ export default function ClientsPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -360,8 +360,8 @@ export default function ClientsPage() {
       <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
-        {clients.length > 0 && (
-          <Card className="mb-6 border-2 border-slate-200">
+        {clients.length > 0 &&
+        <Card className="mb-6 border-2 border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="w-5 h-5 text-brand-primary" />
@@ -397,10 +397,10 @@ export default function ClientsPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        }
 
-        {clients.length === 0 ? (
-          <Card className="text-center py-12 border-2 border-slate-200">
+        {clients.length === 0 ?
+        <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
@@ -414,9 +414,9 @@ export default function ClientsPage() {
                 Add Your First Client
               </Button>
             </CardContent>
-          </Card>
-        ) : budgetFilteredClients.length === 0 ? (
-          <Card className="text-center py-12 border-2 border-slate-200">
+          </Card> :
+        budgetFilteredClients.length === 0 ?
+        <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
@@ -426,30 +426,30 @@ export default function ClientsPage() {
               <h3 className="text-xl font-semibold mb-2">No matching clients</h3>
               <p className="text-slate-600">Try changing the filters to see more clients</p>
             </CardContent>
-          </Card>
-        ) : (
-          <>
+          </Card> :
+
+        <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {budgetFilteredClients.map((client) => {
-                const stats = getCurrentMonthStats(client);
-                const clientTags = client.tags as string[] || [];
-                
-                return (
-                <Card 
-                  key={client.id} 
+              const stats = getCurrentMonthStats(client);
+              const clientTags = client.tags as string[] || [];
+
+              return (
+                <Card
+                  key={client.id}
                   className={`hover:shadow-lg transition-all border-2 border-slate-200 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
-                  onClick={() => handleClientClick(client.id)}
-                >
+                  onClick={() => handleClientClick(client.id)}>
+
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <CardTitle className="text-xl">{client.name}</CardTitle>
-                          {client.archived && (
-                            <Badge variant="secondary" className="bg-slate-200 text-slate-600">
+                          {client.archived &&
+                          <Badge variant="secondary" className="bg-slate-200 text-slate-600">
                               Archived
                             </Badge>
-                          )}
+                          }
                         </div>
                       </div>
                       <div className="flex gap-1">
@@ -465,17 +465,17 @@ export default function ClientsPage() {
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
-                              {client.archived ? (
-                                <>
+                              {client.archived ?
+                              <>
                                   <ArchiveRestore className="w-4 h-4 mr-2" />
                                   Unarchive
-                                </>
-                              ) : (
-                                <>
+                                </> :
+
+                              <>
                                   <Archive className="w-4 h-4 mr-2" />
                                   Archive
                                 </>
-                              )}
+                              }
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -488,8 +488,8 @@ export default function ClientsPage() {
                           size="icon"
                           onClick={(e) => handleAddTimeLog(client.id, e)}
                           title="Add time log"
-                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9"
-                        >
+                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9">
+
                           <Plus className="w-5 h-5" />
                         </Button>
                       </div>
@@ -506,14 +506,14 @@ export default function ClientsPage() {
                         </div>
                         {(() => {
                           const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-                          
+
                           // Always show progress bar, even with 0 logs and negative rollover
                           let progressValue = 0;
                           let isOverBudget = false;
-                          
+
                           if (totalAvailable > 0) {
                             // Normal case: positive total time available
-                            progressValue = Math.min((stats.usedHours / totalAvailable) * 100, 100);
+                            progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
                             isOverBudget = stats.usedHours > totalAvailable;
                           } else if (totalAvailable === 0) {
                             // Edge case: exactly 0 available (negative rollover = allocated)
@@ -525,34 +525,34 @@ export default function ClientsPage() {
                             progressValue = 100;
                             isOverBudget = true;
                           }
-                          
+
                           return (
-                            <Progress 
-                              value={progressValue} 
+                            <Progress
+                              value={progressValue}
                               className="h-2 bg-slate-100"
-                              indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
-                            />
-                          );
+                              indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />);
+
+
                         })()}
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              )})}
+                </Card>);
+            })}
             </div>
 
             <div className="flex justify-center pb-8">
-              <Button 
-                size="lg" 
-                className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                onClick={() => setIsDialogOpen(true)}
-              >
+              <Button
+              size="lg"
+              className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+              onClick={() => setIsDialogOpen(true)} style={{ backgroundColor: "rgb(1, 109, 138)", backgroundImage: "none" }}>
+
                 <Plus className="w-5 h-5" />
                 Add New Client
               </Button>
             </div>
           </>
-        )}
+        }
 
         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogContent className="sm:max-w-[500px]">
@@ -570,8 +570,8 @@ export default function ClientsPage() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Acme Corporation"
-                  />
+                    placeholder="Acme Corporation" />
+
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
@@ -582,8 +582,8 @@ export default function ClientsPage() {
                     min="0"
                     value={formData.allocatedHours}
                     onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
-                    placeholder="40"
-                  />
+                    placeholder="40" />
+
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tags">Tags *</Label>
@@ -593,31 +593,31 @@ export default function ClientsPage() {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleTagInputKeyDown}
-                      placeholder="Enter a tag and press Enter"
-                    />
+                      placeholder="Enter a tag and press Enter" />
+
                     <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      {tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
+                  {tags.length > 0 &&
+                  <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      {tags.map((tag, index) =>
+                    <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
                           {tag}
                           <button
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors"
-                          >
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors">
+
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
-                      ))}
+                    )}
                     </div>
-                  )}
-                  {tags.length === 0 && (
-                    <p className="text-sm text-slate-500 mt-1">Add at least one tag for this client</p>
-                  )}
+                  }
+                  {tags.length === 0 &&
+                  <p className="text-sm text-slate-500 mt-1">Add at least one tag for this client</p>
+                  }
                 </div>
               </div>
               <DialogFooter>
@@ -632,6 +632,6 @@ export default function ClientsPage() {
           </DialogContent>
         </Dialog>
       </main>
-    </div>
-  );
+    </div>);
+
 }
