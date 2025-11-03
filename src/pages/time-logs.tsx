@@ -738,13 +738,14 @@ export default function TimeLogsPage() {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 13, halign: "center" },
-        2: { cellWidth: 55 },
-        3: { cellWidth: 32 },
-        4: { cellWidth: 40 }
+        0: { cellWidth: 25 },
+        1: { cellWidth: 15, halign: "center" },
+        2: { cellWidth: "auto" },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 45 }
       },
       margin: { left: 14, right: 14 },
+      tableWidth: "auto",
       didDrawCell: (data) => {
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
