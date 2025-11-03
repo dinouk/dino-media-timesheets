@@ -435,17 +435,16 @@ export default function ClientsPage() {
                     </div>
                     
                     <div className="pt-2 border-t border-slate-200">
-                      <div className="text-xs font-medium text-slate-600 mb-2">Current Month</div>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-green-600 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
-                          <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                          <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
                             Remaining: {stats.remainingHours.toFixed(2)}h
                           </span>
                         </div>
                         <Progress 
                           value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
-                          className={`h-2 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
+                          className={`h-2 bg-slate-100 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
                         />
                       </div>
                     </div>

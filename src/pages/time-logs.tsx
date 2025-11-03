@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Filter, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar } from "lucide-react";
+import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
@@ -462,7 +462,6 @@ export default function TimeLogsPage() {
     const boxPadding = 3;
 
     const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [147, 51, 234], icon: "arrow" },
       { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
       { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "check" },
       { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: stats.remainingHours >= 0 ? "check" : "alert" }
@@ -802,10 +801,13 @@ export default function TimeLogsPage() {
         {stats && selectedClient && (
           <>
             <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <Card className="border-2 border-brand-light md:col-span-1">
+              <Card className="border-2 border-slate-200 md:col-span-1">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
-                    Allocated Hours
+                  <CardTitle className="text-sm font-medium text-slate-900 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-900" />
+                      <span>Allocated Hours</span>
+                    </div>
                     {!editingAllocation ? (
                       <Button
                         variant="ghost"
@@ -847,15 +849,18 @@ export default function TimeLogsPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-2xl font-bold text-brand-primary">{stats.allocatedHours.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-slate-900">{stats.allocatedHours.toFixed(2)}h</div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-purple-100 md:col-span-1">
+              <Card className="border-2 border-slate-200 md:col-span-1">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
-                    Rollover Hours
+                  <CardTitle className="text-sm font-medium text-slate-900 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ArrowUp className="w-4 h-4 text-slate-900" />
+                      <span>Rollover Hours</span>
+                    </div>
                     {!editingRollover ? (
                       <Button
                         variant="ghost"
@@ -897,35 +902,31 @@ export default function TimeLogsPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <div className={`text-2xl font-bold ${stats.rolloverHours >= 0 ? "text-purple-600" : "text-red-600"}`}>
-                        {stats.rolloverHours.toFixed(2)}
-                      </div>
-                      {stats.rolloverHours >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-purple-600" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 text-red-600" />
-                      )}
+                    <div className={`text-2xl font-bold text-slate-900`}>
+                      {stats.rolloverHours.toFixed(2)}h
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className={`border-2 ${stats.remainingHours >= 0 ? "border-green-100" : "border-red-100"} md:col-span-1`}>
+              <Card className="border-2 border-slate-200 md:col-span-1">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-slate-600">Time Usage</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-900 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-slate-900" />
+                    <span>Time Usage</span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-green-600 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
-                      <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                      <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                      <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
                         Remaining: {stats.remainingHours.toFixed(2)}h
                       </span>
                     </div>
                     <Progress 
                       value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)}
-                      className={`h-3 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
+                      className={`h-3 bg-slate-100 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
                     />
                   </div>
                   {stats.remainingHours < 0 && (
