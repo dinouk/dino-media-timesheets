@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/integrations/supabase/client";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,6 +22,9 @@ export default async function handler(
   }
 
   try {
+    // Create server-side Supabase client
+    const supabase = createServerSupabaseClient();
+
     // Store the signup request in Supabase
     const { data, error } = await supabase
       .from("signup_requests")
