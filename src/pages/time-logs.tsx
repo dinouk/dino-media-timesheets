@@ -1013,7 +1013,7 @@ export default function TimeLogsPage() {
 
         {stats && selectedClient && (
           <>
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="border-2 border-slate-200">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
@@ -1131,7 +1131,7 @@ export default function TimeLogsPage() {
                   <div className="space-y-1">
                     <Progress 
                       value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
-                      className="h-3"
+                      className="h-3 bg-slate-100"
                       indicatorClassName={stats.remainingHours >= 0 ? "bg-black" : "bg-red-600"}
                     />
                     <p className="text-xs text-center text-slate-600">
@@ -1143,6 +1143,17 @@ export default function TimeLogsPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-600">{getSelectedPeriodLabel()}</span>
+              </div>
+              <Button onClick={handleExportPDF} className="gap-2 ml-auto">
+                <FileDown className="w-4 h-4" />
+                Export PDF
+              </Button>
             </div>
 
             <Card>
