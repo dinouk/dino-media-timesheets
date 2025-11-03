@@ -321,7 +321,16 @@ export default function TimeLogsPage() {
         description: "Your time entry has been successfully updated",
       });
 
+      // Clean state reset
       setEditingEntry(null);
+      setEditForm({
+        date: "",
+        hours: "",
+        description: "",
+        tags: [],
+        files: [],
+      });
+      
       await loadData();
     } catch (error: any) {
       console.error("Error updating time entry:", error);
@@ -423,6 +432,17 @@ export default function TimeLogsPage() {
   };
 
   const handleOpenAddDialog = (preselectedClientId?: string) => {
+    // Clear any lingering state
+    setEditingEntry(null);
+    setEditForm({
+      date: "",
+      hours: "",
+      description: "",
+      tags: [],
+      files: [],
+    });
+    
+    // Set up fresh add form
     setAddForm({
       clientId: preselectedClientId || selectedClientId || "",
       date: new Date().toISOString().split("T")[0],
