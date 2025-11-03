@@ -1134,122 +1134,130 @@ export default function TimeLogsPage() {
             </div>
 
             <Card>
-              <CardContent>
+              <CardContent className="pt-6">
                 {filteredEntries.length === 0 ? (
                   <div className="text-center py-12">
                     <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">No Time Entries</h3>
-                    <p className="text-slate-600">No time entries found for this period</p>
+                    <p className="text-slate-600 mb-6">No time entries found for this period</p>
+                    <Button 
+                      size="lg" 
+                      className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                      onClick={() => handleOpenAddDialog()}
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add New Log
+                    </Button>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Hours</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Tags</TableHead>
-                          <TableHead>Files</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredEntries.map(entry => {
-                          const entryFiles = fileAttachments.filter(f => f.time_entry_id === entry.id);
-                          
-                          return (
-                            <TableRow key={entry.id}>
-                              <TableCell className="font-medium">
-                                {new Date(entry.date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
-                              </TableCell>
-                              <TableCell>
-                                <p className="text-sm text-slate-700 truncate">{entry.description}</p>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                  {(entry.tags as string[]).map((tag, index) => (
-                                    <Badge key={index} variant="secondary" className="text-xs">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {entryFiles.length > 0 ? (
+                  <>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Hours</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Tags</TableHead>
+                            <TableHead>Files</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredEntries.map(entry => {
+                            const entryFiles = fileAttachments.filter(f => f.time_entry_id === entry.id);
+                            
+                            return (
+                              <TableRow key={entry.id}>
+                                <TableCell className="font-medium">
+                                  {new Date(entry.date).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
+                                </TableCell>
+                                <TableCell>
+                                  <p className="text-sm text-slate-700 truncate">{entry.description}</p>
+                                </TableCell>
+                                <TableCell>
                                   <div className="flex flex-wrap gap-1">
-                                    {entryFiles.map((file) => (
-                                      <a
-                                        key={file.id}
-                                        href={file.file_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <Download className="w-3 h-3" />
-                                        {file.display_name}
-                                      </a>
+                                    {(entry.tags as string[]).map((tag, index) => (
+                                      <Badge key={index} variant="secondary" className="text-xs">
+                                        {tag}
+                                      </Badge>
                                     ))}
                                   </div>
-                                ) : (
-                                  <span className="text-xs text-slate-400">No files</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                      <MoreVertical className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => setDeletingEntry(entry)}
-                                      className="text-red-600 focus:text-red-600"
-                                    >
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {entryFiles.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {entryFiles.map((file) => (
+                                        <a
+                                          key={file.id}
+                                          href={file.file_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <Download className="w-3 h-3" />
+                                          {file.display_name}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-slate-400">No files</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <MoreVertical className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => setDeletingEntry(entry)}
+                                        className="text-red-600 focus:text-red-600"
+                                      >
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    <div className="flex justify-center gap-4 pt-6 border-t mt-6">
+                      <Button 
+                        size="lg" 
+                        className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                        onClick={() => handleOpenAddDialog()}
+                      >
+                        <Plus className="w-5 h-5" />
+                        Add New Log
+                      </Button>
+                      <Button 
+                        size="lg"
+                        onClick={handleExportPDF} 
+                        className="gap-2"
+                        variant="outline"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Export PDF
+                      </Button>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
-
-            <div className="flex justify-center gap-4 pt-8 pb-8">
-              <Button 
-                size="lg" 
-                className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                onClick={() => handleOpenAddDialog()}
-              >
-                <Plus className="w-5 h-5" />
-                Add New Log
-              </Button>
-              {filteredEntries.length > 0 && (
-                <Button 
-                  size="lg"
-                  onClick={handleExportPDF} 
-                  className="gap-2"
-                  variant="outline"
-                >
-                  <FileDown className="w-4 h-4" />
-                  Export PDF
-                </Button>
-              )}
-            </div>
           </>
         )}
 
