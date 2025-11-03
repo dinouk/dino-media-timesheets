@@ -316,12 +316,7 @@ export default function TimeLogsPage() {
         }
       }
 
-      toast({
-        title: "Time Entry Updated",
-        description: "Your time entry has been successfully updated",
-      });
-
-      // Clean state reset
+      // Complete state cleanup
       setEditingEntry(null);
       setEditForm({
         date: "",
@@ -331,7 +326,15 @@ export default function TimeLogsPage() {
         files: [],
       });
       
+      // Ensure add dialog state is also clean
+      setIsAddingTimeLog(false);
+      
       await loadData();
+      
+      toast({
+        title: "Time Entry Updated",
+        description: "Your time entry has been successfully updated",
+      });
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({
@@ -432,7 +435,7 @@ export default function TimeLogsPage() {
   };
 
   const handleOpenAddDialog = (preselectedClientId?: string) => {
-    // Clear any lingering state
+    // Ensure edit dialog is completely closed
     setEditingEntry(null);
     setEditForm({
       date: "",
@@ -442,16 +445,19 @@ export default function TimeLogsPage() {
       files: [],
     });
     
-    // Set up fresh add form
-    setAddForm({
-      clientId: preselectedClientId || selectedClientId || "",
-      date: new Date().toISOString().split("T")[0],
-      hours: "",
-      description: "",
-      tags: [],
-      files: [],
-    });
-    setIsAddingTimeLog(true);
+    // Small delay to ensure DOM cleanup
+    setTimeout(() => {
+      // Set up fresh add form
+      setAddForm({
+        clientId: preselectedClientId || selectedClientId || "",
+        date: new Date().toISOString().split("T")[0],
+        hours: "",
+        description: "",
+        tags: [],
+        files: [],
+      });
+      setIsAddingTimeLog(true);
+    }, 50);
   };
 
   const handleAddFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
