@@ -635,7 +635,7 @@ export default function TimeLogsPage() {
     doc.text(`${monthName} ${year}`, 14, yPos);
     
     // Reset yPos for logo positioning
-    const logoYPos = 20;
+    const logoYPos = 15;
 
     if (companyLogo) {
       try {
@@ -680,7 +680,7 @@ export default function TimeLogsPage() {
     yPos += 15;
 
     const boxWidth = (pageWidth - 28 - 9) / 4;
-    const boxHeight = 25;
+    const boxHeight = 22;
     const boxY = yPos;
     const boxSpacing = 3;
 
@@ -696,7 +696,7 @@ export default function TimeLogsPage() {
       
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(x, boxY, boxWidth, boxHeight, 3, 3, "FD");
+      doc.roundedRect(x, boxY, boxWidth, boxHeight, 2, 2, "FD");
       
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
@@ -1173,7 +1173,7 @@ export default function TimeLogsPage() {
                                   {new Date(entry.date).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
-                                  <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
+                                  <span className="font-semibold text-brand-primary">{entry.hours}</span>
                                 </TableCell>
                                 <TableCell>
                                   <p className="text-sm text-slate-700 truncate">{entry.description}</p>
