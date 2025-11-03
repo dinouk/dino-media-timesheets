@@ -36,7 +36,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { clientService } from "@/services/clientService";
 import { timeEntryService } from "@/services/timeEntryService";
 import { monthlyAllocationService } from "@/services/monthlyAllocationService";
-import { manualRolloverService } from "@/services/manualRolloverService";
 import { storageService } from "@/services/storageService";
 import { fileAttachmentService } from "@/services/fileAttachmentService";
 import { userSettingsService } from "@/services/userSettingsService";
@@ -45,7 +44,6 @@ import type { Database } from "@/integrations/supabase/types";
 type Client = Database["public"]["Tables"]["clients"]["Row"];
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
-type ManualRollover = Database["public"]["Tables"]["manual_rollovers"]["Row"];
 type FileAttachment = Database["public"]["Tables"]["file_attachments"]["Row"];
 
 interface ClientStats {
@@ -75,7 +73,6 @@ export default function TimeLogsPage() {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
-  const [manualRollovers, setManualRollovers] = useState<ManualRollover[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
@@ -173,11 +170,6 @@ export default function TimeLogsPage() {
       a => a.client_id === selectedClientId && a.month === selectedPeriod
     );
 
-    // Get manual rollover for this period
-    const manualRollover = manualRollovers.find(
-      r => r.client_id === selectedClientId && r.month === selectedPeriod
-    );
-
     // Calculate used hours from time entries
     const monthEntries = timeEntries.filter(
       entry => entry.client_id === selectedClientId && entry.month === selectedPeriod
@@ -185,10 +177,10 @@ export default function TimeLogsPage() {
     const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
 
     // Determine allocated hours (from monthly allocation or client default)
-    const allocatedHours = allocation?.allocated_hours ?? client.allocated_hours_per_month;
+    const allocatedHours = Number(allocation?.allocated_hours ?? client.allocated_hours_per_month);
 
-    // Determine rollover hours (from manual rollover or monthly allocation)
-    const rolloverHours = manualRollover?.rollover_hours ?? allocation?.rollover_hours ?? 0;
+    // Determine rollover hours (from monthly allocation)
+    const rolloverHours = Number(allocation?.rollover_hours ?? 0);
 
     // Calculate remaining hours
     const remainingHours = allocatedHours + rolloverHours - usedHours;
@@ -199,25 +191,23 @@ export default function TimeLogsPage() {
       usedHours,
       remainingHours,
     });
-  }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations, manualRollovers]);
+  }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations]);
 
   const loadData = async () => {
     if (!user) return;
     
     try {
       setLoadingData(true);
-      const [clientsData, entriesData, allocationsData, rolloversData, settingsData] = await Promise.all([
+      const [clientsData, entriesData, allocationsData, settingsData] = await Promise.all([
         clientService.getClients(user.id),
         timeEntryService.getTimeEntries(user.id),
         monthlyAllocationService.getMonthlyAllocations(user.id),
-        manualRolloverService.getManualRollovers(user.id),
         userSettingsService.getUserSettings(user.id),
       ]);
       
       setClients(clientsData);
       setTimeEntries(entriesData);
       setMonthlyAllocations(allocationsData);
-      setManualRollovers(rolloversData);
       
       if (settingsData?.company_logo_url) {
         setCompanyLogo(settingsData.company_logo_url);
@@ -814,7 +804,7 @@ export default function TimeLogsPage() {
   };
 
   const handleSaveRollover = async () => {
-    if (!selectedClient || !selectedPeriod || !user) return;
+    if (!selectedClient || !selectedPeriod || !user || !stats) return;
 
     const newRollover = parseFloat(rolloverValue);
     if (isNaN(newRollover)) {
@@ -827,13 +817,13 @@ export default function TimeLogsPage() {
     }
 
     try {
-      await manualRolloverService.upsertManualRollover({
+      await monthlyAllocationService.upsertMonthlyAllocation({
         user_id: user.id,
         client_id: selectedClientId,
         month: selectedPeriod,
         year: parseInt(selectedPeriod.split("-")[0]),
+        allocated_hours: stats.allocatedHours,
         rollover_hours: newRollover,
-        note: "",
       });
 
       toast({
@@ -854,7 +844,7 @@ export default function TimeLogsPage() {
   };
 
   const handleSaveAllocation = async () => {
-    if (!selectedClient || !selectedPeriod || !user) return;
+    if (!selectedClient || !selectedPeriod || !user || !stats) return;
 
     const newAllocation = parseFloat(allocationValue);
     if (isNaN(newAllocation) || newAllocation < 0) {
@@ -887,7 +877,7 @@ export default function TimeLogsPage() {
           month: selectedPeriod,
           year: parseInt(selectedPeriod.split("-")[0]),
           allocated_hours: newAllocation,
-          rollover_hours: 0,
+          rollover_hours: stats.rolloverHours,
         });
 
         toast({
