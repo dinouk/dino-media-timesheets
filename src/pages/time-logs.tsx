@@ -689,12 +689,12 @@ export default function TimeLogsPage() {
       
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text(box.label, x + boxWidth / 2, boxY + 12, { align: "center" });
+      doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 2, { align: "center" });
       
       doc.setFontSize(11);
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
-      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + 19, { align: "center" });
+      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 4, { align: "center" });
       doc.setFont("helvetica", "normal");
     });
 
