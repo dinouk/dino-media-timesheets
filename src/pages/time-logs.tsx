@@ -738,7 +738,9 @@ export default function TimeLogsPage() {
       styles: {
         lineColor: [248, 250, 252],
         lineWidth: 0,
-        cellPadding: 3
+        cellPadding: 3,
+        fontSize: 7.5,
+        textColor: [51, 65, 85]
       },
       headStyles: {
         fillColor: [1, 136, 169],
@@ -756,35 +758,15 @@ export default function TimeLogsPage() {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 18 },
-        1: { cellWidth: 15 },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 35, overflow: 'linebreak' },
-        4: { cellWidth: 31 }
+        0: { cellWidth: 20 },
+        1: { cellWidth: 16 },
+        2: { cellWidth: 65 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 28 }
       },
       margin: { left: 14, right: 14 },
       tableWidth: pageWidth - 28,
       didDrawCell: (data) => {
-        if (data.column.index === 3 && data.section === "body" && data.row.index < entriesWithFiles.length) {
-          const { entry } = entriesWithFiles[data.row.index];
-          const tags = entry.tags as string[];
-          if (tags.length > 0) {
-            const cell = data.cell;
-            const tagsText = tags.join(", ");
-
-            doc.setFontSize(7.5);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(51, 65, 85);
-
-            const textLines = doc.splitTextToSize(tagsText, cell.width - 4);
-            let yOffset = 5;
-            textLines.forEach((line: string) => {
-              doc.text(line, cell.x + 2, cell.y + yOffset);
-              yOffset += 4;
-            });
-          }
-        }
-
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
           if (files.length > 0) {
