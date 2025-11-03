@@ -11,10 +11,12 @@ export const userSettingsService = {
       .from("user_settings")
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== "PGRST116") throw error;
-    return data as UserSettings | null;
+    if (error) throw error;
+    
+    // Return first item or null if no settings exist
+    return data && data.length > 0 ? (data[0] as UserSettings) : null;
   },
 
   async upsertUserSettings(settings: Omit<UserSettingsInsert, "id" | "created_at" | "updated_at">) {
