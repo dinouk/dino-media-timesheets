@@ -26,7 +26,8 @@ export default async function handler(
     const supabase = createServerSupabaseClient();
 
     // Store the signup request in Supabase
-    const { data, error } = await supabase
+    // Don't try to select back since anonymous users can only INSERT, not SELECT
+    const { error } = await supabase
       .from("signup_requests")
       .insert([
         {
@@ -34,9 +35,7 @@ export default async function handler(
           email: email.trim().toLowerCase(),
           status: "pending",
         },
-      ])
-      .select()
-      .single();
+      ]);
 
     if (error) {
       console.error("Error storing signup request:", error);
@@ -44,7 +43,6 @@ export default async function handler(
     }
 
     // Send email notification using Resend
-    // You'll need to set RESEND_API_KEY in your environment variables
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (resendApiKey) {
