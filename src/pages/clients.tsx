@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -377,9 +377,6 @@ export default function ClientsPage() {
                             </Badge>
                           )}
                         </div>
-                        <CardDescription className="text-base font-semibold text-brand-primary">
-                          {client.allocated_hours_per_month} hours/month
-                        </CardDescription>
                       </div>
                       <div className="flex gap-1">
                         <Button

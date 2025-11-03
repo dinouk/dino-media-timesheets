@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Filter, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
+import { FileDown, Filter, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
