@@ -1254,7 +1254,7 @@ export default function TimeLogsPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-center pt-8 pb-8">
+            <div className="flex justify-center gap-4 pt-8 pb-8">
               <Button 
                 size="lg" 
                 className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
@@ -1263,6 +1263,17 @@ export default function TimeLogsPage() {
                 <Plus className="w-5 h-5" />
                 Add New Log
               </Button>
+              {filteredEntries.length > 0 && (
+                <Button 
+                  size="lg"
+                  onClick={handleExportPDF} 
+                  className="gap-2"
+                  variant="outline"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Export PDF
+                </Button>
+              )}
             </div>
           </>
         )}
