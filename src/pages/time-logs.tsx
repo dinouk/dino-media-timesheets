@@ -5,10 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, CheckCircle } from "lucide-react";
+import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
 import Link from "next/link";
-import { Client, TimeEntry, MonthlyAllocation, ClientStats, ManualRollover } from "@/types";
-import { calculateClientStats, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -34,19 +32,53 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
+import { clientService } from "@/services/clientService";
+import { timeEntryService } from "@/services/timeEntryService";
+import { monthlyAllocationService } from "@/services/monthlyAllocationService";
+import { manualRolloverService } from "@/services/manualRolloverService";
+import { storageService } from "@/services/storageService";
+import { fileAttachmentService } from "@/services/fileAttachmentService";
+import { userSettingsService } from "@/services/userSettingsService";
+import type { Database } from "@/integrations/supabase/types";
+
+type Client = Database["public"]["Tables"]["clients"]["Row"];
+type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
+type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
+type ManualRollover = Database["public"]["Tables"]["manual_rollovers"]["Row"];
+type FileAttachment = Database["public"]["Tables"]["file_attachments"]["Row"];
+
+interface ClientStats {
+  allocatedHours: number;
+  rolloverHours: number;
+  usedHours: number;
+  remainingHours: number;
+}
+
+interface FileUpload {
+  id: string;
+  name: string;
+  displayName: string;
+  file?: File;
+  url?: string;
+  path?: string;
+  type: string;
+  size: number;
+}
 
 export default function TimeLogsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
   const [manualRollovers, setManualRollovers] = useState<ManualRollover[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("");
   const [stats, setStats] = useState<ClientStats | null>(null);
-  const [currentUser, setCurrentUser] = useState("");
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<TimeEntry | null>(null);
   const [editForm, setEditForm] = useState({
@@ -54,29 +86,31 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
-    files: [] as Array<{ id: string; name: string; displayName: string; data: string; type: string; size: number }>,
+    files: [] as FileUpload[],
   });
   const [editingRollover, setEditingRollover] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(false);
   const [rolloverValue, setRolloverValue] = useState("");
   const [allocationValue, setAllocationValue] = useState("");
+  const [loadingData, setLoadingData] = useState(true);
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    loadData();
+    if (user) {
+      loadData();
+    }
     
     if (!router.query.period) {
       const now = new Date();
       const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
       setSelectedPeriod(currentPeriod);
     }
-  }, [router]);
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
@@ -87,33 +121,72 @@ export default function TimeLogsPage() {
     }
   }, [router.query.clientId, router.query.period, clients]);
 
-  const loadData = () => {
-    const savedClients = localStorage.getItem("clients");
-    const savedEntries = localStorage.getItem("timeEntries");
-    const savedAllocations = localStorage.getItem("monthlyAllocations");
-    const savedManualRollovers = localStorage.getItem("manualRollovers");
+  const loadData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingData(true);
+      const [clientsData, entriesData, allocationsData, rolloversData, settingsData] = await Promise.all([
+        clientService.getClients(user.id),
+        timeEntryService.getTimeEntries(user.id),
+        monthlyAllocationService.getMonthlyAllocations(user.id),
+        manualRolloverService.getManualRollovers(user.id),
+        userSettingsService.getUserSettings(user.id),
+      ]);
+      
+      setClients(clientsData);
+      setTimeEntries(entriesData);
+      setMonthlyAllocations(allocationsData);
+      setManualRollovers(rolloversData);
+      
+      if (settingsData?.company_logo_url) {
+        setCompanyLogo(settingsData.company_logo_url);
+      }
 
-    if (savedClients) setClients(JSON.parse(savedClients));
-    if (savedEntries) setTimeEntries(JSON.parse(savedEntries));
-    if (savedAllocations) setMonthlyAllocations(JSON.parse(savedAllocations));
-    if (savedManualRollovers) setManualRollovers(JSON.parse(savedManualRollovers));
+      const allFilePromises = entriesData.map(entry => 
+        fileAttachmentService.getFileAttachments(entry.id)
+      );
+      const allFiles = await Promise.all(allFilePromises);
+      setFileAttachments(allFiles.flat());
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        title: "Error Loading Data",
+        description: "Failed to load time logs data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
+    }
   };
 
-  const handleEditEntry = (entry: TimeEntry) => {
+  const handleEditEntry = async (entry: TimeEntry) => {
     setEditingEntry(entry);
+    
+    const entryFiles = await fileAttachmentService.getFileAttachments(entry.id);
+    const filesForForm: FileUpload[] = entryFiles.map(f => ({
+      id: f.id,
+      name: f.file_name,
+      displayName: f.display_name,
+      url: f.file_url,
+      path: f.file_path,
+      type: f.file_type || "",
+      size: f.file_size || 0,
+    }));
+
     setEditForm({
       date: entry.date,
       hours: entry.hours.toString(),
       description: entry.description,
-      tags: [...entry.tags],
-      files: entry.files ? [...entry.files] : [],
+      tags: [...(entry.tags as string[])],
+      files: filesForForm,
     });
   };
 
-  const handleUpdateEntry = (e: React.FormEvent) => {
+  const handleUpdateEntry = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!editingEntry || !editForm.date || !editForm.hours || editForm.tags.length === 0 || !editForm.description.trim()) {
+    if (!editingEntry || !editForm.date || !editForm.hours || editForm.tags.length === 0 || !editForm.description.trim() || !user) {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields including description and select at least one tag",
@@ -122,73 +195,103 @@ export default function TimeLogsPage() {
       return;
     }
 
-    const date = new Date(editForm.date);
-    const monthKey = getMonthKey(date);
+    try {
+      const date = new Date(editForm.date);
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
 
-    const updatedEntry: TimeEntry = {
-      ...editingEntry,
-      date: editForm.date,
-      hours: parseFloat(editForm.hours),
-      tags: editForm.tags,
-      description: editForm.description.trim(),
-      files: editForm.files.length > 0 ? editForm.files : undefined,
-      month: monthKey,
-      year: date.getFullYear(),
-    };
+      await timeEntryService.updateTimeEntry(editingEntry.id, {
+        date: editForm.date,
+        hours: parseFloat(editForm.hours),
+        tags: editForm.tags,
+        description: editForm.description.trim(),
+        month: monthKey,
+        year: date.getFullYear(),
+      });
 
-    const updatedEntries = timeEntries.map(entry =>
-      entry.id === editingEntry.id ? updatedEntry : entry
-    );
+      const currentFiles = editForm.files.filter(f => !f.file);
+      const existingFileAttachments = await fileAttachmentService.getFileAttachments(editingEntry.id);
+      
+      for (const existingFile of existingFileAttachments) {
+        if (!currentFiles.find(f => f.id === existingFile.id)) {
+          if (existingFile.file_path) {
+            await storageService.deleteFile("time-entry-files", existingFile.file_path);
+          }
+          await fileAttachmentService.deleteFileAttachment(existingFile.id);
+        }
+      }
 
-    setTimeEntries(updatedEntries);
-    localStorage.setItem("timeEntries", JSON.stringify(updatedEntries));
+      const newFiles = editForm.files.filter(f => f.file);
+      for (const fileUpload of newFiles) {
+        if (fileUpload.file) {
+          const filePath = `${user.id}/${editingEntry.id}/${Date.now()}-${fileUpload.file.name}`;
+          
+          await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
+          
+          const fileUrl = storageService.getPublicUrl("time-entry-files", filePath);
 
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      updatedEntries,
-      monthlyAllocations,
-      (date.getMonth() + 1).toString(),
-      date.getFullYear(),
-      manualRollovers
-    );
-    setMonthlyAllocations(updatedAllocations);
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+          await fileAttachmentService.createFileAttachment({
+            time_entry_id: editingEntry.id,
+            file_name: fileUpload.name,
+            display_name: fileUpload.displayName,
+            file_url: fileUrl,
+            file_path: filePath,
+            file_type: fileUpload.file.type,
+            file_size: fileUpload.file.size,
+          });
+        } else if (fileUpload.id && fileUpload.displayName !== fileUpload.name) {
+          await fileAttachmentService.updateFileAttachment(fileUpload.id, {
+            display_name: fileUpload.displayName,
+          });
+        }
+      }
 
-    toast({
-      title: "Time Entry Updated",
-      description: "Your time entry has been successfully updated",
-    });
+      toast({
+        title: "Time Entry Updated",
+        description: "Your time entry has been successfully updated",
+      });
 
-    setEditingEntry(null);
-    loadData();
+      setEditingEntry(null);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error updating time entry:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update time entry",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteEntry = () => {
+  const handleDeleteEntry = async () => {
     if (!deletingEntry) return;
 
-    const updatedEntries = timeEntries.filter(entry => entry.id !== deletingEntry.id);
-    setTimeEntries(updatedEntries);
-    localStorage.setItem("timeEntries", JSON.stringify(updatedEntries));
+    try {
+      const entryFiles = await fileAttachmentService.getFileAttachments(deletingEntry.id);
+      
+      for (const file of entryFiles) {
+        if (file.file_path) {
+          await storageService.deleteFile("time-entry-files", file.file_path);
+        }
+        await fileAttachmentService.deleteFileAttachment(file.id);
+      }
 
-    const date = new Date(deletingEntry.date);
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      updatedEntries,
-      monthlyAllocations,
-      (date.getMonth() + 1).toString(),
-      date.getFullYear(),
-      manualRollovers
-    );
-    setMonthlyAllocations(updatedAllocations);
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+      await timeEntryService.deleteTimeEntry(deletingEntry.id);
 
-    toast({
-      title: "Time Entry Deleted",
-      description: "Your time entry has been successfully deleted",
-    });
+      toast({
+        title: "Time Entry Deleted",
+        description: "Your time entry has been successfully deleted",
+      });
 
-    setDeletingEntry(null);
-    loadData();
+      setDeletingEntry(null);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error deleting time entry:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete time entry",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleEditTag = (tag: string) => {
@@ -214,22 +317,19 @@ export default function TimeLogsPage() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const fileData = {
-          id: Date.now().toString() + Math.random(),
-          name: file.name,
-          displayName: file.name,
-          data: event.target?.result as string,
-          type: file.type,
-          size: file.size,
-        };
-        setEditForm(prev => ({
-          ...prev,
-          files: [...prev.files, fileData],
-        }));
+      const fileData: FileUpload = {
+        id: Date.now().toString() + Math.random(),
+        name: file.name,
+        displayName: file.name,
+        file: file,
+        type: file.type,
+        size: file.size,
       };
-      reader.readAsDataURL(file);
+      
+      setEditForm(prev => ({
+        ...prev,
+        files: [...prev.files, fileData],
+      }));
     });
 
     e.target.value = "";
@@ -256,35 +356,42 @@ export default function TimeLogsPage() {
 
   useEffect(() => {
     if (selectedClientId && selectedPeriod && clients.length > 0) {
-      const client = clients.find(c => c.id === selectedClientId);
-      if (client) {
-        const [year, month] = selectedPeriod.split("-");
-        const updatedAllocations = processMonthlyRollover(
-          clients,
-          timeEntries,
-          monthlyAllocations,
-          month,
-          parseInt(year),
-          manualRollovers
-        );
-        setMonthlyAllocations(updatedAllocations);
-        localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
-
-        const clientStats = calculateClientStats(
-          client,
-          month,
-          parseInt(year),
-          timeEntries,
-          updatedAllocations
-        );
-        setStats(clientStats);
-      }
+      calculateStats();
     }
-  }, [selectedClientId, selectedPeriod, clients, timeEntries, manualRollovers]);
+  }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations, manualRollovers]);
+
+  const calculateStats = () => {
+    const client = clients.find(c => c.id === selectedClientId);
+    if (!client) return;
+
+    const allocation = monthlyAllocations.find(
+      a => a.client_id === selectedClientId && a.month === selectedPeriod
+    );
+
+    const manualRollover = manualRollovers.find(
+      r => r.client_id === selectedClientId && r.month === selectedPeriod
+    );
+
+    const monthEntries = timeEntries.filter(
+      entry => entry.client_id === selectedClientId && entry.month === selectedPeriod
+    );
+
+    const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+    const allocatedHours = allocation?.allocated_hours ?? client.allocated_hours_per_month;
+    const rolloverHours = manualRollover?.rollover_hours ?? (allocation?.rollover_hours ?? 0);
+    const remainingHours = allocatedHours + rolloverHours - usedHours;
+
+    setStats({
+      allocatedHours,
+      rolloverHours,
+      usedHours,
+      remainingHours,
+    });
+  };
 
   const filteredEntries = timeEntries
     .filter(entry => 
-      entry.clientId === selectedClientId &&
+      entry.client_id === selectedClientId &&
       entry.month === selectedPeriod
     )
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -294,12 +401,11 @@ export default function TimeLogsPage() {
   const activeClients = clients.filter(c => !c.archived);
   const archivedClients = clients.filter(c => c.archived);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
 
     const [year, month] = selectedPeriod.split("-");
     const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
-    const companyLogo = localStorage.getItem("companyLogo");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -308,7 +414,14 @@ export default function TimeLogsPage() {
     if (companyLogo) {
       try {
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.src = companyLogo;
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
         const imgWidth = img.width;
         const imgHeight = img.height;
         const aspectRatio = imgWidth / imgHeight;
@@ -369,24 +482,19 @@ export default function TimeLogsPage() {
       doc.setDrawColor(box.color[0], box.color[1], box.color[2]);
       doc.setLineWidth(0.5);
       
-      // Draw icons based on type
       if (box.icon === "arrow") {
-        // Trending up arrow
         doc.line(iconCenterX - iconSize, iconCenterY + iconSize/2, iconCenterX + iconSize, iconCenterY - iconSize/2);
         doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2 + 1);
         doc.line(iconCenterX + iconSize, iconCenterY - iconSize/2, iconCenterX + iconSize - 1, iconCenterY - iconSize/2);
       } else if (box.icon === "clock") {
-        // Clock icon
         doc.circle(iconCenterX, iconCenterY, iconSize, "S");
         doc.line(iconCenterX, iconCenterY, iconCenterX, iconCenterY - iconSize * 0.6);
         doc.line(iconCenterX, iconCenterY, iconCenterX + iconSize * 0.5, iconCenterY);
       } else if (box.icon === "check") {
-        // Check mark
         doc.setLineWidth(0.8);
         doc.line(iconCenterX - iconSize, iconCenterY, iconCenterX - iconSize/2, iconCenterY + iconSize);
         doc.line(iconCenterX - iconSize/2, iconCenterY + iconSize, iconCenterX + iconSize, iconCenterY - iconSize);
       } else if (box.icon === "alert") {
-        // Alert/warning icon
         doc.circle(iconCenterX, iconCenterY, iconSize, "S");
         doc.setLineWidth(0.6);
         doc.line(iconCenterX, iconCenterY - iconSize/2, iconCenterX, iconCenterY + iconSize/4);
@@ -411,14 +519,19 @@ export default function TimeLogsPage() {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    const tableData = entriesSortedAsc.map(entry => [
+    const entriesWithFiles = await Promise.all(
+      entriesSortedAsc.map(async (entry) => {
+        const files = await fileAttachmentService.getFileAttachments(entry.id);
+        return { entry, files };
+      })
+    );
+
+    const tableData = entriesWithFiles.map(({ entry, files }) => [
       new Date(entry.date).toLocaleDateString(),
       entry.hours.toString(),
       entry.description,
-      entry.tags.join(", "),
-      entry.files && entry.files.length > 0 
-        ? entry.files.map(f => f.displayName).join(", ")
-        : "No files"
+      (entry.tags as string[]).join(", "),
+      files.length > 0 ? files.map(f => f.display_name).join(", ") : "No files"
     ]);
 
     autoTable(doc, {
@@ -448,11 +561,10 @@ export default function TimeLogsPage() {
       },
       margin: { left: 14, right: 14 },
       didDrawCell: (data) => {
-        if (data.column.index === 4 && data.section === "body" && data.row.index < entriesSortedAsc.length) {
-          const entry = entriesSortedAsc[data.row.index];
-          if (entry.files && entry.files.length > 0) {
+        if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
+          const { files } = entriesWithFiles[data.row.index];
+          if (files.length > 0) {
             const cell = data.cell;
-            const files = entry.files;
             
             files.forEach((file, fileIndex) => {
               const linkY = cell.y + 5 + (fileIndex * 6);
@@ -460,8 +572,8 @@ export default function TimeLogsPage() {
               doc.setFontSize(10);
               doc.setFont("helvetica", "normal");
               doc.setTextColor(1, 136, 169);
-              doc.textWithLink(file.displayName, cell.x + 2, linkY, {
-                url: file.data
+              doc.textWithLink(file.display_name, cell.x + 2, linkY, {
+                url: file.file_url
               });
             });
           }
@@ -505,8 +617,8 @@ export default function TimeLogsPage() {
     return option ? option.label : "";
   };
 
-  const handleSaveRollover = () => {
-    if (!selectedClient || !selectedPeriod) return;
+  const handleSaveRollover = async () => {
+    if (!selectedClient || !selectedPeriod || !user) return;
 
     const newRollover = parseFloat(rolloverValue);
     if (isNaN(newRollover)) {
@@ -518,59 +630,35 @@ export default function TimeLogsPage() {
       return;
     }
 
-    const existingIndex = manualRollovers.findIndex(
-      r => r.clientId === selectedClientId && r.month === selectedPeriod
-    );
-
-    let updatedRollovers: ManualRollover[];
-
-    if (existingIndex !== -1) {
-      updatedRollovers = [...manualRollovers];
-      updatedRollovers[existingIndex] = {
-        ...updatedRollovers[existingIndex],
-        rolloverHours: newRollover,
-        updatedAt: new Date().toISOString(),
-      };
-    } else {
-      const newRolloverEntry: ManualRollover = {
-        id: Date.now().toString(),
-        clientId: selectedClientId,
+    try {
+      await manualRolloverService.upsertManualRollover({
+        user_id: user.id,
+        client_id: selectedClientId,
         month: selectedPeriod,
         year: parseInt(selectedPeriod.split("-")[0]),
-        rolloverHours: newRollover,
+        rollover_hours: newRollover,
         note: "",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      updatedRollovers = [...manualRollovers, newRolloverEntry];
+      });
+
+      toast({
+        title: "Rollover Updated",
+        description: "Rollover hours have been updated successfully",
+      });
+
+      setEditingRollover(false);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error updating rollover:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update rollover",
+        variant: "destructive",
+      });
     }
-
-    setManualRollovers(updatedRollovers);
-    localStorage.setItem("manualRollovers", JSON.stringify(updatedRollovers));
-
-    const [year, month] = selectedPeriod.split("-");
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      timeEntries,
-      monthlyAllocations,
-      month,
-      parseInt(year),
-      updatedRollovers
-    );
-    setMonthlyAllocations(updatedAllocations);
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
-
-    toast({
-      title: "Rollover Updated",
-      description: "Rollover hours have been updated successfully",
-    });
-
-    setEditingRollover(false);
-    loadData();
   };
 
-  const handleSaveAllocation = () => {
-    if (!selectedClient || !selectedPeriod) return;
+  const handleSaveAllocation = async () => {
+    if (!selectedClient || !selectedPeriod || !user) return;
 
     const newAllocation = parseFloat(allocationValue);
     if (isNaN(newAllocation) || newAllocation < 0) {
@@ -582,57 +670,46 @@ export default function TimeLogsPage() {
       return;
     }
 
-    const [year, month] = selectedPeriod.split("-");
-    const currentDate = new Date();
-    const currentPeriod = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, "0")}`;
-    const isCurrentMonth = selectedPeriod === currentPeriod;
+    try {
+      const currentDate = new Date();
+      const currentPeriod = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, "0")}`;
+      const isCurrentMonth = selectedPeriod === currentPeriod;
 
-    if (isCurrentMonth) {
-      const updatedClients = clients.map(c =>
-        c.id === selectedClientId ? { ...c, allocatedHoursPerMonth: newAllocation } : c
-      );
-      setClients(updatedClients);
-      localStorage.setItem("clients", JSON.stringify(updatedClients));
+      if (isCurrentMonth) {
+        await clientService.updateClient(selectedClientId, {
+          allocated_hours_per_month: newAllocation,
+        });
 
-      toast({
-        title: "Allocation Updated",
-        description: "Base allocated hours updated for this client (affects current and future months)",
-      });
-    } else {
-      const existingIndex = monthlyAllocations.findIndex(
-        a => a.clientId === selectedClientId && a.month === selectedPeriod
-      );
-
-      let updatedAllocations: MonthlyAllocation[];
-
-      if (existingIndex !== -1) {
-        updatedAllocations = [...monthlyAllocations];
-        updatedAllocations[existingIndex] = {
-          ...updatedAllocations[existingIndex],
-          allocatedHours: newAllocation,
-        };
+        toast({
+          title: "Allocation Updated",
+          description: "Base allocated hours updated for this client (affects current and future months)",
+        });
       } else {
-        const newEntry: MonthlyAllocation = {
-          clientId: selectedClientId,
+        await monthlyAllocationService.upsertMonthlyAllocation({
+          user_id: user.id,
+          client_id: selectedClientId,
           month: selectedPeriod,
-          year: parseInt(year),
-          allocatedHours: newAllocation,
-          rolloverHours: 0,
-        };
-        updatedAllocations = [...monthlyAllocations, newEntry];
+          year: parseInt(selectedPeriod.split("-")[0]),
+          allocated_hours: newAllocation,
+          rollover_hours: 0,
+        });
+
+        toast({
+          title: "Allocation Updated",
+          description: "Allocated hours updated for this month only",
+        });
       }
 
-      setMonthlyAllocations(updatedAllocations);
-      localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
-
+      setEditingAllocation(false);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error updating allocation:", error);
       toast({
-        title: "Allocation Updated",
-        description: "Allocated hours updated for this month only",
+        title: "Error",
+        description: error.message || "Failed to update allocation",
+        variant: "destructive",
       });
     }
-
-    setEditingAllocation(false);
-    loadData();
   };
 
   const handleStartEditRollover = () => {
@@ -649,11 +726,20 @@ export default function TimeLogsPage() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted || loading || loadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
@@ -838,7 +924,7 @@ export default function TimeLogsPage() {
                       </span>
                     </div>
                     <Progress 
-                      value={stats.usedHours / (stats.allocatedHours + stats.rolloverHours) * 100} 
+                      value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)}
                       className={`h-3 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
                     />
                   </div>
@@ -889,68 +975,73 @@ export default function TimeLogsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredEntries.map(entry => (
-                          <TableRow key={entry.id}>
-                            <TableCell className="font-medium">
-                              {new Date(entry.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
-                            </TableCell>
-                            <TableCell className="max-w-xs">
-                              <p className="text-sm text-slate-700 truncate">{entry.description}</p>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {entry.tags.map((tag, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {entry.files && entry.files.length > 0 ? (
+                        {filteredEntries.map(entry => {
+                          const entryFiles = fileAttachments.filter(f => f.time_entry_id === entry.id);
+                          
+                          return (
+                            <TableRow key={entry.id}>
+                              <TableCell className="font-medium">
+                                {new Date(entry.date).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-semibold text-brand-primary">{entry.hours} hours</span>
+                              </TableCell>
+                              <TableCell className="max-w-xs">
+                                <p className="text-sm text-slate-700 truncate">{entry.description}</p>
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex flex-wrap gap-1">
-                                  {entry.files.map((file) => (
-                                    <a
-                                      key={file.id}
-                                      href={file.data}
-                                      download={file.name}
-                                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <Download className="w-3 h-3" />
-                                      {file.displayName}
-                                    </a>
+                                  {(entry.tags as string[]).map((tag, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
                                   ))}
                                 </div>
-                              ) : (
-                                <span className="text-xs text-slate-400">No files</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreVertical className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => setDeletingEntry(entry)}
-                                    className="text-red-600 focus:text-red-600"
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              </TableCell>
+                              <TableCell>
+                                {entryFiles.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {entryFiles.map((file) => (
+                                      <a
+                                        key={file.id}
+                                        href={file.file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        {file.display_name}
+                                      </a>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-slate-400">No files</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => setDeletingEntry(entry)}
+                                      className="text-red-600 focus:text-red-600"
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -1094,11 +1185,11 @@ export default function TimeLogsPage() {
                   )}
                 </div>
 
-                {selectedClient && selectedClient.tags.length > 0 && (
+                {selectedClient && (selectedClient.tags as string[]).length > 0 && (
                   <div className="space-y-2">
                     <Label>Tags * (select at least one)</Label>
                     <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {selectedClient.tags.map((tag) => (
+                      {(selectedClient.tags as string[]).map((tag) => (
                         <Badge
                           key={tag}
                           variant={editForm.tags.includes(tag) ? "default" : "outline"}
