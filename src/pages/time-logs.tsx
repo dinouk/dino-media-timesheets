@@ -132,7 +132,7 @@ export default function TimeLogsPage() {
         router.replace({
           pathname: router.pathname,
           query: { clientId: router.query.clientId, period: router.query.period }
-        }, undefined, { shallow: true });
+        });
       }
     }
     if (router.query.period && typeof router.query.period === "string") {
@@ -148,7 +148,7 @@ export default function TimeLogsPage() {
       router.replace({
         pathname: router.pathname,
         query: router.query.period ? { period: router.query.period } : {}
-      }, undefined, { shallow: true });
+      });
     }
   }, [router.query.add, router.query.clientId, clients.length]);
 
@@ -585,7 +585,7 @@ export default function TimeLogsPage() {
       router.push({
         pathname: "/time-logs",
         query: { clientId: addForm.clientId, period: monthKey }
-      }, undefined, { shallow: true });
+      });
       
       await loadData();
     } catch (error: any) {
@@ -841,7 +841,7 @@ export default function TimeLogsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    }, undefined, { shallow: true });
+    });
   };
 
   // Handle period filter change with URL sync
@@ -857,7 +857,7 @@ export default function TimeLogsPage() {
     router.push({
       pathname: router.pathname,
       query: newQuery
-    }, undefined, { shallow: true });
+    });
   };
 
   const handleSaveRollover = async () => {
