@@ -37,7 +37,7 @@ export default function MyAccountPage() {
       toast({
         title: "Invalid Email",
         description: "Please enter a valid email address",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -45,16 +45,16 @@ export default function MyAccountPage() {
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
-      
+
       toast({
         title: "Email Update Requested",
-        description: "Please check your new email address to confirm the change",
+        description: "Please check your new email address to confirm the change"
       });
     } catch (err: any) {
       toast({
         title: "Error",
         description: err.message || "Failed to update email",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -65,7 +65,7 @@ export default function MyAccountPage() {
       toast({
         title: "Missing Fields",
         description: "Please fill in all password fields",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -73,7 +73,7 @@ export default function MyAccountPage() {
       toast({
         title: "Password Mismatch",
         description: "New passwords do not match",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -81,7 +81,7 @@ export default function MyAccountPage() {
       toast({
         title: "Password Too Short",
         description: "Password must be at least 6 characters long",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -90,7 +90,7 @@ export default function MyAccountPage() {
       await updatePassword(newPassword);
       toast({
         title: "Password Updated",
-        description: "Your password has been successfully updated",
+        description: "Your password has been successfully updated"
       });
       setCurrentPassword("");
       setNewPassword("");
@@ -99,7 +99,7 @@ export default function MyAccountPage() {
       toast({
         title: "Error",
         description: err.message || "Failed to update password",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -111,8 +111,8 @@ export default function MyAccountPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -138,15 +138,15 @@ export default function MyAccountPage() {
               <CardContent>
                 <form onSubmit={handleUpdateEmail} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    
                     <Input
                       id="email"
                       type="email"
                       placeholder="your.email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                      required />
+
                   </div>
                   <Button type="submit" className="gap-2">
                     <Save className="w-4 h-4" />
@@ -174,8 +174,8 @@ export default function MyAccountPage() {
                       placeholder="Enter current password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
-                    />
+                      required />
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="new-password">New Password</Label>
@@ -185,8 +185,8 @@ export default function MyAccountPage() {
                       placeholder="Enter new password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                    />
+                      required />
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -196,8 +196,8 @@ export default function MyAccountPage() {
                       placeholder="Confirm new password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
+                      required />
+
                   </div>
                   <Button type="submit" className="gap-2">
                     <Save className="w-4 h-4" />
@@ -209,6 +209,6 @@ export default function MyAccountPage() {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>);
+
 }
