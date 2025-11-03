@@ -316,12 +316,7 @@ export default function TimeLogsPage() {
         }
       }
 
-      toast({
-        title: "Time Entry Updated",
-        description: "Your time entry has been successfully updated"
-      });
-
-      // Complete state cleanup - critical to prevent modal blocking
+      // First, close the dialog by clearing state
       setEditingEntry(null);
       setEditForm({
         date: "",
@@ -331,10 +326,16 @@ export default function TimeLogsPage() {
         files: []
       });
 
-      // Reload data after a brief delay to ensure modal unmounts
+      // Show toast after state cleanup
+      toast({
+        title: "Time Entry Updated",
+        description: "Your time entry has been successfully updated"
+      });
+
+      // Allow dialog to fully unmount, then reload data
       setTimeout(async () => {
         await loadData();
-      }, 100);
+      }, 300);
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({
@@ -573,15 +574,11 @@ export default function TimeLogsPage() {
         }
       }
 
-      toast({
-        title: "Time Entry Created",
-        description: "Your time entry has been successfully logged"
-      });
-
-      // Complete state cleanup
+      // Save navigation targets before closing
       const targetClientId = addForm.clientId;
       const targetPeriod = monthKey;
       
+      // Close dialog first
       setIsAddingTimeLog(false);
       setAddForm({
         clientId: "",
@@ -592,7 +589,13 @@ export default function TimeLogsPage() {
         files: []
       });
 
-      // Brief delay to ensure modal unmounts before navigation
+      // Show toast after cleanup
+      toast({
+        title: "Time Entry Created",
+        description: "Your time entry has been successfully logged"
+      });
+
+      // Allow dialog to fully unmount before navigation
       setTimeout(() => {
         setSelectedClientId(targetClientId);
         setSelectedPeriod(targetPeriod);
@@ -603,7 +606,7 @@ export default function TimeLogsPage() {
         }, undefined, { shallow: true });
 
         loadData();
-      }, 100);
+      }, 300);
     } catch (error: any) {
       console.error("Error creating time entry:", error);
       toast({
@@ -1341,7 +1344,18 @@ export default function TimeLogsPage() {
         }
 
         {editingEntry && selectedClient &&
-        <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
+        <Dialog open={!!editingEntry} onOpenChange={(open) => {
+            if (!open) {
+              setEditingEntry(null);
+              setEditForm({
+                date: "",
+                hours: "",
+                description: "",
+                tags: [],
+                files: []
+              });
+            }
+          }}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Time Entry</DialogTitle>
@@ -1510,7 +1524,19 @@ export default function TimeLogsPage() {
         }
 
         {isAddingTimeLog &&
-        <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
+        <Dialog open={isAddingTimeLog} onOpenChange={(open) => {
+            if (!open) {
+              setIsAddingTimeLog(false);
+              setAddForm({
+                clientId: "",
+                date: "",
+                hours: "",
+                description: "",
+                tags: [],
+                files: []
+              });
+            }
+          }}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Log Time Entry</DialogTitle>
