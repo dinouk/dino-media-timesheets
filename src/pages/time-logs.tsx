@@ -23,14 +23,14 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTitle } from
+"@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { clientService } from "@/services/clientService";
@@ -83,7 +83,7 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
-    files: [] as FileUpload[],
+    files: [] as FileUpload[]
   });
   const [editingRollover, setEditingRollover] = useState(false);
   const [editingAllocation, setEditingAllocation] = useState(false);
@@ -98,7 +98,7 @@ export default function TimeLogsPage() {
     hours: "",
     description: "",
     tags: [] as string[],
-    files: [] as FileUpload[],
+    files: [] as FileUpload[]
   });
 
   const minDate = "2025-10-01";
@@ -113,7 +113,7 @@ export default function TimeLogsPage() {
     if (user) {
       loadData();
     }
-    
+
     if (!router.query.period) {
       const now = new Date();
       const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
@@ -124,7 +124,7 @@ export default function TimeLogsPage() {
   useEffect(() => {
     if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
       setSelectedClientId(router.query.clientId);
-      
+
       // Check if we should open add dialog
       if (router.query.add === "true") {
         handleOpenAddDialog(router.query.clientId);
@@ -139,7 +139,7 @@ export default function TimeLogsPage() {
       setSelectedPeriod(router.query.period);
     }
   }, [router.query.clientId, router.query.period, router.query.add, clients]);
-  
+
   // Separate effect to handle add dialog without clientId
   useEffect(() => {
     if (router.query.add === "true" && !router.query.clientId && clients.length > 0) {
@@ -159,7 +159,7 @@ export default function TimeLogsPage() {
       return;
     }
 
-    const client = clients.find(c => c.id === selectedClientId);
+    const client = clients.find((c) => c.id === selectedClientId);
     if (!client) {
       setStats(null);
       return;
@@ -167,12 +167,12 @@ export default function TimeLogsPage() {
 
     // Get monthly allocation for this period
     const allocation = monthlyAllocations.find(
-      a => a.client_id === selectedClientId && a.month === selectedPeriod
+      (a) => a.client_id === selectedClientId && a.month === selectedPeriod
     );
 
     // Calculate used hours from time entries
     const monthEntries = timeEntries.filter(
-      entry => entry.client_id === selectedClientId && entry.month === selectedPeriod
+      (entry) => entry.client_id === selectedClientId && entry.month === selectedPeriod
     );
     const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
 
@@ -189,32 +189,32 @@ export default function TimeLogsPage() {
       allocatedHours,
       rolloverHours,
       usedHours,
-      remainingHours,
+      remainingHours
     });
   }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations]);
 
   const loadData = async () => {
     if (!user) return;
-    
+
     try {
       setLoadingData(true);
       const [clientsData, entriesData, allocationsData, settingsData] = await Promise.all([
-        clientService.getClients(user.id),
-        timeEntryService.getTimeEntries(user.id),
-        monthlyAllocationService.getMonthlyAllocations(user.id),
-        userSettingsService.getUserSettings(user.id),
-      ]);
-      
+      clientService.getClients(user.id),
+      timeEntryService.getTimeEntries(user.id),
+      monthlyAllocationService.getMonthlyAllocations(user.id),
+      userSettingsService.getUserSettings(user.id)]
+      );
+
       setClients(clientsData);
       setTimeEntries(entriesData);
       setMonthlyAllocations(allocationsData);
-      
+
       if (settingsData?.company_logo_url) {
         setCompanyLogo(settingsData.company_logo_url);
       }
 
-      const allFilePromises = entriesData.map(entry => 
-        fileAttachmentService.getFileAttachments(entry.id)
+      const allFilePromises = entriesData.map((entry) =>
+      fileAttachmentService.getFileAttachments(entry.id)
       );
       const allFiles = await Promise.all(allFilePromises);
       setFileAttachments(allFiles.flat());
@@ -223,7 +223,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Error Loading Data",
         description: "Failed to load time logs data",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoadingData(false);
@@ -232,16 +232,16 @@ export default function TimeLogsPage() {
 
   const handleEditEntry = async (entry: TimeEntry) => {
     setEditingEntry(entry);
-    
+
     const entryFiles = await fileAttachmentService.getFileAttachments(entry.id);
-    const filesForForm: FileUpload[] = entryFiles.map(f => ({
+    const filesForForm: FileUpload[] = entryFiles.map((f) => ({
       id: f.id,
       name: f.file_name,
       displayName: f.display_name,
       url: f.file_url,
       path: f.file_path,
       type: f.file_type || "",
-      size: f.file_size || 0,
+      size: f.file_size || 0
     }));
 
     setEditForm({
@@ -249,7 +249,7 @@ export default function TimeLogsPage() {
       hours: entry.hours.toString(),
       description: entry.description,
       tags: [...(entry.tags as string[])],
-      files: filesForForm,
+      files: filesForForm
     });
   };
 
@@ -260,7 +260,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields including description and select at least one tag",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -275,14 +275,14 @@ export default function TimeLogsPage() {
         tags: editForm.tags,
         description: editForm.description.trim(),
         month: monthKey,
-        year: date.getFullYear(),
+        year: date.getFullYear()
       });
 
-      const currentFiles = editForm.files.filter(f => !f.file);
+      const currentFiles = editForm.files.filter((f) => !f.file);
       const existingFileAttachments = await fileAttachmentService.getFileAttachments(editingEntry.id);
-      
+
       for (const existingFile of existingFileAttachments) {
-        if (!currentFiles.find(f => f.id === existingFile.id)) {
+        if (!currentFiles.find((f) => f.id === existingFile.id)) {
           if (existingFile.file_path) {
             await storageService.deleteFile("time-entry-files", existingFile.file_path);
           }
@@ -290,13 +290,13 @@ export default function TimeLogsPage() {
         }
       }
 
-      const newFiles = editForm.files.filter(f => f.file);
+      const newFiles = editForm.files.filter((f) => f.file);
       for (const fileUpload of newFiles) {
         if (fileUpload.file) {
           const filePath = `${user.id}/${editingEntry.id}/${Date.now()}-${fileUpload.file.name}`;
-          
+
           await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
-          
+
           const fileUrl = await storageService.getPublicUrl("time-entry-files", filePath);
 
           await fileAttachmentService.createFileAttachment({
@@ -307,11 +307,11 @@ export default function TimeLogsPage() {
             file_url: fileUrl,
             file_path: filePath,
             file_type: fileUpload.file.type,
-            file_size: fileUpload.file.size,
+            file_size: fileUpload.file.size
           });
         } else if (fileUpload.id && fileUpload.displayName !== fileUpload.name) {
           await fileAttachmentService.updateFileAttachment(fileUpload.id, {
-            display_name: fileUpload.displayName,
+            display_name: fileUpload.displayName
           });
         }
       }
@@ -323,24 +323,24 @@ export default function TimeLogsPage() {
         hours: "",
         description: "",
         tags: [],
-        files: [],
+        files: []
       });
-      
+
       // Ensure add dialog state is also clean
       setIsAddingTimeLog(false);
-      
+
       await loadData();
-      
+
       toast({
         title: "Time Entry Updated",
-        description: "Your time entry has been successfully updated",
+        description: "Your time entry has been successfully updated"
       });
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update time entry",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -350,7 +350,7 @@ export default function TimeLogsPage() {
 
     try {
       const entryFiles = await fileAttachmentService.getFileAttachments(deletingEntry.id);
-      
+
       for (const file of entryFiles) {
         if (file.file_path) {
           await storageService.deleteFile("time-entry-files", file.file_path);
@@ -362,7 +362,7 @@ export default function TimeLogsPage() {
 
       toast({
         title: "Time Entry Deleted",
-        description: "Your time entry has been successfully deleted",
+        description: "Your time entry has been successfully deleted"
       });
 
       setDeletingEntry(null);
@@ -372,17 +372,17 @@ export default function TimeLogsPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to delete time entry",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   const toggleEditTag = (tag: string) => {
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag],
+      tags: prev.tags.includes(tag) ?
+      prev.tags.filter((t) => t !== tag) :
+      [...prev.tags, tag]
     }));
   };
 
@@ -395,7 +395,7 @@ export default function TimeLogsPage() {
         toast({
           title: "File Too Large",
           description: `${file.name} exceeds 5MB limit`,
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
@@ -406,12 +406,12 @@ export default function TimeLogsPage() {
         displayName: file.name,
         file: file,
         type: file.type,
-        size: file.size,
+        size: file.size
       };
-      
-      setEditForm(prev => ({
+
+      setEditForm((prev) => ({
         ...prev,
-        files: [...prev.files, fileData],
+        files: [...prev.files, fileData]
       }));
     });
 
@@ -419,18 +419,18 @@ export default function TimeLogsPage() {
   };
 
   const handleRemoveEditFile = (fileId: string) => {
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      files: prev.files.filter(f => f.id !== fileId),
+      files: prev.files.filter((f) => f.id !== fileId)
     }));
   };
 
   const handleUpdateFileDisplayName = (fileId: string, newDisplayName: string) => {
-    setEditForm(prev => ({
+    setEditForm((prev) => ({
       ...prev,
-      files: prev.files.map(f => 
-        f.id === fileId ? { ...f, displayName: newDisplayName } : f
-      ),
+      files: prev.files.map((f) =>
+      f.id === fileId ? { ...f, displayName: newDisplayName } : f
+      )
     }));
   };
 
@@ -442,9 +442,9 @@ export default function TimeLogsPage() {
       hours: "",
       description: "",
       tags: [],
-      files: [],
+      files: []
     });
-    
+
     // Small delay to ensure DOM cleanup
     setTimeout(() => {
       // Set up fresh add form
@@ -454,7 +454,7 @@ export default function TimeLogsPage() {
         hours: "",
         description: "",
         tags: [],
-        files: [],
+        files: []
       });
       setIsAddingTimeLog(true);
     }, 50);
@@ -469,7 +469,7 @@ export default function TimeLogsPage() {
         toast({
           title: "File Too Large",
           description: `${file.name} exceeds 5MB limit`,
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
@@ -480,12 +480,12 @@ export default function TimeLogsPage() {
         displayName: file.name,
         file: file,
         type: file.type,
-        size: file.size,
+        size: file.size
       };
-      
-      setAddForm(prev => ({
+
+      setAddForm((prev) => ({
         ...prev,
-        files: [...prev.files, fileData],
+        files: [...prev.files, fileData]
       }));
     });
 
@@ -493,34 +493,34 @@ export default function TimeLogsPage() {
   };
 
   const handleRemoveAddFile = (fileId: string) => {
-    setAddForm(prev => ({
+    setAddForm((prev) => ({
       ...prev,
-      files: prev.files.filter(f => f.id !== fileId),
+      files: prev.files.filter((f) => f.id !== fileId)
     }));
   };
 
   const handleUpdateAddFileDisplayName = (fileId: string, newDisplayName: string) => {
-    setAddForm(prev => ({
+    setAddForm((prev) => ({
       ...prev,
-      files: prev.files.map(f => 
-        f.id === fileId ? { ...f, displayName: newDisplayName } : f
-      ),
+      files: prev.files.map((f) =>
+      f.id === fileId ? { ...f, displayName: newDisplayName } : f
+      )
     }));
   };
 
   const toggleAddTag = (tag: string) => {
-    setAddForm(prev => ({
+    setAddForm((prev) => ({
       ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag],
+      tags: prev.tags.includes(tag) ?
+      prev.tags.filter((t) => t !== tag) :
+      [...prev.tags, tag]
     }));
   };
 
   const handleSubmitTimeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const addClient = clients.find(c => c.id === addForm.clientId);
+    const addClient = clients.find((c) => c.id === addForm.clientId);
     if (!addClient) return;
 
     const clientTags = addClient.tags as string[] || [];
@@ -530,7 +530,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields including description and select at least one tag",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -547,16 +547,16 @@ export default function TimeLogsPage() {
         tags: finalTags,
         description: addForm.description.trim(),
         month: monthKey,
-        year: date.getFullYear(),
+        year: date.getFullYear()
       });
 
       if (addForm.files.length > 0) {
         for (const fileUpload of addForm.files) {
           if (fileUpload.file) {
             const filePath = `${user.id}/${newEntry.id}/${Date.now()}-${fileUpload.file.name}`;
-            
+
             await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
-            
+
             const fileUrl = await storageService.getPublicUrl("time-entry-files", filePath);
 
             await fileAttachmentService.createFileAttachment({
@@ -567,7 +567,7 @@ export default function TimeLogsPage() {
               file_url: fileUrl,
               file_path: filePath,
               file_type: fileUpload.file.type,
-              file_size: fileUpload.file.size,
+              file_size: fileUpload.file.size
             });
           }
         }
@@ -575,51 +575,51 @@ export default function TimeLogsPage() {
 
       toast({
         title: "Time Entry Created",
-        description: "Your time entry has been successfully logged",
+        description: "Your time entry has been successfully logged"
       });
 
       setIsAddingTimeLog(false);
       setSelectedClientId(addForm.clientId);
       setSelectedPeriod(monthKey);
-      
+
       router.push({
         pathname: "/time-logs",
         query: { clientId: addForm.clientId, period: monthKey }
       });
-      
+
       await loadData();
     } catch (error: any) {
       console.error("Error creating time entry:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create time entry",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
-  const selectedAddClient = clients.find(c => c.id === addForm.clientId);
-  const addClientTags = selectedAddClient ? (selectedAddClient.tags as string[] || []) : [];
+  const selectedAddClient = clients.find((c) => c.id === addForm.clientId);
+  const addClientTags = selectedAddClient ? selectedAddClient.tags as string[] || [] : [];
   const shouldShowAddTags = addClientTags.length > 1;
 
-  const filteredEntries = timeEntries
-    .filter(entry => 
-      entry.client_id === selectedClientId &&
-      entry.month === selectedPeriod
-    )
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const filteredEntries = timeEntries.
+  filter((entry) =>
+  entry.client_id === selectedClientId &&
+  entry.month === selectedPeriod
+  ).
+  sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const selectedClient = clients.find((c) => c.id === selectedClientId);
 
-  const activeClients = clients.filter(c => !c.archived);
-  const archivedClients = clients.filter(c => c.archived);
+  const activeClients = clients.filter((c) => !c.archived);
+  const archivedClients = clients.filter((c) => c.archived);
 
   const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
 
     const [year, month] = selectedPeriod.split("-");
     const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
-    
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 20;
@@ -633,7 +633,7 @@ export default function TimeLogsPage() {
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, 14, yPos);
-    
+
     // Reset yPos for logo positioning - moved higher
     const logoYPos = 12;
 
@@ -642,7 +642,7 @@ export default function TimeLogsPage() {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = companyLogo;
-        
+
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
@@ -651,22 +651,22 @@ export default function TimeLogsPage() {
         const imgWidth = img.width;
         const imgHeight = img.height;
         const aspectRatio = imgWidth / imgHeight;
-        
+
         const maxLogoWidth = 36;
         const maxLogoHeight = 14.4;
-        
+
         let logoWidth = maxLogoWidth;
         let logoHeight = logoWidth / aspectRatio;
-        
+
         if (logoHeight > maxLogoHeight) {
           logoHeight = maxLogoHeight;
           logoWidth = logoHeight * aspectRatio;
         }
-        
+
         // Position logo on the right side
         const logoX = pageWidth - logoWidth - 14;
         doc.addImage(companyLogo, "PNG", logoX, logoYPos, logoWidth, logoHeight);
-        
+
         // Update yPos if logo extends below the date
         const logoBottom = logoYPos + logoHeight;
         if (logoBottom > yPos) {
@@ -685,23 +685,23 @@ export default function TimeLogsPage() {
     const boxSpacing = 3;
 
     const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
-      { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
-      { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "alert-circle" },
-      { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: "trending-down" }
-    ];
+    { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
+    { label: "Allocated", value: stats.allocatedHours.toFixed(2), color: [1, 136, 169], icon: "clock" },
+    { label: "Used", value: stats.usedHours.toFixed(2), color: [34, 197, 94], icon: "alert-circle" },
+    { label: "Remaining", value: stats.remainingHours.toFixed(2), color: stats.remainingHours >= 0 ? [16, 185, 129] : [239, 68, 68], icon: "trending-down" }];
+
 
     statBoxes.forEach((box, index) => {
-      const x = 14 + (index * (boxWidth + boxSpacing));
-      
+      const x = 14 + index * (boxWidth + boxSpacing);
+
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
-      
+
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
       doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
-      
+
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
@@ -711,8 +711,8 @@ export default function TimeLogsPage() {
 
     yPos = boxY + boxHeight + 10;
 
-    const entriesSortedAsc = [...filteredEntries].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
+    const entriesSortedAsc = [...filteredEntries].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
     const entriesWithFiles = await Promise.all(
@@ -723,12 +723,12 @@ export default function TimeLogsPage() {
     );
 
     const tableData = entriesWithFiles.map(({ entry, files }) => [
-      new Date(entry.date).toLocaleDateString(),
-      entry.hours.toString(),
-      entry.description,
-      (entry.tags as string[]).join(", "),
-      files.length > 0 ? files.map(f => f.display_name).join(", ") : "No files"
-    ]);
+    new Date(entry.date).toLocaleDateString(),
+    entry.hours.toString(),
+    entry.description,
+    (entry.tags as string[]).join(", "),
+    files.length > 0 ? files.map((f) => f.display_name).join(", ") : "No files"]
+    );
 
     autoTable(doc, {
       startY: yPos,
@@ -738,19 +738,19 @@ export default function TimeLogsPage() {
       styles: {
         lineColor: [248, 250, 252],
         lineWidth: 0,
-        cellPadding: 3,
+        cellPadding: 3
       },
       headStyles: {
         fillColor: [1, 136, 169],
         textColor: [255, 255, 255],
         fontStyle: "bold",
         fontSize: 9,
-        lineWidth: 0,
+        lineWidth: 0
       },
       bodyStyles: {
         fontSize: 7.5,
         textColor: [51, 65, 85],
-        lineWidth: 0,
+        lineWidth: 0
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
@@ -771,26 +771,26 @@ export default function TimeLogsPage() {
           if (tags.length > 0) {
             const cell = data.cell;
             const tagsText = tags.join(", ");
-            
+
             doc.setFontSize(7.5);
             doc.setFont("helvetica", "normal");
             doc.setTextColor(51, 65, 85);
-            
+
             const textLines = doc.splitTextToSize(tagsText, cell.width - 4);
             textLines.forEach((line: string, lineIndex: number) => {
-              doc.text(line, cell.x + 2, cell.y + 5 + (lineIndex * 4));
+              doc.text(line, cell.x + 2, cell.y + 5 + lineIndex * 4);
             });
           }
         }
-        
+
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
           if (files.length > 0) {
             const cell = data.cell;
-            
+
             files.forEach((file, fileIndex) => {
-              const linkY = cell.y + 5 + (fileIndex * 6);
-              
+              const linkY = cell.y + 5 + fileIndex * 6;
+
               doc.setFontSize(7.5);
               doc.setFont("helvetica", "normal");
               doc.setTextColor(1, 136, 169);
@@ -813,14 +813,14 @@ export default function TimeLogsPage() {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth() + 1;
-    
+
     const startYear = 2025;
     const startMonth = 10;
-    
+
     for (let year = startYear; year <= currentYear; year++) {
       const monthStart = year === startYear ? startMonth : 1;
       const monthEnd = year === currentYear ? currentMonth : 12;
-      
+
       for (let month = monthStart; month <= monthEnd; month++) {
         const value = `${year}-${month.toString().padStart(2, "0")}`;
         const date = new Date(year, month - 1);
@@ -828,14 +828,14 @@ export default function TimeLogsPage() {
         options.push({ value, label });
       }
     }
-    
+
     return options.reverse();
   };
 
   const periodOptions = generatePeriodOptions();
   const getSelectedPeriodLabel = () => {
     if (!selectedPeriod) return "";
-    const option = periodOptions.find(opt => opt.value === selectedPeriod);
+    const option = periodOptions.find((opt) => opt.value === selectedPeriod);
     return option ? option.label : "";
   };
 
@@ -879,7 +879,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Invalid Input",
         description: "Please enter a valid number",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -891,12 +891,12 @@ export default function TimeLogsPage() {
         month: selectedPeriod,
         year: parseInt(selectedPeriod.split("-")[0]),
         allocated_hours: stats.allocatedHours,
-        rollover_hours: newRollover,
+        rollover_hours: newRollover
       });
 
       toast({
         title: "Rollover Updated",
-        description: "Rollover hours have been updated successfully",
+        description: "Rollover hours have been updated successfully"
       });
 
       setEditingRollover(false);
@@ -906,7 +906,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to update rollover",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -919,7 +919,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Invalid Input",
         description: "Please enter a valid positive number",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -931,12 +931,12 @@ export default function TimeLogsPage() {
 
       if (isCurrentMonth) {
         await clientService.updateClient(selectedClientId, {
-          allocated_hours_per_month: newAllocation,
+          allocated_hours_per_month: newAllocation
         });
 
         toast({
           title: "Allocation Updated",
-          description: "Base allocated hours updated for this client (affects current and future months)",
+          description: "Base allocated hours updated for this client (affects current and future months)"
         });
       } else {
         await monthlyAllocationService.upsertMonthlyAllocation({
@@ -945,12 +945,12 @@ export default function TimeLogsPage() {
           month: selectedPeriod,
           year: parseInt(selectedPeriod.split("-")[0]),
           allocated_hours: newAllocation,
-          rollover_hours: stats.rolloverHours,
+          rollover_hours: stats.rolloverHours
         });
 
         toast({
           title: "Allocation Updated",
-          description: "Allocated hours updated for this month only",
+          description: "Allocated hours updated for this month only"
         });
       }
 
@@ -961,7 +961,7 @@ export default function TimeLogsPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to update allocation",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -987,8 +987,8 @@ export default function TimeLogsPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -1011,26 +1011,26 @@ export default function TimeLogsPage() {
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeClients.length > 0 && (
-                      <SelectGroup>
+                    {activeClients.length > 0 &&
+                    <SelectGroup>
                         <SelectLabel>Active Clients</SelectLabel>
-                        {activeClients.map(client => (
-                          <SelectItem key={client.id} value={client.id}>
+                        {activeClients.map((client) =>
+                      <SelectItem key={client.id} value={client.id}>
                             {client.name}
                           </SelectItem>
-                        ))}
+                      )}
                       </SelectGroup>
-                    )}
-                    {archivedClients.length > 0 && (
-                      <SelectGroup>
+                    }
+                    {archivedClients.length > 0 &&
+                    <SelectGroup>
                         <SelectLabel>Archived Clients</SelectLabel>
-                        {archivedClients.map(client => (
-                          <SelectItem key={client.id} value={client.id}>
+                        {archivedClients.map((client) =>
+                      <SelectItem key={client.id} value={client.id}>
                             {client.name}
                           </SelectItem>
-                        ))}
+                      )}
                       </SelectGroup>
-                    )}
+                    }
                   </SelectContent>
                 </Select>
               </div>
@@ -1040,11 +1040,11 @@ export default function TimeLogsPage() {
                     <SelectValue placeholder="Select period" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    {periodOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                    {periodOptions.map((option) =>
+                    <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -1052,8 +1052,8 @@ export default function TimeLogsPage() {
           </CardContent>
         </Card>
 
-        {stats && selectedClient && (
-          <>
+        {stats && selectedClient &&
+        <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card>
                 <CardHeader className="pb-3">
@@ -1062,49 +1062,49 @@ export default function TimeLogsPage() {
                       <ArrowUp className="w-4 h-4 text-black" />
                       <span>Rolled Over</span>
                     </div>
-                    {!editingRollover ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleStartEditRollover}
-                        className="h-6 w-6 p-0"
-                      >
+                    {!editingRollover ?
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditRollover}
+                    className="h-6 w-6 p-0">
+
                         <Edit2 className="w-3 h-3" />
-                      </Button>
-                    ) : null}
+                      </Button> :
+                  null}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {editingRollover ? (
-                    <div className="flex items-center gap-2">
+                  {editingRollover ?
+                <div className="flex items-center gap-2">
                       <Input
-                        type="number"
-                        step="0.25"
-                        value={rolloverValue}
-                        onChange={(e) => setRolloverValue(e.target.value)}
-                        className="h-8 text-sm"
-                        autoFocus
-                      />
+                    type="number"
+                    step="0.25"
+                    value={rolloverValue}
+                    onChange={(e) => setRolloverValue(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus />
+
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSaveRollover}
-                        className="h-8 w-8 p-0 text-green-600"
-                      >
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveRollover}
+                    className="h-8 w-8 p-0 text-green-600">
+
                         <Save className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingRollover(false)}
-                        className="h-8 w-8 p-0 text-red-600"
-                      >
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingRollover(false)}
+                    className="h-8 w-8 p-0 text-red-600">
+
                         <X className="w-4 h-4" />
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="text-2xl font-bold text-black">{stats.rolloverHours.toFixed(2)}h</div>
-                  )}
+                    </div> :
+
+                <div className="text-2xl font-bold text-black">{stats.rolloverHours.toFixed(2)}h</div>
+                }
                 </CardContent>
               </Card>
 
@@ -1115,49 +1115,49 @@ export default function TimeLogsPage() {
                       <Clock className="w-4 h-4 text-black" />
                       <span>Allocated</span>
                     </div>
-                    {!editingAllocation ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleStartEditAllocation}
-                        className="h-6 w-6 p-0"
-                      >
+                    {!editingAllocation ?
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditAllocation}
+                    className="h-6 w-6 p-0">
+
                         <Edit2 className="w-3 h-3" />
-                      </Button>
-                    ) : null}
+                      </Button> :
+                  null}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {editingAllocation ? (
-                    <div className="flex items-center gap-2">
+                  {editingAllocation ?
+                <div className="flex items-center gap-2">
                       <Input
-                        type="number"
-                        step="0.25"
-                        value={allocationValue}
-                        onChange={(e) => setAllocationValue(e.target.value)}
-                        className="h-8 text-sm"
-                        autoFocus
-                      />
+                    type="number"
+                    step="0.25"
+                    value={allocationValue}
+                    onChange={(e) => setAllocationValue(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus />
+
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSaveAllocation}
-                        className="h-8 w-8 p-0 text-green-600"
-                      >
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveAllocation}
+                    className="h-8 w-8 p-0 text-green-600">
+
                         <Save className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingAllocation(false)}
-                        className="h-8 w-8 p-0 text-red-600"
-                      >
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingAllocation(false)}
+                    className="h-8 w-8 p-0 text-red-600">
+
                         <X className="w-4 h-4" />
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="text-2xl font-bold text-black">{stats.allocatedHours.toFixed(2)}h</div>
-                  )}
+                    </div> :
+
+                <div className="text-2xl font-bold text-black">{stats.allocatedHours.toFixed(2)}h</div>
+                }
                 </CardContent>
               </Card>
 
@@ -1181,33 +1181,33 @@ export default function TimeLogsPage() {
                       </span>
                     </div>
                   </div>
-                  <Progress 
-                    value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
-                    className="h-3 bg-slate-100"
-                    indicatorClassName={stats.usedHours <= (stats.allocatedHours + stats.rolloverHours) ? "bg-green-600" : "bg-red-600"}
-                  />
+                  <Progress
+                  value={Math.min(stats.usedHours / (stats.allocatedHours + stats.rolloverHours) * 100, 100)}
+                  className="h-3 bg-slate-100"
+                  indicatorClassName={stats.usedHours <= stats.allocatedHours + stats.rolloverHours ? "bg-green-600" : "bg-red-600"} />
+
                 </CardContent>
               </Card>
             </div>
 
             <Card>
               <CardContent className="pt-6">
-                {filteredEntries.length === 0 ? (
-                  <div className="text-center py-12">
+                {filteredEntries.length === 0 ?
+              <div className="text-center py-12">
                     <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">No Time Entries</h3>
                     <p className="text-slate-600 mb-6">No time entries found for this period</p>
-                    <Button 
-                      size="lg" 
-                      className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                      onClick={() => handleOpenAddDialog()}
-                    >
+                    <Button
+                  size="lg"
+                  className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                  onClick={() => handleOpenAddDialog()}>
+
                       <Plus className="w-5 h-5" />
                       Add New Log
                     </Button>
-                  </div>
-                ) : (
-                  <>
+                  </div> :
+
+              <>
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
@@ -1221,11 +1221,11 @@ export default function TimeLogsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredEntries.map(entry => {
-                            const entryFiles = fileAttachments.filter(f => f.time_entry_id === entry.id);
-                            
-                            return (
-                              <TableRow key={entry.id}>
+                          {filteredEntries.map((entry) => {
+                        const entryFiles = fileAttachments.filter((f) => f.time_entry_id === entry.id);
+
+                        return (
+                          <TableRow key={entry.id}>
                                 <TableCell className="font-medium">
                                   {new Date(entry.date).toLocaleDateString()}
                                 </TableCell>
@@ -1237,33 +1237,33 @@ export default function TimeLogsPage() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex flex-wrap gap-1">
-                                    {(entry.tags as string[]).map((tag, index) => (
-                                      <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap">
+                                    {(entry.tags as string[]).map((tag, index) =>
+                                <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap">
                                         {tag}
                                       </Badge>
-                                    ))}
+                                )}
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  {entryFiles.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
-                                      {entryFiles.map((file) => (
-                                        <a
-                                          key={file.id}
-                                          href={file.file_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
+                                  {entryFiles.length > 0 ?
+                              <div className="flex flex-wrap gap-1">
+                                      {entryFiles.map((file) =>
+                                <a
+                                  key={file.id}
+                                  href={file.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
+                                  onClick={(e) => e.stopPropagation()}>
+
                                           <Download className="w-3 h-3" />
                                           {file.display_name}
                                         </a>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-slate-400">No files</span>
-                                  )}
+                                )}
+                                    </div> :
+
+                              <span className="text-xs text-slate-400">No files</span>
+                              }
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <DropdownMenu>
@@ -1276,60 +1276,60 @@ export default function TimeLogsPage() {
                                       <DropdownMenuItem onClick={() => handleEditEntry(entry)}>
                                         Edit
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem 
-                                        onClick={() => setDeletingEntry(entry)}
-                                        className="text-red-600 focus:text-red-600"
-                                      >
+                                      <DropdownMenuItem
+                                    onClick={() => setDeletingEntry(entry)}
+                                    className="text-red-600 focus:text-red-600">
+
                                         Delete
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </TableCell>
-                              </TableRow>
-                            );
-                          })}
+                              </TableRow>);
+
+                      })}
                         </TableBody>
                       </Table>
                     </div>
                     
                     <div className="flex justify-center gap-4 pt-6 border-t mt-6">
-                      <Button 
-                        size="lg" 
-                        className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                        onClick={() => handleOpenAddDialog()}
-                      >
+                      <Button
+                    size="lg"
+                    className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                    onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "rgb(1, 109, 138)", backgroundImage: "none" }}>
+
                         <Plus className="w-5 h-5" />
                         Add New Log
                       </Button>
-                      <Button 
-                        size="lg"
-                        onClick={handleExportPDF} 
-                        className="gap-2"
-                        variant="outline"
-                      >
+                      <Button
+                    size="lg"
+                    onClick={handleExportPDF}
+                    className="gap-2"
+                    variant="outline" style={{ backgroundImage: "none", backgroundColor: "rgb(248, 248, 248)" }}>
+
                         <FileDown className="w-4 h-4" />
                         Export PDF
                       </Button>
                     </div>
                   </>
-                )}
+              }
               </CardContent>
             </Card>
           </>
-        )}
+        }
 
-        {!selectedClientId && clients.length > 0 && (
-          <Card className="text-center py-12">
+        {!selectedClientId && clients.length > 0 &&
+        <Card className="text-center py-12">
             <CardContent>
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Select Filters</h3>
               <p className="text-slate-600">Choose a client and period to view time logs</p>
             </CardContent>
           </Card>
-        )}
+        }
 
-        {clients.length === 0 && (
-          <Card className="text-center py-12">
+        {clients.length === 0 &&
+        <Card className="text-center py-12">
             <CardContent>
               <p className="text-slate-600 mb-4">You need to add clients first</p>
               <Link href="/clients">
@@ -1337,10 +1337,10 @@ export default function TimeLogsPage() {
               </Link>
             </CardContent>
           </Card>
-        )}
+        }
 
-        {editingEntry && selectedClient && (
-          <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
+        {editingEntry && selectedClient &&
+        <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Time Entry</DialogTitle>
@@ -1349,31 +1349,31 @@ export default function TimeLogsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-date">Date *</Label>
                   <Input
-                    id="edit-date"
-                    type="date"
-                    value={editForm.date}
-                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
-                    min={minDate}
-                    max={maxDate}
-                    className="h-10"
-                  />
+                  id="edit-date"
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  min={minDate}
+                  max={maxDate}
+                  className="h-10" />
+
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-hours">Hours *</Label>
                   <Select
-                    value={editForm.hours}
-                    onValueChange={(value) => setEditForm({ ...editForm, hours: value })}
-                  >
+                  value={editForm.hours}
+                  onValueChange={(value) => setEditForm({ ...editForm, hours: value })}>
+
                     <SelectTrigger id="edit-hours">
                       <SelectValue placeholder="Select hours" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
-                        <SelectItem key={value} value={value.toString()}>
+                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) =>
+                    <SelectItem key={value} value={value.toString()}>
                           {value} hours
                         </SelectItem>
-                      ))}
+                    )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1381,113 +1381,113 @@ export default function TimeLogsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-description">Task Description *</Label>
                   <Textarea
-                    id="edit-description"
-                    placeholder="Describe the work performed..."
-                    value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    rows={4}
-                    className="resize-none"
-                  />
+                  id="edit-description"
+                  placeholder="Describe the work performed..."
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={4}
+                  className="resize-none" />
+
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-files">Attachments</Label>
                   <div className="flex items-center gap-2">
                     <Input
-                      id="edit-files"
-                      type="file"
-                      onChange={handleEditFileUpload}
-                      multiple
-                      className="cursor-pointer"
-                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx"
-                    />
+                    id="edit-files"
+                    type="file"
+                    onChange={handleEditFileUpload}
+                    multiple
+                    className="cursor-pointer"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" />
+
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => document.getElementById("edit-files")?.click()}
-                      title="Upload files"
-                    >
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => document.getElementById("edit-files")?.click()}
+                    title="Upload files">
+
                       <Upload className="w-4 h-4" />
                     </Button>
                   </div>
                   <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
                   
-                  {editForm.files.length > 0 && (
-                    <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  {editForm.files.length > 0 &&
+                <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                       <p className="text-sm font-medium text-slate-700">Attached Files ({editForm.files.length})</p>
                       <div className="space-y-2">
-                        {editForm.files.map((file) => (
-                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
+                        {editForm.files.map((file) =>
+                    <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
                             <Download className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <Input
-                              type="text"
-                              value={file.displayName}
-                              onChange={(e) => handleUpdateFileDisplayName(file.id, e.target.value)}
-                              className="h-8 text-sm flex-1"
-                              placeholder="Display name..."
-                            />
+                        type="text"
+                        value={file.displayName}
+                        onChange={(e) => handleUpdateFileDisplayName(file.id, e.target.value)}
+                        className="h-8 text-sm flex-1"
+                        placeholder="Display name..." />
+
                             <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveEditFile(file.id)}
-                              className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveEditFile(file.id)}
+                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
-                        ))}
+                    )}
                       </div>
                     </div>
-                  )}
+                }
                 </div>
 
-                {selectedClient && (selectedClient.tags as string[]).length > 0 && (
-                  <div className="space-y-2">
+                {selectedClient && (selectedClient.tags as string[]).length > 0 &&
+              <div className="space-y-2">
                     <Label>Tags *</Label>
                     <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {(selectedClient.tags as string[]).map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant={editForm.tags.includes(tag) ? "default" : "outline"}
-                          className={`cursor-pointer transition-all ${
-                            editForm.tags.includes(tag)
-                              ? "bg-brand-primary hover:bg-brand-primary-hover"
-                              : "hover:bg-slate-200"
-                          }`}
-                          onClick={() => toggleEditTag(tag)}
-                        >
+                      {(selectedClient.tags as string[]).map((tag) =>
+                  <Badge
+                    key={tag}
+                    variant={editForm.tags.includes(tag) ? "default" : "outline"}
+                    className={`cursor-pointer transition-all ${
+                    editForm.tags.includes(tag) ?
+                    "bg-brand-primary hover:bg-brand-primary-hover" :
+                    "hover:bg-slate-200"}`
+                    }
+                    onClick={() => toggleEditTag(tag)}>
+
                           {tag}
                         </Badge>
-                      ))}
+                  )}
                     </div>
                   </div>
-                )}
+              }
 
                 <div className="flex gap-2">
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingEntry(null)}
-                    className="flex-1"
-                  >
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingEntry(null)}
+                  className="flex-1">
+
                     Cancel
                   </Button>
                   <Button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                  >
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
+
                     Update Entry
                   </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
-        )}
+        }
 
-        {deletingEntry && (
-          <AlertDialog open={!!deletingEntry} onOpenChange={() => setDeletingEntry(null)}>
+        {deletingEntry &&
+        <AlertDialog open={!!deletingEntry} onOpenChange={() => setDeletingEntry(null)}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Time Entry</AlertDialogTitle>
@@ -1498,18 +1498,18 @@ export default function TimeLogsPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleDeleteEntry}
-                  className="bg-red-600 hover:bg-red-700"
-                >
+                onClick={handleDeleteEntry}
+                className="bg-red-600 hover:bg-red-700">
+
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )}
+        }
 
-        {isAddingTimeLog && (
-          <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
+        {isAddingTimeLog &&
+        <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Log Time Entry</DialogTitle>
@@ -1522,11 +1522,11 @@ export default function TimeLogsPage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {activeClients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
+                      {activeClients.map((client) =>
+                    <SelectItem key={client.id} value={client.id}>
                           {client.name}
                         </SelectItem>
-                      ))}
+                    )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1534,31 +1534,31 @@ export default function TimeLogsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="add-date">Date *</Label>
                   <Input
-                    id="add-date"
-                    type="date"
-                    value={addForm.date}
-                    onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
-                    min={minDate}
-                    max={maxDate}
-                    className="h-10"
-                  />
+                  id="add-date"
+                  type="date"
+                  value={addForm.date}
+                  onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                  min={minDate}
+                  max={maxDate}
+                  className="h-10" />
+
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="add-hours">Hours *</Label>
                   <Select
-                    value={addForm.hours}
-                    onValueChange={(value) => setAddForm({ ...addForm, hours: value })}
-                  >
+                  value={addForm.hours}
+                  onValueChange={(value) => setAddForm({ ...addForm, hours: value })}>
+
                     <SelectTrigger id="add-hours">
                       <SelectValue placeholder="Select hours" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
-                        <SelectItem key={value} value={value.toString()}>
+                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) =>
+                    <SelectItem key={value} value={value.toString()}>
                           {value} hours
                         </SelectItem>
-                      ))}
+                    )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1566,111 +1566,111 @@ export default function TimeLogsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="add-description">Task Description *</Label>
                   <Textarea
-                    id="add-description"
-                    placeholder="Describe the work performed..."
-                    value={addForm.description}
-                    onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-                    rows={4}
-                    className="resize-none"
-                  />
+                  id="add-description"
+                  placeholder="Describe the work performed..."
+                  value={addForm.description}
+                  onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                  rows={4}
+                  className="resize-none" />
+
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="add-files">Attachments (Optional)</Label>
                   <div className="flex items-center gap-2">
                     <Input
-                      id="add-files"
-                      type="file"
-                      onChange={handleAddFileUpload}
-                      multiple
-                      className="cursor-pointer"
-                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx"
-                    />
+                    id="add-files"
+                    type="file"
+                    onChange={handleAddFileUpload}
+                    multiple
+                    className="cursor-pointer"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" />
+
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => document.getElementById("add-files")?.click()}
-                      title="Upload files"
-                    >
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => document.getElementById("add-files")?.click()}
+                    title="Upload files">
+
                       <Upload className="w-4 h-4" />
                     </Button>
                   </div>
                   <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
                   
-                  {addForm.files.length > 0 && (
-                    <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  {addForm.files.length > 0 &&
+                <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                       <p className="text-sm font-medium text-slate-700">Attached Files ({addForm.files.length})</p>
                       <div className="space-y-2">
-                        {addForm.files.map((file) => (
-                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
+                        {addForm.files.map((file) =>
+                    <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
                             <FileIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <Input
-                              type="text"
-                              value={file.displayName}
-                              onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
-                              className="h-8 text-sm flex-1"
-                              placeholder="Display name..."
-                            />
+                        type="text"
+                        value={file.displayName}
+                        onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
+                        className="h-8 text-sm flex-1"
+                        placeholder="Display name..." />
+
                             <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveAddFile(file.id)}
-                              className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveAddFile(file.id)}
+                        className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
-                        ))}
+                    )}
                       </div>
                     </div>
-                  )}
+                }
                 </div>
 
-                {shouldShowAddTags && selectedAddClient && (
-                  <div className="space-y-2">
+                {shouldShowAddTags && selectedAddClient &&
+              <div className="space-y-2">
                     <Label>Tags *</Label>
                     <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                      {addClientTags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant={addForm.tags.includes(tag) ? "default" : "outline"}
-                          className={`cursor-pointer transition-all ${
-                            addForm.tags.includes(tag)
-                              ? "bg-brand-primary hover:bg-brand-primary-hover"
-                              : "hover:bg-slate-200"
-                          }`}
-                          onClick={() => toggleAddTag(tag)}
-                        >
+                      {addClientTags.map((tag) =>
+                  <Badge
+                    key={tag}
+                    variant={addForm.tags.includes(tag) ? "default" : "outline"}
+                    className={`cursor-pointer transition-all ${
+                    addForm.tags.includes(tag) ?
+                    "bg-brand-primary hover:bg-brand-primary-hover" :
+                    "hover:bg-slate-200"}`
+                    }
+                    onClick={() => toggleAddTag(tag)}>
+
                           {tag}
                         </Badge>
-                      ))}
+                  )}
                     </div>
                   </div>
-                )}
+              }
 
                 <div className="flex gap-2">
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddingTimeLog(false)}
-                    className="flex-1"
-                  >
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddingTimeLog(false)}
+                  className="flex-1">
+
                     Cancel
                   </Button>
                   <Button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                  >
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
+
                     Log Time Entry
                   </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
-        )}
+        }
       </main>
-    </div>
-  );
+    </div>);
+
 }
