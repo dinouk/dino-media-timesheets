@@ -100,7 +100,6 @@ export default function TimeLogsPage() {
     tags: [] as string[],
     files: [] as FileUpload[]
   });
-  const [pendingReload, setPendingReload] = useState(false);
 
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
@@ -288,7 +287,9 @@ export default function TimeLogsPage() {
         }
       }
       toast({ title: "Time Entry Updated", description: "Your time entry has been successfully updated" });
-      closeEditDialog(() => setPendingReload(true));
+      closeEditDialog(() => {
+        loadData();
+      });
     } catch (error: any) {
       console.error("Error updating time entry:", error);
       toast({ title: "Error", description: error.message || "Failed to update time entry", variant: "destructive" });
@@ -373,8 +374,9 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
+    // Give Radix Dialog time to fully unmount before callback
     if (callback) {
-      setTimeout(callback, 500);
+      setTimeout(callback, 300);
     }
   };
 
@@ -388,67 +390,22 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
+    // Give Radix Dialog time to fully unmount before callback
     if (callback) {
-      setTimeout(callback, 500);
+      setTimeout(callback, 300);
     }
   };
 
-  // Cleanup effect to remove any lingering modal overlays
+  // Simple cleanup to ensure body styles are reset
   useEffect(() => {
     if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
-      // Small delay to ensure modal animations complete
-      const cleanup = setTimeout(() => {
-        // Force remove ALL Radix UI portal overlays
-        const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
-        overlays.forEach(overlay => {
-          overlay.remove();
-        });
-        
-        // Remove ALL portal containers
-        const portals = document.querySelectorAll('[data-radix-portal]');
-        portals.forEach(portal => {
-          portal.remove();
-        });
-        
-        // Remove any elements with radix dialog content
-        const contents = document.querySelectorAll('[data-radix-dialog-content]');
-        contents.forEach(content => {
-          const parent = content.parentElement;
-          if (parent) {
-            parent.remove();
-          }
-        });
-        
-        // Force restore pointer events on body
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = 'auto';
-        
-        // Remove any data-state attributes that might block interactions
-        document.querySelectorAll('[data-state]').forEach(el => {
-          if (el.getAttribute('data-state') === 'open') {
-            el.removeAttribute('data-state');
-          }
-        });
-        
-        // Clear any lingering aria-hidden on body
-        document.body.removeAttribute('aria-hidden');
-        
-      }, 150);
-      
-      return () => clearTimeout(cleanup);
-    }
-  }, [editingEntry, isAddingTimeLog, deletingEntry]);
-
-  // Handle pending reload after modals are closed
-  useEffect(() => {
-    if (pendingReload && !editingEntry && !isAddingTimeLog && !deletingEntry) {
       const timer = setTimeout(() => {
-        loadData();
-        setPendingReload(false);
-      }, 500);
+        document.body.style.pointerEvents = '';
+        document.body.style.overflow = '';
+      }, 350);
       return () => clearTimeout(timer);
     }
-  }, [pendingReload, editingEntry, isAddingTimeLog, deletingEntry]);
+  }, [editingEntry, isAddingTimeLog, deletingEntry]);
 
   const handleSubmitTimeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -487,7 +444,8 @@ export default function TimeLogsPage() {
         setSelectedClientId(targetClientId);
         setSelectedPeriod(targetPeriod);
         router.push({ pathname: "/time-logs", query: { clientId: targetClientId, period: targetPeriod } }, undefined, { shallow: true });
-        setPendingReload(true);
+        // Small additional delay after navigation before reloading
+        setTimeout(() => loadData(), 100);
       });
     } catch (error: any) {
       console.error("Error creating time entry:", error);
