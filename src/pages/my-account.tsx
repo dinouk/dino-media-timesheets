@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
@@ -7,66 +6,117 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppHeader } from "@/components/AppHeader";
 import { Save, Mail, Lock, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyAccountPage() {
   const router = useRouter();
+  const { user, loading, updatePassword } = useAuth();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
-  const [currentUser, setCurrentUser] = useState("");
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    setEmail(user);
-  }, [router]);
+    if (user) {
+      setEmail(user.email || "");
+    }
+  }, [user, loading, router]);
 
-  const handleUpdateEmail = (e: React.FormEvent) => {
+  const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) {
-      alert("Please enter a valid email address");
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
       return;
     }
-    localStorage.setItem("currentUser", email);
-    setCurrentUser(email);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+
+    try {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
+      
+      toast({
+        title: "Email Update Requested",
+        description: "Please check your new email address to confirm the change",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update email",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
-      alert("Please fill in all password fields");
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert("New passwords do not match");
+      toast({
+        title: "Password Mismatch",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
       return;
     }
     if (newPassword.length < 6) {
-      alert("Password must be at least 6 characters long");
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
       return;
     }
-    setSuccess(true);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setTimeout(() => setSuccess(false), 3000);
+
+    try {
+      await updatePassword(newPassword);
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully updated",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update password",
+        variant: "destructive",
+      });
+    }
   };
 
-  if (!mounted) return null;
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
@@ -74,13 +124,6 @@ export default function MyAccountPage() {
             <h2 className="text-3xl font-bold text-slate-800 mb-2">My Account</h2>
             <p className="text-slate-600">Manage your account settings and preferences</p>
           </div>
-
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-800">
-              <CheckCircle className="w-5 h-5" />
-              <p className="font-medium">Settings updated successfully!</p>
-            </div>
-          )}
 
           <div className="space-y-6">
             <Card>

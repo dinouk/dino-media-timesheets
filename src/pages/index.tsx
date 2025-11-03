@@ -1,26 +1,26 @@
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading, signIn, signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const user = localStorage.getItem("currentUser");
-    if (user) {
+    if (!loading && user) {
       router.push("/dashboard");
     }
-  }, [router]);
+  }, [user, loading, router]);
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -29,28 +29,29 @@ export default function LoginPage() {
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-
-    if (isRegistering) {
-      const existingUser = users.find((u: any) => u.email === email);
-      if (existingUser) {
-        setError("User already exists");
-        return;
-      }
-      users.push({ email, password });
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("currentUser", email);
-      router.push("/dashboard");
-    } else {
-      const user = users.find((u: any) => u.email === email && u.password === password);
-      if (user) {
-        localStorage.setItem("currentUser", email);
-        router.push("/dashboard");
+    try {
+      if (isRegistering) {
+        await signUp(email, password);
+        setError("Account created! Please check your email to verify your account.");
       } else {
-        setError("Invalid credentials");
+        await signIn(email, password);
+        router.push("/dashboard");
       }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-4">
@@ -88,7 +89,7 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
+              <div className={`text-sm ${error.includes("check your email") ? "text-green-600 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200"} border rounded-md p-3`}>
                 {error}
               </div>
             )}
