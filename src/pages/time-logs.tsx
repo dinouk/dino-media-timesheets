@@ -730,14 +730,6 @@ export default function TimeLogsPage() {
       files.length > 0 ? files.map(f => f.display_name).join(", ") : "No files"
     ]);
 
-    // Save the graphics state and add clipping region for rounded corners
-    doc.saveGraphicsState();
-    const tableWidth = pageWidth - 28;
-    
-    // Create a clipping path with rounded corners
-    doc.roundedRect(14, yPos, tableWidth, 200, 1.5, 1.5);
-    doc.clip();
-
     autoTable(doc, {
       startY: yPos,
       head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
@@ -771,6 +763,15 @@ export default function TimeLogsPage() {
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
+      willDrawPage: (data) => {
+        const tableWidth = pageWidth - 28;
+        // A height large enough to contain the table on the page
+        const tableRegionHeight = doc.internal.pageSize.getHeight() - yPos - data.settings.margin.bottom;
+        
+        (doc as any).saveGraphicsState();
+        doc.roundedRect(14, yPos, tableWidth, tableRegionHeight, 1.5, 1.5);
+        (doc as any).clip();
+      },
       didDrawCell: (data) => {
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
@@ -791,10 +792,10 @@ export default function TimeLogsPage() {
         }
       },
       didDrawPage: (data) => {
-        // Restore graphics state to remove clipping
-        doc.restoreGraphicsState();
+        (doc as any).restoreGraphicsState(); // Remove clipping
         
-        // Draw border around the entire table with rounded corners
+        // Draw border around the entire table with rounded corners AFTER table is drawn
+        const tableWidth = pageWidth - 28;
         const finalTableHeight = (data as any).cursor.y - yPos;
         
         doc.setDrawColor(226, 232, 240);
