@@ -210,6 +210,33 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_requests: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           client_id: string

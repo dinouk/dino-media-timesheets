@@ -85,12 +85,30 @@ export default function LoginPage() {
       return;
     }
 
-    // In a real implementation, you would send this to a backend endpoint
-    // For now, we'll just show a success message
-    console.log("Manual signup request:", manualSignupForm);
-    
-    setSignupSubmitted(true);
-    setManualSignupForm({ name: "", email: "" });
+    try {
+      const response = await fetch("/api/signup-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: manualSignupForm.name.trim(),
+          email: manualSignupForm.email.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit signup request");
+      }
+
+      setSignupSubmitted(true);
+      setManualSignupForm({ name: "", email: "" });
+    } catch (err: any) {
+      console.error("Error submitting signup request:", err);
+      setError(err.message || "Failed to submit request. Please try again.");
+    }
   };
 
   if (loading) {
