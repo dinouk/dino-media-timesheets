@@ -54,16 +54,15 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
         </Link>
 
         <div className="flex items-center gap-3">
-          <Link href="/log-time">
-            <Button 
-              variant="default"
-              className="bg-brand-primary hover:bg-brand-primary-hover h-10 gap-2"
-              title="Log Time"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="hidden md:inline">Log Time</span>
-            </Button>
-          </Link>
+          <Button 
+            variant="default"
+            className="bg-brand-primary hover:bg-brand-primary-hover h-10 gap-2"
+            title="Log Time"
+            onClick={() => router.push("/time-logs?add=true")}
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden md:inline">Log Time</span>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

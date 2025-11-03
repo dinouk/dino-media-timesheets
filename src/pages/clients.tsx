@@ -233,7 +233,7 @@ export default function ClientsPage() {
 
   const handleAddTimeLog = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/log-time?clientId=${clientId}`);
+    router.push(`/time-logs?clientId=${clientId}&add=true`);
   };
 
   const resetForm = () => {
@@ -528,7 +528,7 @@ export default function ClientsPage() {
                     </div>
                   )}
                   {tags.length === 0 && (
-                    <p className="text-sm text-red-500 mt-1">At least one tag is required</p>
+                    <p className="text-sm text-slate-500 mt-1">Add at least one tag for this client</p>
                   )}
                 </div>
               </div>

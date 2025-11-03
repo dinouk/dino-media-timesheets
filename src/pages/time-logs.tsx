@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp } from "lucide-react";
+import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
@@ -94,6 +94,18 @@ export default function TimeLogsPage() {
   const [allocationValue, setAllocationValue] = useState("");
   const [loadingData, setLoadingData] = useState(true);
   const [companyLogo, setCompanyLogo] = useState<string | null>(null);
+  const [isAddingTimeLog, setIsAddingTimeLog] = useState(false);
+  const [addForm, setAddForm] = useState({
+    clientId: "",
+    date: "",
+    hours: "",
+    description: "",
+    tags: [] as string[],
+    files: [] as FileUpload[],
+  });
+
+  const minDate = "2025-10-01";
+  const maxDate = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     setMounted(true);
@@ -115,11 +127,21 @@ export default function TimeLogsPage() {
   useEffect(() => {
     if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
       setSelectedClientId(router.query.clientId);
+      
+      // Check if we should open add dialog
+      if (router.query.add === "true") {
+        handleOpenAddDialog(router.query.clientId);
+        // Clean up URL
+        router.replace({
+          pathname: router.pathname,
+          query: { clientId: router.query.clientId, period: router.query.period }
+        }, undefined, { shallow: true });
+      }
     }
     if (router.query.period && typeof router.query.period === "string") {
       setSelectedPeriod(router.query.period);
     }
-  }, [router.query.clientId, router.query.period, clients]);
+  }, [router.query.clientId, router.query.period, router.query.add, clients]);
 
   const loadData = async () => {
     if (!user) return;
@@ -352,43 +374,159 @@ export default function TimeLogsPage() {
     }));
   };
 
-  const minDate = "2025-10-01";
-  const maxDate = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    if (selectedClientId && selectedPeriod && clients.length > 0) {
-      calculateStats();
-    }
-  }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations, manualRollovers]);
-
-  const calculateStats = () => {
-    const client = clients.find(c => c.id === selectedClientId);
-    if (!client) return;
-
-    const allocation = monthlyAllocations.find(
-      a => a.client_id === selectedClientId && a.month === selectedPeriod
-    );
-
-    const manualRollover = manualRollovers.find(
-      r => r.client_id === selectedClientId && r.month === selectedPeriod
-    );
-
-    const monthEntries = timeEntries.filter(
-      entry => entry.client_id === selectedClientId && entry.month === selectedPeriod
-    );
-
-    const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
-    const allocatedHours = allocation?.allocated_hours ?? client.allocated_hours_per_month;
-    const rolloverHours = manualRollover?.rollover_hours ?? (allocation?.rollover_hours ?? 0);
-    const remainingHours = allocatedHours + rolloverHours - usedHours;
-
-    setStats({
-      allocatedHours,
-      rolloverHours,
-      usedHours,
-      remainingHours,
+  const handleOpenAddDialog = (preselectedClientId?: string) => {
+    setAddForm({
+      clientId: preselectedClientId || selectedClientId || "",
+      date: new Date().toISOString().split("T")[0],
+      hours: "",
+      description: "",
+      tags: [],
+      files: [],
     });
+    setIsAddingTimeLog(true);
   };
+
+  const handleAddFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const fileData: FileUpload = {
+        id: Date.now().toString() + Math.random(),
+        name: file.name,
+        displayName: file.name,
+        file: file,
+        type: file.type,
+        size: file.size,
+      };
+      
+      setAddForm(prev => ({
+        ...prev,
+        files: [...prev.files, fileData],
+      }));
+    });
+
+    e.target.value = "";
+  };
+
+  const handleRemoveAddFile = (fileId: string) => {
+    setAddForm(prev => ({
+      ...prev,
+      files: prev.files.filter(f => f.id !== fileId),
+    }));
+  };
+
+  const handleUpdateAddFileDisplayName = (fileId: string, newDisplayName: string) => {
+    setAddForm(prev => ({
+      ...prev,
+      files: prev.files.map(f => 
+        f.id === fileId ? { ...f, displayName: newDisplayName } : f
+      ),
+    }));
+  };
+
+  const toggleAddTag = (tag: string) => {
+    setAddForm(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag],
+    }));
+  };
+
+  const handleSubmitTimeEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const addClient = clients.find(c => c.id === addForm.clientId);
+    if (!addClient) return;
+
+    const clientTags = addClient.tags as string[] || [];
+    const finalTags = clientTags.length === 1 ? clientTags : addForm.tags;
+
+    if (!addForm.clientId || !addForm.date || !addForm.hours || finalTags.length === 0 || !addForm.description.trim() || !user) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all fields including description and select at least one tag",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const date = new Date(addForm.date);
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+
+      const newEntry = await timeEntryService.createTimeEntry({
+        user_id: user.id,
+        client_id: addForm.clientId,
+        date: addForm.date,
+        hours: parseFloat(addForm.hours),
+        tags: finalTags,
+        description: addForm.description.trim(),
+        month: monthKey,
+        year: date.getFullYear(),
+      });
+
+      if (addForm.files.length > 0) {
+        for (const fileUpload of addForm.files) {
+          if (fileUpload.file) {
+            const filePath = `${user.id}/${newEntry.id}/${Date.now()}-${fileUpload.file.name}`;
+            
+            await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
+            
+            const fileUrl = await storageService.getPublicUrl("time-entry-files", filePath);
+
+            await fileAttachmentService.createFileAttachment({
+              user_id: user.id,
+              time_entry_id: newEntry.id,
+              file_name: fileUpload.name,
+              display_name: fileUpload.displayName,
+              file_url: fileUrl,
+              file_path: filePath,
+              file_type: fileUpload.file.type,
+              file_size: fileUpload.file.size,
+            });
+          }
+        }
+      }
+
+      toast({
+        title: "Time Entry Created",
+        description: "Your time entry has been successfully logged",
+      });
+
+      setIsAddingTimeLog(false);
+      setSelectedClientId(addForm.clientId);
+      setSelectedPeriod(monthKey);
+      
+      router.push({
+        pathname: "/time-logs",
+        query: { clientId: addForm.clientId, period: monthKey }
+      }, undefined, { shallow: true });
+      
+      await loadData();
+    } catch (error: any) {
+      console.error("Error creating time entry:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create time entry",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const selectedAddClient = clients.find(c => c.id === addForm.clientId);
+  const addClientTags = selectedAddClient ? (selectedAddClient.tags as string[] || []) : [];
+  const shouldShowAddTags = addClientTags.length > 1;
 
   const filteredEntries = timeEntries
     .filter(entry => 
@@ -1046,12 +1184,14 @@ export default function TimeLogsPage() {
             </Card>
 
             <div className="flex justify-center pt-8 pb-8">
-              <Link href={`/log-time${selectedClientId ? `?clientId=${selectedClientId}` : ""}`}>
-                <Button size="lg" className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800">
-                  <Plus className="w-5 h-5" />
-                  Add New Log
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                onClick={() => handleOpenAddDialog()}
+              >
+                <Plus className="w-5 h-5" />
+                Add New Log
+              </Button>
             </div>
           </>
         )}
@@ -1244,6 +1384,169 @@ export default function TimeLogsPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        )}
+
+        {isAddingTimeLog && (
+          <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Log Time Entry</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmitTimeEntry} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="add-client">Client *</Label>
+                  <Select value={addForm.clientId} onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}>
+                    <SelectTrigger id="add-client">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activeClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-date">Date *</Label>
+                  <Input
+                    id="add-date"
+                    type="date"
+                    value={addForm.date}
+                    onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                    min={minDate}
+                    max={maxDate}
+                    className="h-10"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-hours">Hours (15-minute intervals) *</Label>
+                  <Select
+                    value={addForm.hours}
+                    onValueChange={(value) => setAddForm({ ...addForm, hours: value })}
+                  >
+                    <SelectTrigger id="add-hours">
+                      <SelectValue placeholder="Select hours" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
+                        <SelectItem key={value} value={value.toString()}>
+                          {value} hours
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-description">Task Description *</Label>
+                  <Textarea
+                    id="add-description"
+                    placeholder="Describe the work performed..."
+                    value={addForm.description}
+                    onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="add-files">File Attachments (Optional)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="add-files"
+                      type="file"
+                      onChange={handleAddFileUpload}
+                      multiple
+                      className="cursor-pointer"
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => document.getElementById("add-files")?.click()}
+                      title="Upload files"
+                    >
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
+                  
+                  {addForm.files.length > 0 && (
+                    <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <p className="text-sm font-medium text-slate-700">Attached Files ({addForm.files.length})</p>
+                      <div className="space-y-2">
+                        {addForm.files.map((file) => (
+                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
+                            <FileIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <Input
+                              type="text"
+                              value={file.displayName}
+                              onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
+                              className="h-8 text-sm flex-1"
+                              placeholder="Display name..."
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveAddFile(file.id)}
+                              className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {shouldShowAddTags && selectedAddClient && (
+                  <div className="space-y-2">
+                    <Label>Tags *</Label>
+                    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
+                      {addClientTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={addForm.tags.includes(tag) ? "default" : "outline"}
+                          className={`cursor-pointer transition-all ${
+                            addForm.tags.includes(tag)
+                              ? "bg-brand-primary hover:bg-brand-primary-hover"
+                              : "hover:bg-slate-200"
+                          }`}
+                          onClick={() => toggleAddTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsAddingTimeLog(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                  >
+                    Log Time Entry
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         )}
       </main>
     </div>
