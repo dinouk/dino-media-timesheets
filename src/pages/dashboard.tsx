@@ -1,57 +1,77 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, Clock, LogOut, TrendingUp, FileText, Calendar } from "lucide-react";
-import Link from "next/link";
-import { Client, TimeEntry } from "@/types";
+import { Calendar } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { useAuth } from "@/contexts/AuthContext";
+import { clientService } from "@/services/clientService";
+import { timeEntryService } from "@/services/timeEntryService";
+import type { Database } from "@/integrations/supabase/types";
+
+type Client = Database["public"]["Tables"]["clients"]["Row"];
+type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  const [currentUser, setCurrentUser] = useState("");
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    loadData();
-  }, [router]);
+    if (user) {
+      loadData();
+    }
+  }, [user, loading, router]);
 
-  const loadData = () => {
-    const savedClients = localStorage.getItem("clients");
-    const savedEntries = localStorage.getItem("timeEntries");
+  const loadData = async () => {
+    if (!user) return;
     
-    if (savedClients) setClients(JSON.parse(savedClients));
-    if (savedEntries) setTimeEntries(JSON.parse(savedEntries));
+    try {
+      setLoadingData(true);
+      const [clientsData, entriesData] = await Promise.all([
+        clientService.getClients(user.id),
+        timeEntryService.getTimeEntries(user.id)
+      ]);
+      
+      setClients(clientsData);
+      setTimeEntries(entriesData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    router.push("/");
-  };
-
-  if (!mounted) return null;
+  if (!mounted || loading || loadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const thisMonthEntries = timeEntries.filter(entry => entry.month === currentMonth);
-  const totalHoursThisMonth = thisMonthEntries.reduce((sum, entry) => sum + entry.hours, 0);
+  const totalHoursThisMonth = thisMonthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
   
   const recentEntries = [...timeEntries]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -62,10 +82,7 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <Card className="border-2 border-green-100 bg-gradient-to-br from-green-50 to-white">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-slate-600">This Month</CardTitle>
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
+              <CardTitle className="text-sm font-medium text-slate-600">This Month</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">{totalHoursThisMonth.toFixed(1)}h</div>
@@ -84,16 +101,13 @@ export default function DashboardPage() {
             <CardContent>
               {recentEntries.length === 0 ? (
                 <div className="text-center py-8 text-slate-500">
-                  <Clock className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                   <p>No time entries yet</p>
-                  <Link href="/log-time">
-                    <Button variant="link" className="mt-2">Log your first entry</Button>
-                  </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {recentEntries.map(entry => {
-                    const client = clients.find(c => c.id === entry.clientId);
+                    const client = clients.find(c => c.id === entry.client_id);
+                    const tags = entry.tags as string[] || [];
                     return (
                       <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                         <div className="flex-1">
@@ -103,7 +117,7 @@ export default function DashboardPage() {
                         <div className="text-right">
                           <p className="font-semibold text-brand-primary">{entry.hours}h</p>
                           <div className="flex gap-1 mt-1 justify-end">
-                            {entry.tags.slice(0, 2).map((tag, i) => (
+                            {tags.slice(0, 2).map((tag, i) => (
                               <Badge key={i} variant="secondary" className="text-xs px-1.5 py-0">
                                 {tag}
                               </Badge>
