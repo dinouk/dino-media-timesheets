@@ -607,7 +607,7 @@ export default function TimeLogsPage() {
       entry.client_id === selectedClientId &&
       entry.month === selectedPeriod
     )
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -738,6 +738,7 @@ export default function TimeLogsPage() {
       styles: {
         lineColor: [248, 250, 252],
         lineWidth: 0,
+        cellPadding: 3,
       },
       headStyles: {
         fillColor: [1, 136, 169],
@@ -757,13 +758,31 @@ export default function TimeLogsPage() {
       columnStyles: {
         0: { cellWidth: 18 },
         1: { cellWidth: 15 },
-        2: { cellWidth: "auto" },
-        3: { cellWidth: 28 },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 28, overflow: 'linebreak' },
         4: { cellWidth: 31 }
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
       didDrawCell: (data) => {
+        if (data.column.index === 3 && data.section === "body" && data.row.index < entriesWithFiles.length) {
+          const { entry } = entriesWithFiles[data.row.index];
+          const tags = entry.tags as string[];
+          if (tags.length > 0) {
+            const cell = data.cell;
+            const tagsText = tags.join(", ");
+            
+            doc.setFontSize(7.5);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 65, 85);
+            
+            const textLines = doc.splitTextToSize(tagsText, cell.width - 4);
+            textLines.forEach((line: string, lineIndex: number) => {
+              doc.text(line, cell.x + 2, cell.y + 5 + (lineIndex * 4));
+            });
+          }
+        }
+        
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
           if (files.length > 0) {
@@ -1195,7 +1214,7 @@ export default function TimeLogsPage() {
                           <TableRow>
                             <TableHead>Date</TableHead>
                             <TableHead>Hours</TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}>Description</TableHead>
                             <TableHead>Tags</TableHead>
                             <TableHead>Files</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -1213,13 +1232,13 @@ export default function TimeLogsPage() {
                                 <TableCell>
                                   <span className="font-semibold text-brand-primary">{entry.hours}</span>
                                 </TableCell>
-                                <TableCell>
-                                  <p className="text-sm text-slate-700 truncate">{entry.description}</p>
+                                <TableCell style={{ width: "50vw", minWidth: "200px", maxWidth: "500px" }}>
+                                  <p className="text-sm text-slate-700 break-words">{entry.description}</p>
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex flex-wrap gap-1">
                                     {(entry.tags as string[]).map((tag, index) => (
-                                      <Badge key={index} variant="secondary" className="text-xs">
+                                      <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap">
                                         {tag}
                                       </Badge>
                                     ))}
