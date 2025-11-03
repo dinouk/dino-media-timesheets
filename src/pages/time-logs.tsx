@@ -639,8 +639,8 @@ export default function TimeLogsPage() {
         const imgHeight = img.height;
         const aspectRatio = imgWidth / imgHeight;
         
-        const maxLogoWidth = 60;
-        const maxLogoHeight = 25;
+        const maxLogoWidth = 30;
+        const maxLogoHeight = 12;
         
         let logoWidth = maxLogoWidth;
         let logoHeight = logoWidth / aspectRatio;
@@ -663,15 +663,15 @@ export default function TimeLogsPage() {
     doc.text(selectedClient.name, pageWidth / 2, yPos, { align: "center" });
     yPos += 10;
 
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
     yPos += 15;
 
-    const boxWidth = (pageWidth - 40) / 4;
+    const boxWidth = (pageWidth - 28) / 4;
     const boxHeight = 25;
     const boxY = yPos;
-    const boxPadding = 3;
+    const boxPadding = 0;
 
     const statBoxes = [
       { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
@@ -681,7 +681,7 @@ export default function TimeLogsPage() {
     ];
 
     statBoxes.forEach((box, index) => {
-      const x = 14 + (index * (boxWidth + boxPadding));
+      const x = 14 + (index * boxWidth);
       
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(248, 250, 252);
