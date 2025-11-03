@@ -365,13 +365,53 @@ export default function TimeLogsPage() {
 
   const closeEditDialog = (callback?: () => void) => {
     setEditingEntry(null);
-    if (callback) setTimeout(callback, 150);
+    setEditForm({
+      date: "",
+      hours: "",
+      description: "",
+      tags: [],
+      files: []
+    });
+    if (callback) setTimeout(callback, 300);
   };
 
   const closeAddDialog = (callback?: () => void) => {
     setIsAddingTimeLog(false);
-    if (callback) setTimeout(callback, 150);
+    setAddForm({
+      clientId: "",
+      date: "",
+      hours: "",
+      description: "",
+      tags: [],
+      files: []
+    });
+    if (callback) setTimeout(callback, 300);
   };
+
+  // Cleanup effect to remove any lingering modal overlays
+  useEffect(() => {
+    if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
+      // Small delay to ensure modal animations complete
+      const cleanup = setTimeout(() => {
+        // Remove any lingering Radix UI portal overlays
+        const portals = document.querySelectorAll('[data-radix-dialog-overlay]');
+        portals.forEach(portal => portal.remove());
+        
+        // Also remove any stray portals
+        const allPortals = document.querySelectorAll('[data-radix-portal]');
+        allPortals.forEach(portal => {
+          // Only remove if it's empty or contains overlay/content
+          if (portal.children.length === 0 || 
+              portal.querySelector('[data-radix-dialog-overlay]') ||
+              portal.querySelector('[data-radix-dialog-content]')) {
+            portal.remove();
+          }
+        });
+      }, 100);
+      
+      return () => clearTimeout(cleanup);
+    }
+  }, [editingEntry, isAddingTimeLog, deletingEntry]);
 
   const handleSubmitTimeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
