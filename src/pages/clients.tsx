@@ -389,7 +389,7 @@ export default function ClientsPage() {
                 return (
                 <Card 
                   key={client.id} 
-                  className={`hover:shadow-lg transition-all border-2 hover:border-blue-200 cursor-pointer ${client.archived ? "opacity-75" : ""}`}
+                  className={`hover:shadow-lg transition-all border-2 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
                   onClick={() => handleClientClick(client.id)}
                 >
                   <CardHeader>
