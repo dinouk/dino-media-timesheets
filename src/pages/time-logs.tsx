@@ -1142,35 +1142,35 @@ export default function TimeLogsPage() {
                     </div>
                   </div>
                   {(() => {
-                    const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-                    
-                    // Always show progress bar, even with 0 logs and negative rollover
-                    let progressValue = 0;
-                    let isOverBudget = false;
-                    
-                    if (totalAvailable > 0) {
-                      // Normal case: positive total time available
-                      progressValue = Math.min((stats.usedHours / totalAvailable) * 100, 100);
-                      isOverBudget = stats.usedHours > totalAvailable;
-                    } else if (totalAvailable === 0) {
-                      // Edge case: exactly 0 available (negative rollover = allocated)
-                      progressValue = stats.usedHours > 0 ? 100 : 0;
-                      isOverBudget = stats.usedHours > 0;
-                    } else {
-                      // Negative available time (negative rollover > allocated)
-                      // Show as over budget even with 0 usage
-                      progressValue = 100;
-                      isOverBudget = true;
-                    }
-                    
-                    return (
-                      <Progress
-                        value={progressValue}
-                        className="h-3 bg-slate-100"
-                        indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
-                      />
-                    );
-                  })()}
+                  const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+
+                  // Always show progress bar, even with 0 logs and negative rollover
+                  let progressValue = 0;
+                  let isOverBudget = false;
+
+                  if (totalAvailable > 0) {
+                    // Normal case: positive total time available
+                    progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
+                    isOverBudget = stats.usedHours > totalAvailable;
+                  } else if (totalAvailable === 0) {
+                    // Edge case: exactly 0 available (negative rollover = allocated)
+                    progressValue = stats.usedHours > 0 ? 100 : 0;
+                    isOverBudget = stats.usedHours > 0;
+                  } else {
+                    // Negative available time (negative rollover > allocated)
+                    // Show as over budget even with 0 usage
+                    progressValue = 100;
+                    isOverBudget = true;
+                  }
+
+                  return (
+                    <Progress
+                      value={progressValue}
+                      className="h-3 bg-slate-100"
+                      indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />);
+
+
+                })()}
                 </CardContent>
               </Card>
             </div>
@@ -1185,7 +1185,7 @@ export default function TimeLogsPage() {
                     <Button
                   size="lg"
                   className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                  onClick={() => handleOpenAddDialog()}>
+                  onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}>
 
                       <Plus className="w-5 h-5" />
                       Add New Log
