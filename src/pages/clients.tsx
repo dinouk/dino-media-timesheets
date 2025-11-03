@@ -22,6 +22,7 @@ type Client = Database["public"]["Tables"]["clients"]["Row"];
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
 type StatusFilter = "active" | "archived" | "all";
+type BudgetFilter = "all" | "remaining" | "over";
 
 interface ClientStats {
   allocatedHours: number;
@@ -42,6 +43,7 @@ export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [budgetFilter, setBudgetFilter] = useState<BudgetFilter>("all");
   const [formData, setFormData] = useState({
     name: "",
     allocatedHours: "",
@@ -280,6 +282,17 @@ export default function ClientsPage() {
     if (statusFilter === "archived") return client.archived;
     return true;
   });
+  
+  const budgetFilteredClients = filteredClients.filter(client => {
+    if (budgetFilter === "all") return true;
+    
+    const stats = getCurrentMonthStats(client);
+    
+    if (budgetFilter === "remaining") return stats.remainingHours >= 0;
+    if (budgetFilter === "over") return stats.remainingHours < 0;
+    
+    return true;
+  });
 
   if (!mounted || loading || loadingData) {
     return (
@@ -320,6 +333,19 @@ export default function ClientsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Budget Status</label>
+                  <Select value={budgetFilter} onValueChange={(value) => setBudgetFilter(value as BudgetFilter)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Budgets</SelectItem>
+                      <SelectItem value="remaining">Time Remaining</SelectItem>
+                      <SelectItem value="over">Over Budget</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -341,7 +367,7 @@ export default function ClientsPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : filteredClients.length === 0 ? (
+        ) : budgetFilteredClients.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <div className="mb-4 flex justify-center">
@@ -349,14 +375,14 @@ export default function ClientsPage() {
                   <Archive className="w-8 h-8 text-slate-600" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No {statusFilter} clients</h3>
-              <p className="text-slate-600">Try changing the filter to see more clients</p>
+              <h3 className="text-xl font-semibold mb-2">No matching clients</h3>
+              <p className="text-slate-600">Try changing the filters to see more clients</p>
             </CardContent>
           </Card>
         ) : (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {filteredClients.map((client) => {
+              {budgetFilteredClients.map((client) => {
                 const stats = getCurrentMonthStats(client);
                 const clientTags = client.tags as string[] || [];
                 
