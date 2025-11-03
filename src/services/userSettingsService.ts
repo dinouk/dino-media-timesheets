@@ -11,12 +11,12 @@ export const userSettingsService = {
       .from("user_settings")
       .select("*")
       .eq("user_id", userId)
-      .limit(1);
+      .maybeSingle();
 
     if (error) throw error;
     
-    // Return first item or null if no settings exist
-    return data && data.length > 0 ? (data[0] as UserSettings) : null;
+    // maybeSingle() returns null if no row found, or the single row if found
+    return data as UserSettings | null;
   },
 
   async upsertUserSettings(settings: Omit<UserSettingsInsert, "id" | "created_at" | "updated_at">) {
