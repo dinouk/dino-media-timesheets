@@ -730,6 +730,14 @@ export default function TimeLogsPage() {
       files.length > 0 ? files.map(f => f.display_name).join(", ") : "No files"
     ]);
 
+    // Save the graphics state and add clipping region for rounded corners
+    doc.saveGraphicsState();
+    const tableWidth = pageWidth - 28;
+    
+    // Create a clipping path with rounded corners
+    doc.roundedRect(14, yPos, tableWidth, 200, 1.5, 1.5);
+    doc.clip();
+
     autoTable(doc, {
       startY: yPos,
       head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
@@ -783,13 +791,15 @@ export default function TimeLogsPage() {
         }
       },
       didDrawPage: (data) => {
-        // Draw border around the entire table with rounded corners AFTER table is drawn
-        const tableWidth = pageWidth - 28;
-        const tableHeight = (data as any).cursor.y - yPos;
+        // Restore graphics state to remove clipping
+        doc.restoreGraphicsState();
+        
+        // Draw border around the entire table with rounded corners
+        const finalTableHeight = (data as any).cursor.y - yPos;
         
         doc.setDrawColor(226, 232, 240);
         doc.setLineWidth(0.5);
-        doc.roundedRect(14, yPos, tableWidth, tableHeight, 1.5, 1.5, "S");
+        doc.roundedRect(14, yPos, tableWidth, finalTableHeight, 1.5, 1.5, "S");
       }
     });
 
