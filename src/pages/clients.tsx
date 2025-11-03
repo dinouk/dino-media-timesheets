@@ -504,10 +504,36 @@ export default function ClientsPage() {
                             Remaining: {stats.remainingHours.toFixed(2)}h
                           </span>
                         </div>
-                        <Progress 
-                          value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
-                          className={`h-2 bg-slate-100 ${stats.remainingHours < 0 ? "[&>div]:bg-red-500" : "[&>div]:bg-green-500"}`}
-                        />
+                        {(() => {
+                          const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                          
+                          // Always show progress bar, even with 0 logs and negative rollover
+                          let progressValue = 0;
+                          let isOverBudget = false;
+                          
+                          if (totalAvailable > 0) {
+                            // Normal case: positive total time available
+                            progressValue = Math.min((stats.usedHours / totalAvailable) * 100, 100);
+                            isOverBudget = stats.usedHours > totalAvailable;
+                          } else if (totalAvailable === 0) {
+                            // Edge case: exactly 0 available (negative rollover = allocated)
+                            progressValue = stats.usedHours > 0 ? 100 : 0;
+                            isOverBudget = stats.usedHours > 0;
+                          } else {
+                            // Negative available time (negative rollover > allocated)
+                            // Show as over budget even with 0 usage
+                            progressValue = 100;
+                            isOverBudget = true;
+                          }
+                          
+                          return (
+                            <Progress 
+                              value={progressValue} 
+                              className="h-2 bg-slate-100"
+                              indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
+                            />
+                          );
+                        })()}
                       </div>
                     </div>
                   </CardContent>

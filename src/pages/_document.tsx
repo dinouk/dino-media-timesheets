@@ -5,6 +5,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        <title>Dino Media - Timesheets</title>
+        <link rel="icon" href="https://dino.media/images/icons/favicon.ico" />
         {/*
           CRITICAL: DO NOT REMOVE THIS SCRIPT
           The Softgen AI monitoring script is essential for core app functionality.
