@@ -951,8 +951,10 @@ export default function TimeLogsPage() {
               </CardHeader>
               <CardContent>
                 {filteredEntries.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600">
-                    No time entries found for this period
+                  <div className="text-center py-12">
+                    <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Time Entries</h3>
+                    <p className="text-slate-600">No time entries found for this period</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">

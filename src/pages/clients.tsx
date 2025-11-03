@@ -326,7 +326,7 @@ export default function ClientsPage() {
         )}
 
         {clients.length === 0 ? (
-          <Card className="max-w-md mx-auto text-center py-12">
+          <Card className="text-center py-12">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
