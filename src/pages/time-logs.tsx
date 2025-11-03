@@ -142,6 +142,18 @@ export default function TimeLogsPage() {
       setSelectedPeriod(router.query.period);
     }
   }, [router.query.clientId, router.query.period, router.query.add, clients]);
+  
+  // Separate effect to handle add dialog without clientId
+  useEffect(() => {
+    if (router.query.add === "true" && !router.query.clientId && clients.length > 0) {
+      handleOpenAddDialog();
+      // Clean up URL
+      router.replace({
+        pathname: router.pathname,
+        query: router.query.period ? { period: router.query.period } : {}
+      }, undefined, { shallow: true });
+    }
+  }, [router.query.add, router.query.clientId, clients.length]);
 
   const loadData = async () => {
     if (!user) return;
