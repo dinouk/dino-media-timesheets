@@ -1016,9 +1016,21 @@ export default function TimeLogsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="border-2 border-slate-200">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-black flex items-center gap-2">
-                    <ArrowUp className="w-4 h-4 text-black" />
-                    <span>Rolled Over</span>
+                  <CardTitle className="text-sm font-medium text-black flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ArrowUp className="w-4 h-4 text-black" />
+                      <span>Rolled Over</span>
+                    </div>
+                    {!editingRollover ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleStartEditRollover}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </Button>
+                    ) : null}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
