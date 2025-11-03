@@ -181,7 +181,7 @@ export default function LogTimePage() {
             
             await storageService.uploadFile("time-entry-files", filePath, fileUpload.file);
             
-            const fileUrl = storageService.getPublicUrl("time-entry-files", filePath);
+            const fileUrl = await storageService.getPublicUrl("time-entry-files", filePath);
 
             await fileAttachmentService.createFileAttachment({
               time_entry_id: newEntry.id,

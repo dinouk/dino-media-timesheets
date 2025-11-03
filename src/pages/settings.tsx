@@ -103,7 +103,7 @@ export default function SettingsPage() {
       const fileName = `${user.id}/logo.${fileExt}`;
       
       await storageService.uploadFile("company-logos", fileName, selectedFile);
-      const publicUrl = storageService.getPublicUrl("company-logos", fileName);
+      const publicUrl = await storageService.getPublicUrl("company-logos", fileName);
 
       // Save to user settings
       await userSettingsService.upsertUserSettings({
