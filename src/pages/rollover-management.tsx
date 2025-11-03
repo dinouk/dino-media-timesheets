@@ -10,16 +10,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AppHeader } from "@/components/AppHeader";
-import { Client, TimeEntry, MonthlyAllocation, ManualRollover } from "@/types";
-import { calculateAutoRollover, processMonthlyRollover, getMonthKey } from "@/lib/timeCalculations";
+import { calculateAutoRollover, processMonthlyRollover } from "@/lib/timeCalculations";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, TrendingUp, TrendingDown, Edit2, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { clientService } from "@/services/clientService";
+import { timeEntryService } from "@/services/timeEntryService";
+import { monthlyAllocationService } from "@/services/monthlyAllocationService";
+import { manualRolloverService } from "@/services/manualRolloverService";
+import type { Database } from "@/integrations/supabase/types";
+
+type Client = Database["public"]["Tables"]["clients"]["Row"];
+type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
+type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
+type ManualRollover = Database["public"]["Tables"]["manual_rollovers"]["Row"];
 
 export default function RolloverManagementPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [currentUser, setCurrentUser] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
@@ -30,32 +40,49 @@ export default function RolloverManagementPage() {
     rolloverHours: "",
     note: "",
   });
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
+    if (!loading && !user) {
       router.push("/");
       return;
     }
-    setCurrentUser(user);
-    loadData();
+    if (user) {
+      loadData();
+    }
 
     const now = new Date();
     const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
     setSelectedPeriod(currentPeriod);
-  }, [router]);
+  }, [user, loading, router]);
 
-  const loadData = () => {
-    const savedClients = localStorage.getItem("clients");
-    const savedEntries = localStorage.getItem("timeEntries");
-    const savedAllocations = localStorage.getItem("monthlyAllocations");
-    const savedManualRollovers = localStorage.getItem("manualRollovers");
-
-    if (savedClients) setClients(JSON.parse(savedClients));
-    if (savedEntries) setTimeEntries(JSON.parse(savedEntries));
-    if (savedAllocations) setMonthlyAllocations(JSON.parse(savedAllocations));
-    if (savedManualRollovers) setManualRollovers(JSON.parse(savedManualRollovers));
+  const loadData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingData(true);
+      const [clientsData, entriesData, allocationsData, rolloversData] = await Promise.all([
+        clientService.getClients(user.id),
+        timeEntryService.getTimeEntries(user.id),
+        monthlyAllocationService.getMonthlyAllocations(user.id),
+        manualRolloverService.getManualRollovers(user.id),
+      ]);
+      
+      setClients(clientsData);
+      setTimeEntries(entriesData);
+      setMonthlyAllocations(allocationsData);
+      setManualRollovers(rolloversData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        title: "Error Loading Data",
+        description: "Failed to load rollover management data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const generatePeriodOptions = () => {
@@ -89,21 +116,33 @@ export default function RolloverManagementPage() {
 
     return clients.map(client => {
       const existingAllocation = monthlyAllocations.find(
-        a => a.clientId === client.id && a.month === selectedPeriod
+        a => a.client_id === client.id && a.month === selectedPeriod
       );
 
       const manualRollover = manualRollovers.find(
-        r => r.clientId === client.id && r.month === selectedPeriod
+        r => r.client_id === client.id && r.month === selectedPeriod
       );
 
-      const autoCalculated = calculateAutoRollover(
-        client,
-        selectedPeriod,
-        timeEntries,
-        monthlyAllocations
+      // Calculate auto rollover based on previous month's data
+      const [year, month] = selectedPeriod.split("-");
+      const prevDate = new Date(parseInt(year), parseInt(month) - 2); // -2 because month is 1-indexed and we want previous month
+      const prevMonth = `${prevDate.getFullYear()}-${(prevDate.getMonth() + 1).toString().padStart(2, "0")}`;
+      
+      const prevAllocation = monthlyAllocations.find(
+        a => a.client_id === client.id && a.month === prevMonth
       );
+      
+      const prevEntries = timeEntries.filter(
+        e => e.client_id === client.id && e.month === prevMonth
+      );
+      
+      const prevUsedHours = prevEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+      const prevAllocatedHours = prevAllocation?.allocated_hours ?? client.allocated_hours_per_month;
+      const prevRolloverHours = prevAllocation?.rollover_hours ?? 0;
+      
+      const autoCalculated = prevAllocatedHours + prevRolloverHours - prevUsedHours;
 
-      const currentRollover = existingAllocation?.rolloverHours ?? autoCalculated;
+      const currentRollover = existingAllocation?.rollover_hours ?? autoCalculated;
       const isManual = !!manualRollover;
 
       return {
@@ -121,7 +160,7 @@ export default function RolloverManagementPage() {
     if (!data) return;
 
     const manualRollover = manualRollovers.find(
-      r => r.clientId === clientId && r.month === selectedPeriod
+      r => r.client_id === clientId && r.month === selectedPeriod
     );
 
     setEditingRollover({ clientId, month: selectedPeriod });
@@ -131,9 +170,9 @@ export default function RolloverManagementPage() {
     });
   };
 
-  const handleSaveRollover = (e: React.FormEvent) => {
+  const handleSaveRollover = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingRollover) return;
+    if (!editingRollover || !user) return;
 
     const rolloverHours = parseFloat(editForm.rolloverHours);
     if (isNaN(rolloverHours)) {
@@ -145,97 +184,115 @@ export default function RolloverManagementPage() {
       return;
     }
 
-    const existingIndex = manualRollovers.findIndex(
-      r => r.clientId === editingRollover.clientId && r.month === editingRollover.month
-    );
+    try {
+      const [year] = editingRollover.month.split("-");
 
-    let updatedRollovers: ManualRollover[];
-
-    if (existingIndex !== -1) {
-      updatedRollovers = [...manualRollovers];
-      updatedRollovers[existingIndex] = {
-        ...updatedRollovers[existingIndex],
-        rolloverHours,
-        note: editForm.note,
-        updatedAt: new Date().toISOString(),
-      };
-    } else {
-      const newRollover: ManualRollover = {
-        id: Date.now().toString(),
-        clientId: editingRollover.clientId,
+      await manualRolloverService.upsertManualRollover({
+        user_id: user.id,
+        client_id: editingRollover.clientId,
         month: editingRollover.month,
-        year: parseInt(editingRollover.month.split("-")[0]),
-        rolloverHours,
-        note: editForm.note,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      updatedRollovers = [...manualRollovers, newRollover];
+        year: parseInt(year),
+        rollover_hours: rolloverHours,
+        note: editForm.note || "",
+      });
+
+      const existingAllocation = monthlyAllocations.find(
+        a => a.client_id === editingRollover.clientId && a.month === editingRollover.month
+      );
+
+      const client = clients.find(c => c.id === editingRollover.clientId);
+      if (!client) return;
+
+      await monthlyAllocationService.upsertMonthlyAllocation({
+        user_id: user.id,
+        client_id: editingRollover.clientId,
+        month: editingRollover.month,
+        year: parseInt(year),
+        allocated_hours: existingAllocation?.allocated_hours ?? client.allocated_hours_per_month,
+        rollover_hours: rolloverHours,
+      });
+
+      toast({
+        title: "Rollover Updated",
+        description: "Manual rollover hours have been saved successfully",
+      });
+
+      setEditingRollover(null);
+      await loadData();
+    } catch (error: any) {
+      console.error("Error saving rollover:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save rollover",
+        variant: "destructive",
+      });
     }
-
-    setManualRollovers(updatedRollovers);
-    localStorage.setItem("manualRollovers", JSON.stringify(updatedRollovers));
-
-    const [year, month] = selectedPeriod.split("-");
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      timeEntries,
-      monthlyAllocations,
-      month,
-      parseInt(year),
-      updatedRollovers
-    );
-    setMonthlyAllocations(updatedAllocations);
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
-
-    toast({
-      title: "Rollover Updated",
-      description: "Manual rollover hours have been saved successfully",
-    });
-
-    setEditingRollover(null);
-    loadData();
   };
 
-  const handleResetToAuto = (clientId: string) => {
+  const handleResetToAuto = async (clientId: string) => {
     if (!confirm("Reset to automatically calculated rollover? This will remove any manual adjustments.")) {
       return;
     }
 
-    const updatedRollovers = manualRollovers.filter(
-      r => !(r.clientId === clientId && r.month === selectedPeriod)
-    );
+    try {
+      const manualRollover = manualRollovers.find(
+        r => r.client_id === clientId && r.month === selectedPeriod
+      );
 
-    setManualRollovers(updatedRollovers);
-    localStorage.setItem("manualRollovers", JSON.stringify(updatedRollovers));
+      if (!manualRollover) return;
 
-    const [year, month] = selectedPeriod.split("-");
-    const updatedAllocations = processMonthlyRollover(
-      clients,
-      timeEntries,
-      monthlyAllocations,
-      month,
-      parseInt(year),
-      updatedRollovers
-    );
-    setMonthlyAllocations(updatedAllocations);
-    localStorage.setItem("monthlyAllocations", JSON.stringify(updatedAllocations));
+      const data = getRolloverData().find(d => d.client.id === clientId);
+      if (!data) return;
 
-    toast({
-      title: "Rollover Reset",
-      description: "Rollover has been reset to automatic calculation",
-    });
+      const [year] = selectedPeriod.split("-");
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
 
-    loadData();
+      const existingAllocation = monthlyAllocations.find(
+        a => a.client_id === clientId && a.month === selectedPeriod
+      );
+
+      await monthlyAllocationService.upsertMonthlyAllocation({
+        user_id: user!.id,
+        client_id: clientId,
+        month: selectedPeriod,
+        year: parseInt(year),
+        allocated_hours: existingAllocation?.allocated_hours ?? client.allocated_hours_per_month,
+        rollover_hours: data.autoCalculated,
+      });
+
+      toast({
+        title: "Rollover Reset",
+        description: "Rollover has been reset to automatic calculation",
+      });
+
+      await loadData();
+    } catch (error: any) {
+      console.error("Error resetting rollover:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reset rollover",
+        variant: "destructive",
+      });
+    }
   };
 
   const rolloverData = getRolloverData();
 
-  if (!mounted) return null;
+  if (!mounted || loading || loadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <AppHeader currentUser={currentUser} />
+      <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
