@@ -1131,7 +1131,7 @@ export default function TimeLogsPage() {
                   <Progress 
                     value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
                     className="h-3 bg-slate-100"
-                    indicatorClassName={stats.remainingHours >= 0 ? "bg-black" : "bg-red-600"}
+                    indicatorClassName={stats.usedHours <= (stats.allocatedHours + stats.rolloverHours) ? "bg-green-600" : "bg-red-600"}
                   />
                 </CardContent>
               </Card>
