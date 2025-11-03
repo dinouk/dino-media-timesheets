@@ -728,21 +728,21 @@ export default function TimeLogsPage() {
         fillColor: [1, 136, 169],
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        fontSize: 11
+        fontSize: 9
       },
       bodyStyles: {
-        fontSize: 10,
+        fontSize: 8,
         textColor: [51, 65, 85]
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 15, halign: "center" },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 35 },
-        4: { cellWidth: 45 }
+        0: { cellWidth: 22 },
+        1: { cellWidth: 13, halign: "center" },
+        2: { cellWidth: 55 },
+        3: { cellWidth: 32 },
+        4: { cellWidth: 40 }
       },
       margin: { left: 14, right: 14 },
       didDrawCell: (data) => {
@@ -754,7 +754,7 @@ export default function TimeLogsPage() {
             files.forEach((file, fileIndex) => {
               const linkY = cell.y + 5 + (fileIndex * 6);
               
-              doc.setFontSize(10);
+              doc.setFontSize(8);
               doc.setFont("helvetica", "normal");
               doc.setTextColor(1, 136, 169);
               doc.textWithLink(file.display_name, cell.x + 2, linkY, {
