@@ -84,17 +84,31 @@ export default function ClientsPage() {
   // Update URL when filters change
   const handleStatusFilterChange = (value: StatusFilter) => {
     setStatusFilter(value);
+    const newQuery: Record<string, string> = {};
+    if (value !== "active") {
+      newQuery.status = value;
+    }
+    if (budgetFilter !== "all") {
+      newQuery.budgetStatus = budgetFilter;
+    }
     router.push({
       pathname: router.pathname,
-      query: { ...router.query, status: value }
+      query: newQuery
     }, undefined, { shallow: true });
   };
 
   const handleBudgetFilterChange = (value: BudgetFilter) => {
     setBudgetFilter(value);
+    const newQuery: Record<string, string> = {};
+    if (statusFilter !== "active") {
+      newQuery.status = statusFilter;
+    }
+    if (value !== "all") {
+      newQuery.budgetStatus = value;
+    }
     router.push({
       pathname: router.pathname,
-      query: { ...router.query, budgetStatus: value }
+      query: newQuery
     }, undefined, { shallow: true });
   };
 

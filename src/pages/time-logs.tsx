@@ -831,18 +831,32 @@ export default function TimeLogsPage() {
   // Handle client filter change with URL sync
   const handleClientFilterChange = (value: string) => {
     setSelectedClientId(value);
+    const newQuery: Record<string, string> = {};
+    if (value) {
+      newQuery.clientId = value;
+    }
+    if (selectedPeriod) {
+      newQuery.period = selectedPeriod;
+    }
     router.push({
       pathname: router.pathname,
-      query: { clientId: value, period: selectedPeriod }
+      query: newQuery
     }, undefined, { shallow: true });
   };
 
   // Handle period filter change with URL sync
   const handlePeriodFilterChange = (value: string) => {
     setSelectedPeriod(value);
+    const newQuery: Record<string, string> = {};
+    if (selectedClientId) {
+      newQuery.clientId = selectedClientId;
+    }
+    if (value) {
+      newQuery.period = value;
+    }
     router.push({
       pathname: router.pathname,
-      query: { clientId: selectedClientId, period: value }
+      query: newQuery
     }, undefined, { shallow: true });
   };
 
