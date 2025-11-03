@@ -634,8 +634,8 @@ export default function TimeLogsPage() {
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, 14, yPos);
     
-    // Reset yPos for logo positioning
-    const logoYPos = 15;
+    // Reset yPos for logo positioning - moved higher
+    const logoYPos = 12;
 
     if (companyLogo) {
       try {
@@ -735,22 +735,28 @@ export default function TimeLogsPage() {
       head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
       body: tableData,
       theme: "striped",
+      styles: {
+        lineColor: [248, 250, 252],
+        lineWidth: 0,
+      },
       headStyles: {
         fillColor: [1, 136, 169],
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        fontSize: 9
+        fontSize: 9,
+        lineWidth: 0,
       },
       bodyStyles: {
         fontSize: 7.5,
-        textColor: [51, 65, 85]
+        textColor: [51, 65, 85],
+        lineWidth: 0,
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 13, halign: "left" },
+        0: { cellWidth: 18 },
+        1: { cellWidth: 11 },
         2: { cellWidth: "auto" },
         3: { cellWidth: 30 },
         4: { cellWidth: 33 }
