@@ -763,6 +763,15 @@ export default function TimeLogsPage() {
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
+      didDrawPage: (data) => {
+        // Draw border around the entire table with rounded corners
+        const tableWidth = pageWidth - 28; // Total width between margins
+        const tableHeight = (data as any).cursor.y - yPos;
+        
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.5); // 2px equivalent
+        doc.roundedRect(14, yPos, tableWidth, tableHeight, 1.5, 1.5, "S");
+      },
       didDrawCell: (data) => {
         if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
           const { files } = entriesWithFiles[data.row.index];
