@@ -304,7 +304,6 @@ export default function ClientsPage() {
                 <Filter className="w-5 h-5 text-brand-primary" />
                 Filter Clients
               </CardTitle>
-              <CardDescription>Filter clients by their status</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">

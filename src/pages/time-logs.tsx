@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Calendar, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
+import { FileDown, Filter, TrendingUp, TrendingDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import jsPDF from "jspdf";
@@ -746,10 +746,9 @@ export default function TimeLogsPage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-brand-primary" />
+              <Filter className="w-5 h-5 text-brand-primary" />
               Filter Time Logs
             </CardTitle>
-            <CardDescription>Select a client and period to view time entries</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
