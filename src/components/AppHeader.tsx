@@ -280,13 +280,27 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
             {/* Desktop navigation links */}
             <div className="hidden md:flex items-center gap-2">
               <Link href="/clients">
-                <Button variant="ghost" className="gap-2">
+                <Button 
+                  variant="ghost" 
+                  className={`gap-2 ${
+                    router.pathname === "/clients" 
+                      ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" 
+                      : ""
+                  }`}
+                >
                   <Users className="w-4 h-4" />
                   Clients
                 </Button>
               </Link>
               <Link href="/time-logs">
-                <Button variant="ghost" className="gap-2">
+                <Button 
+                  variant="ghost" 
+                  className={`gap-2 ${
+                    router.pathname === "/time-logs" 
+                      ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" 
+                      : ""
+                  }`}
+                >
                   <Clock className="w-4 h-4" />
                   Time Logs
                 </Button>
@@ -310,27 +324,56 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link href="/clients" className="flex items-center gap-2 cursor-pointer">
+                {/* Hide Clients and Time Logs on desktop, show on mobile/tablet */}
+                <DropdownMenuItem asChild className="md:hidden">
+                  <Link 
+                    href="/clients" 
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      router.pathname === "/clients" 
+                        ? "bg-brand-primary/10 text-brand-primary" 
+                        : ""
+                    }`}
+                  >
                     <Users className="w-4 h-4" />
                     Clients
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/time-logs" className="flex items-center gap-2 cursor-pointer">
+                <DropdownMenuItem asChild className="md:hidden">
+                  <Link 
+                    href="/time-logs" 
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      router.pathname === "/time-logs" 
+                        ? "bg-brand-primary/10 text-brand-primary" 
+                        : ""
+                    }`}
+                  >
                     <Clock className="w-4 h-4" />
                     Time Logs
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="md:hidden" />
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Link 
+                    href="/settings" 
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      router.pathname === "/settings" 
+                        ? "bg-brand-primary/10 text-brand-primary" 
+                        : ""
+                    }`}
+                  >
                     <Settings className="w-4 h-4" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/my-account" className="flex items-center gap-2 cursor-pointer">
+                  <Link 
+                    href="/my-account" 
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      router.pathname === "/my-account" 
+                        ? "bg-brand-primary/10 text-brand-primary" 
+                        : ""
+                    }`}
+                  >
                     <User className="w-4 h-4" />
                     My Account
                   </Link>
