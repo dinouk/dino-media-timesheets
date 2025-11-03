@@ -628,9 +628,9 @@ export default function TimeLogsPage() {
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.text(selectedClient.name, 14, yPos);
-    yPos += 8;
+    yPos += 6;
 
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, 14, yPos);
     
@@ -652,8 +652,8 @@ export default function TimeLogsPage() {
         const imgHeight = img.height;
         const aspectRatio = imgWidth / imgHeight;
         
-        const maxLogoWidth = 30;
-        const maxLogoHeight = 12;
+        const maxLogoWidth = 36;
+        const maxLogoHeight = 14.4;
         
         let logoWidth = maxLogoWidth;
         let logoHeight = logoWidth / aspectRatio;
@@ -677,10 +677,10 @@ export default function TimeLogsPage() {
       }
     }
 
-    yPos += 15;
+    yPos += 10;
 
     const boxWidth = (pageWidth - 28 - 9) / 4;
-    const boxHeight = 22;
+    const boxHeight = 18;
     const boxY = yPos;
     const boxSpacing = 3;
 
@@ -696,20 +696,20 @@ export default function TimeLogsPage() {
       
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(x, boxY, boxWidth, boxHeight, 2, 2, "FD");
+      doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
       
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
-      doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 2, { align: "center" });
+      doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
       
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
-      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 4, { align: "center" });
+      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 3.5, { align: "center" });
       doc.setFont("helvetica", "normal");
     });
 
-    yPos = boxY + boxHeight + 15;
+    yPos = boxY + boxHeight + 10;
 
     const entriesSortedAsc = [...filteredEntries].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -742,18 +742,18 @@ export default function TimeLogsPage() {
         fontSize: 9
       },
       bodyStyles: {
-        fontSize: 8,
+        fontSize: 7.5,
         textColor: [51, 65, 85]
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 15, halign: "left" },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 13, halign: "left" },
         2: { cellWidth: "auto" },
         3: { cellWidth: 30 },
-        4: { cellWidth: 35 }
+        4: { cellWidth: 33 }
       },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
@@ -766,7 +766,7 @@ export default function TimeLogsPage() {
             files.forEach((file, fileIndex) => {
               const linkY = cell.y + 5 + (fileIndex * 6);
               
-              doc.setFontSize(8);
+              doc.setFontSize(7.5);
               doc.setFont("helvetica", "normal");
               doc.setTextColor(1, 136, 169);
               doc.textWithLink(file.display_name, cell.x + 2, linkY, {
@@ -1133,7 +1133,7 @@ export default function TimeLogsPage() {
               </Card>
             </div>
 
-            <Card>
+            <Card className="border-2 border-slate-200">
               <CardContent className="pt-6">
                 {filteredEntries.length === 0 ? (
                   <div className="text-center py-12">
