@@ -668,10 +668,10 @@ export default function TimeLogsPage() {
     doc.text(`${monthName} ${year}`, pageWidth / 2, yPos, { align: "center" });
     yPos += 15;
 
-    const boxWidth = (pageWidth - 28) / 4;
+    const boxWidth = (pageWidth - 28 - 9) / 4;
     const boxHeight = 25;
     const boxY = yPos;
-    const boxPadding = 0;
+    const boxSpacing = 3;
 
     const statBoxes = [
       { label: "Rolled Over", value: stats.rolloverHours.toFixed(2), color: [1, 136, 169], icon: "arrow-up" },
@@ -681,7 +681,7 @@ export default function TimeLogsPage() {
     ];
 
     statBoxes.forEach((box, index) => {
-      const x = 14 + (index * boxWidth);
+      const x = 14 + (index * (boxWidth + boxSpacing));
       
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(248, 250, 252);
