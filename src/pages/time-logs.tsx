@@ -155,6 +155,52 @@ export default function TimeLogsPage() {
     }
   }, [router.query.add, router.query.clientId, clients.length]);
 
+  // Calculate stats when client, period, or data changes
+  useEffect(() => {
+    if (!selectedClientId || !selectedPeriod) {
+      setStats(null);
+      return;
+    }
+
+    const client = clients.find(c => c.id === selectedClientId);
+    if (!client) {
+      setStats(null);
+      return;
+    }
+
+    // Get monthly allocation for this period
+    const allocation = monthlyAllocations.find(
+      a => a.client_id === selectedClientId && a.month === selectedPeriod
+    );
+
+    // Get manual rollover for this period
+    const manualRollover = manualRollovers.find(
+      r => r.client_id === selectedClientId && r.month === selectedPeriod
+    );
+
+    // Calculate used hours from time entries
+    const monthEntries = timeEntries.filter(
+      entry => entry.client_id === selectedClientId && entry.month === selectedPeriod
+    );
+    const usedHours = monthEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+
+    // Determine allocated hours (from monthly allocation or client default)
+    const allocatedHours = allocation?.allocated_hours ?? client.allocated_hours_per_month;
+
+    // Determine rollover hours (from manual rollover or monthly allocation)
+    const rolloverHours = manualRollover?.rollover_hours ?? allocation?.rollover_hours ?? 0;
+
+    // Calculate remaining hours
+    const remainingHours = allocatedHours + rolloverHours - usedHours;
+
+    setStats({
+      allocatedHours,
+      rolloverHours,
+      usedHours,
+      remainingHours,
+    });
+  }, [selectedClientId, selectedPeriod, clients, timeEntries, monthlyAllocations, manualRollovers]);
+
   const loadData = async () => {
     if (!user) return;
     
