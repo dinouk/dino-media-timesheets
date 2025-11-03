@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +100,10 @@ export default function TimeLogsPage() {
     tags: [] as string[],
     files: [] as FileUpload[]
   });
+
+  // Refs to track dialog state
+  const isEditDialogClosing = useRef(false);
+  const isAddDialogClosing = useRef(false);
 
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
@@ -265,6 +269,9 @@ export default function TimeLogsPage() {
       return;
     }
 
+    if (isEditDialogClosing.current) return;
+    isEditDialogClosing.current = true;
+
     try {
       const date = new Date(editForm.date);
       const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
@@ -316,7 +323,7 @@ export default function TimeLogsPage() {
         }
       }
 
-      // First, close the dialog by clearing state
+      // Close dialog and clean up state
       setEditingEntry(null);
       setEditForm({
         date: "",
@@ -326,17 +333,19 @@ export default function TimeLogsPage() {
         files: []
       });
 
-      // Show toast after state cleanup
+      // Show toast
       toast({
         title: "Time Entry Updated",
         description: "Your time entry has been successfully updated"
       });
 
-      // Allow dialog to fully unmount, then reload data
-      setTimeout(async () => {
-        await loadData();
-      }, 300);
+      // Wait for dialog to fully unmount and clean up DOM
+      setTimeout(() => {
+        isEditDialogClosing.current = false;
+        loadData();
+      }, 500);
     } catch (error: any) {
+      isEditDialogClosing.current = false;
       console.error("Error updating time entry:", error);
       toast({
         title: "Error",
@@ -536,6 +545,9 @@ export default function TimeLogsPage() {
       return;
     }
 
+    if (isAddDialogClosing.current) return;
+    isAddDialogClosing.current = true;
+
     try {
       const date = new Date(addForm.date);
       const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
@@ -574,11 +586,11 @@ export default function TimeLogsPage() {
         }
       }
 
-      // Save navigation targets before closing
+      // Save navigation targets
       const targetClientId = addForm.clientId;
       const targetPeriod = monthKey;
       
-      // Close dialog first
+      // Close dialog and clean up state
       setIsAddingTimeLog(false);
       setAddForm({
         clientId: "",
@@ -589,14 +601,15 @@ export default function TimeLogsPage() {
         files: []
       });
 
-      // Show toast after cleanup
+      // Show toast
       toast({
         title: "Time Entry Created",
         description: "Your time entry has been successfully logged"
       });
 
-      // Allow dialog to fully unmount before navigation
+      // Wait for dialog to fully unmount and clean up DOM
       setTimeout(() => {
+        isAddDialogClosing.current = false;
         setSelectedClientId(targetClientId);
         setSelectedPeriod(targetPeriod);
         
@@ -606,8 +619,9 @@ export default function TimeLogsPage() {
         }, undefined, { shallow: true });
 
         loadData();
-      }, 300);
+      }, 500);
     } catch (error: any) {
+      isAddDialogClosing.current = false;
       console.error("Error creating time entry:", error);
       toast({
         title: "Error",
@@ -1697,6 +1711,25 @@ export default function TimeLogsPage() {
             </DialogContent>
           </Dialog>
         }
+
+        // Cleanup effect to remove any lingering modal backdrops
+        useEffect(() => {
+          const cleanupBackdrops = () => {
+            // Remove any lingering Radix UI portals/overlays
+            const overlays = document.querySelectorAll('[data-radix-portal]');
+            overlays.forEach(overlay => {
+              if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
+                overlay.remove();
+              }
+            });
+          };
+
+          // Run cleanup when no modals should be open
+          if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
+            const timer = setTimeout(cleanupBackdrops, 100);
+            return () => clearTimeout(timer);
+          }
+        }, [editingEntry, isAddingTimeLog, deletingEntry]);
       </main>
     </div>);
 
