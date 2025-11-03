@@ -127,7 +127,7 @@ export default function MyAccountPage() {
           </div>
 
           <div className="space-y-6">
-            <Card>
+            <Card className="border-2 border-slate-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="w-5 h-5 text-brand-primary" />
@@ -156,7 +156,7 @@ export default function MyAccountPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-slate-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Lock className="w-5 h-5 text-brand-primary" />

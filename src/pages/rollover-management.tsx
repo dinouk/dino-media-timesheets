@@ -217,7 +217,7 @@ export default function RolloverManagementPage() {
       <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
-        <Card className="mb-6">
+        <Card className="mb-6 border-2 border-slate-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-brand-primary" />
@@ -262,7 +262,7 @@ export default function RolloverManagementPage() {
         </Card>
 
         {selectedPeriod && (
-          <Card>
+          <Card className="border-2 border-slate-200">
             <CardHeader>
               <CardTitle>Rollover Hours for {periodOptions.find(p => p.value === selectedPeriod)?.label}</CardTitle>
               <CardDescription>

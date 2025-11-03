@@ -939,7 +939,7 @@ export default function TimeLogsPage() {
       <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
-        <Card className="mb-6">
+        <Card className="mb-6 border-2 border-slate-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="w-5 h-5 text-brand-primary" />
@@ -1262,7 +1262,7 @@ export default function TimeLogsPage() {
         )}
 
         {!selectedClientId && clients.length > 0 && (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Select Filters</h3>
@@ -1272,7 +1272,7 @@ export default function TimeLogsPage() {
         )}
 
         {clients.length === 0 && (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <p className="text-slate-600 mb-4">You need to add clients first</p>
               <Link href="/clients">

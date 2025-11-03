@@ -186,7 +186,7 @@ export default function SettingsPage() {
             <p className="text-slate-600">Customize your timesheet preferences</p>
           </div>
 
-          <Card>
+          <Card className="border-2 border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="w-5 h-5 text-brand-primary" />

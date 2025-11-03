@@ -311,7 +311,7 @@ export default function ClientsPage() {
 
       <main className="container mx-auto px-4 py-8">
         {clients.length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-6 border-2 border-slate-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="w-5 h-5 text-brand-primary" />
@@ -352,7 +352,7 @@ export default function ClientsPage() {
         )}
 
         {clients.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
@@ -368,7 +368,7 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         ) : budgetFilteredClients.length === 0 ? (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
@@ -389,7 +389,7 @@ export default function ClientsPage() {
                 return (
                 <Card 
                   key={client.id} 
-                  className={`hover:shadow-lg transition-all border-2 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
+                  className={`hover:shadow-lg transition-all border-2 border-slate-200 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
                   onClick={() => handleClientClick(client.id)}
                 >
                   <CardHeader>
