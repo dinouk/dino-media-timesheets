@@ -1128,19 +1128,11 @@ export default function TimeLogsPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Progress 
-                      value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
-                      className="h-3 bg-slate-100"
-                      indicatorClassName={stats.remainingHours >= 0 ? "bg-black" : "bg-red-600"}
-                    />
-                    <p className="text-xs text-center text-slate-600">
-                      {stats.usedHours.toFixed(2)}h of {(stats.allocatedHours + stats.rolloverHours).toFixed(2)}h
-                      {stats.remainingHours < 0 && (
-                        <span className="text-red-600 font-semibold"> (Over budget)</span>
-                      )}
-                    </p>
-                  </div>
+                  <Progress 
+                    value={Math.min((stats.usedHours / (stats.allocatedHours + stats.rolloverHours)) * 100, 100)} 
+                    className="h-3 bg-slate-100"
+                    indicatorClassName={stats.remainingHours >= 0 ? "bg-black" : "bg-red-600"}
+                  />
                 </CardContent>
               </Card>
             </div>
