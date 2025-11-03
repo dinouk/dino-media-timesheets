@@ -45,7 +45,7 @@ interface AppHeaderProps {
 export function AppHeader({ currentUser }: AppHeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [isAddingTimeLog, setIsAddingTimeLog] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -92,9 +92,21 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
     setIsAddingTimeLog(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log out",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
