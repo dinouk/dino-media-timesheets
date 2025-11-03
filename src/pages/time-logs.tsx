@@ -1137,17 +1137,6 @@ export default function TimeLogsPage() {
               </Card>
             </div>
 
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-600">{getSelectedPeriodLabel()}</span>
-              </div>
-              <Button onClick={handleExportPDF} className="gap-2 ml-auto">
-                <FileDown className="w-4 h-4" />
-                Export PDF
-              </Button>
-            </div>
-
             <Card>
               <CardContent>
                 {filteredEntries.length === 0 ? (
