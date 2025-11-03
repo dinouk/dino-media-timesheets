@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -91,50 +91,6 @@ export type Database = {
             columns: ["time_entry_id"]
             isOneToOne: false
             referencedRelation: "time_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      manual_rollovers: {
-        Row: {
-          client_id: string
-          created_at: string | null
-          id: string
-          month: string
-          note: string | null
-          rollover_hours: number
-          updated_at: string | null
-          user_id: string
-          year: number
-        }
-        Insert: {
-          client_id: string
-          created_at?: string | null
-          id?: string
-          month: string
-          note?: string | null
-          rollover_hours?: number
-          updated_at?: string | null
-          user_id: string
-          year: number
-        }
-        Update: {
-          client_id?: string
-          created_at?: string | null
-          id?: string
-          month?: string
-          note?: string | null
-          rollover_hours?: number
-          updated_at?: string | null
-          user_id?: string
-          year?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "manual_rollovers_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
