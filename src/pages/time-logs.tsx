@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FileDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
@@ -76,7 +76,7 @@ export default function TimeLogsPage() {
   const [timeEntries, setTimeEntries] = useState([] as TimeEntry[]);
   const [fileAttachments, setFileAttachments] = useState([] as FileAttachment[]);
   const [monthlyAllocations, setMonthlyAllocations] = useState([] as MonthlyAllocation[]);
-  const [selectedClientId, setSelectedClientId] = useState<string>("all");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedPeriod, setSelectedPeriod] = useState<string>("");
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
@@ -128,17 +128,26 @@ export default function TimeLogsPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (clients.length > 0 && router.query.clientId && typeof router.query.clientId === "string") {
-      setSelectedClientId(router.query.clientId);
+    if (clients.length > 0) {
+      const activeClients = clients.filter((c) => !c.archived);
+      
+      if (router.query.clientId && typeof router.query.clientId === "string") {
+        setSelectedClientId(router.query.clientId);
 
-      if (router.query.add === "true") {
-        handleOpenAddDialog(router.query.clientId);
-        router.replace({
-          pathname: router.pathname,
-          query: { clientId: router.query.clientId, period: router.query.period }
-        }, undefined, { shallow: true });
+        if (router.query.add === "true") {
+          handleOpenAddDialog(router.query.clientId);
+          router.replace({
+            pathname: router.pathname,
+            query: { clientId: router.query.clientId, period: router.query.period }
+          }, undefined, { shallow: true });
+        }
+      } else if (!selectedClientId && activeClients.length > 0) {
+        // Default to first active client if none selected
+        const firstActiveClient = activeClients[0];
+        setSelectedClientId(firstActiveClient.id);
       }
     }
+    
     if (router.query.period && typeof router.query.period === "string") {
       setSelectedPeriod(router.query.period);
     } else if (!router.query.period && selectedPeriod === "") {
@@ -146,7 +155,7 @@ export default function TimeLogsPage() {
       const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
       setSelectedPeriod(currentPeriod);
     }
-  }, [router.query.clientId, router.query.period, router.query.add, clients]);
+  }, [router.query.clientId, router.query.period, router.query.add, clients, selectedClientId]);
 
   useEffect(() => {
     if (router.query.add === "true" && !router.query.clientId && clients.length > 0) {
@@ -464,6 +473,7 @@ export default function TimeLogsPage() {
   const shouldShowAddTags = addClientTags.length > 1;
   const selectedClient = clients.find((c) => c.id === selectedClientId);
   const activeClients = clients.filter((c) => !c.archived);
+  const archivedClients = clients.filter((c) => c.archived);
 
   const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
@@ -615,7 +625,7 @@ export default function TimeLogsPage() {
   const periodOptions = generatePeriodOptions();
 
   const filteredEntries = timeEntries.filter((entry) => {
-    if (selectedClientId !== "all" && entry.client_id !== selectedClientId) {
+    if (selectedClientId && entry.client_id !== selectedClientId) {
       return false;
     }
 
@@ -630,6 +640,7 @@ export default function TimeLogsPage() {
     setSelectedClientId(value);
     router.push({ pathname: router.pathname, query: { ...router.query, clientId: value } }, undefined, { shallow: true });
   };
+  
   const handlePeriodFilterChange = (value: string) => {
     setSelectedPeriod(value);
     router.push({ pathname: router.pathname, query: { ...router.query, period: value } }, undefined, { shallow: true });
@@ -688,6 +699,7 @@ export default function TimeLogsPage() {
   const handleStartEditAllocation = () => { if (stats) { setAllocationValue(stats.allocatedHours.toString()); setEditingAllocation(true); } };
 
   const currentMonth = new Date().toISOString().split("T")[0].slice(0, 7);
+  const firstActiveClient = activeClients.length > 0 ? activeClients[0].id : "";
 
   if (!mounted || loading || loadingData) {
     return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100"><div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div><p className="mt-4 text-slate-600">Loading...</p></div></div>;
@@ -700,16 +712,16 @@ export default function TimeLogsPage() {
         <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-h-[60px]">
             <CardTitle>Filter Time Logs</CardTitle>
-            {(selectedClientId !== "all" || selectedPeriod !== currentMonth) && (
+            {(selectedClientId !== firstActiveClient || selectedPeriod !== currentMonth) && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setSelectedClientId("all");
+                  setSelectedClientId(firstActiveClient);
                   setSelectedPeriod(currentMonth);
                   router.push({
                     pathname: router.pathname,
-                    query: {}
+                    query: { clientId: firstActiveClient, period: currentMonth }
                   }, undefined, { shallow: true });
                 }}
                 className="h-7 px-2 text-xs"
@@ -723,15 +735,29 @@ export default function TimeLogsPage() {
               <div>
                 <Select value={selectedClientId} onValueChange={handleClientFilterChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Clients" />
+                    <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Clients</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
+                    {activeClients.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Active Clients</SelectLabel>
+                        {activeClients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                    {archivedClients.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Archived Clients</SelectLabel>
+                        {archivedClients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -808,7 +834,28 @@ export default function TimeLogsPage() {
         {deletingEntry && <AlertDialog open={!!deletingEntry} onOpenChange={() => setDeletingEntry(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Time Entry</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete this time entry? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteEntry} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
         <Dialog open={isAddingTimeLog} onOpenChange={(open) => !open && closeAddDialog()}><DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Log Time Entry</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmitTimeEntry} className="space-y-6">
-            <div className="space-y-2"><Label htmlFor="add-client">Client *</Label><Select value={addForm.clientId} onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}><SelectTrigger id="add-client"><SelectValue placeholder="Select a client" /></SelectTrigger><SelectContent>{activeClients.map((client) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="add-client">Client *</Label><Select value={addForm.clientId} onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}><SelectTrigger id="add-client"><SelectValue placeholder="Select a client" /></SelectTrigger><SelectContent>
+              {activeClients.length > 0 && (
+                <SelectGroup>
+                  <SelectLabel>Active Clients</SelectLabel>
+                  {activeClients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              )}
+              {archivedClients.length > 0 && (
+                <SelectGroup>
+                  <SelectLabel>Archived Clients</SelectLabel>
+                  {archivedClients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              )}
+            </SelectContent></Select></div>
             <div className="space-y-2"><Label htmlFor="add-date">Date *</Label><Input id="add-date" type="date" value={addForm.date} onChange={(e) => setAddForm({ ...addForm, date: e.target.value })} min={minDate} max={maxDate} className="h-10" /></div>
             <div className="space-y-2"><Label htmlFor="add-hours">Hours *</Label><Select value={addForm.hours} onValueChange={(value) => setAddForm({ ...addForm, hours: value })}><SelectTrigger id="add-hours"><SelectValue placeholder="Select hours" /></SelectTrigger><SelectContent>{Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => <SelectItem key={value} value={value.toString()}>{value} hours</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label htmlFor="add-description">Task Description *</Label><Textarea id="add-description" placeholder="Describe the work performed..." value={addForm.description} onChange={(e) => setAddForm({ ...addForm, description: e.target.value })} rows={4} className="resize-none" /></div>
