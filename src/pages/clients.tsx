@@ -42,6 +42,7 @@ export default function ClientsPage() {
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("all");
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -64,7 +65,8 @@ export default function ClientsPage() {
       return;
     }
     if (user) {
-      loadData();
+      fetchClients();
+      fetchBrands();
     }
   }, [user, loading, router]);
 
@@ -118,22 +120,36 @@ export default function ClientsPage() {
     }, undefined, { shallow: true });
   };
 
-  const loadData = async () => {
+  const fetchBrands = async () => {
+    if (!user) return;
+    
+    try {
+      const data = await brandService.getBrands(user.id);
+      setBrands(data || []);
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load brands",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchClients = async () => {
     if (!user) return;
 
     try {
       setLoadingData(true);
-      const [clientsData, entriesData, allocationsData, brandsData] = await Promise.all([
+      const [clientsData, entriesData, allocationsData] = await Promise.all([
       clientService.getClients(user.id),
       timeEntryService.getTimeEntries(user.id),
       monthlyAllocationService.getMonthlyAllocations(user.id),
-      brandService.getBrands(user.id)]
-      );
+      ]);
 
       setClients(clientsData);
       setTimeEntries(entriesData);
       setMonthlyAllocations(allocationsData);
-      setBrands(brandsData);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -217,7 +233,7 @@ export default function ClientsPage() {
 
       setIsDialogOpen(false);
       resetForm();
-      await loadData();
+      await fetchClients();
     } catch (error: any) {
       console.error("Error saving client:", error);
       toast({
@@ -253,7 +269,7 @@ export default function ClientsPage() {
         description: `${clientToDelete?.name || "Client"} has been successfully deleted`
       });
 
-      await loadData();
+      await fetchClients();
     } catch (error: any) {
       console.error("Error deleting client:", error);
       toast({
@@ -277,7 +293,7 @@ export default function ClientsPage() {
         description: `${client.name} has been ${client.archived ? "unarchived" : "archived"}`
       });
 
-      await loadData();
+      await fetchClients();
     } catch (error: any) {
       console.error("Error toggling archive:", error);
       toast({
@@ -338,11 +354,9 @@ export default function ClientsPage() {
     };
   };
 
-  const filteredClients = clients.filter((client) => {
-    if (statusFilter === "active") return !client.archived;
-    if (statusFilter === "archived") return client.archived;
-    return true;
-  });
+  const filteredClients = selectedBrandFilter === "all" 
+    ? clients 
+    : clients.filter(client => client.brand_id === selectedBrandFilter);
 
   const budgetFilteredClients = filteredClients.filter((client) => {
     if (budgetFilter === "all") return true;
@@ -440,6 +454,28 @@ export default function ClientsPage() {
           </Card> :
 
         <>
+            {/* Clients List */}
+            {brands.length > 1 && (
+              <div className="mb-4">
+                <label htmlFor="brand-filter" className="block text-sm font-medium mb-2">
+                  Filter by Brand
+                </label>
+                <select
+                  id="brand-filter"
+                  value={selectedBrandFilter}
+                  onChange={(e) => setSelectedBrandFilter(e.target.value)}
+                  className="w-full md:w-64 px-3 py-2 border rounded-md bg-background"
+                >
+                  <option value="all">All Brands</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {budgetFilteredClients.map((client) => {
               const stats = getCurrentMonthStats(client);
