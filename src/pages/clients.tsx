@@ -456,20 +456,17 @@ export default function ClientsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <CardTitle className="text-xl">{client.name}</CardTitle>
-                          {client.brands && (
-                            <Badge variant="outline" className="text-xs" style={{ 
-                              borderColor: client.brands.brand_color, 
-                              color: client.brands.brand_color 
-                            }}>
-                              {client.brands.name}
-                            </Badge>
-                          )}
                           {client.archived &&
                           <Badge variant="secondary" className="bg-slate-200 text-slate-600">
                               Archived
                             </Badge>
                           }
                         </div>
+                        {client.brands && (
+                          <div className="text-sm text-slate-500 mt-0.5">
+                            {client.brands.name}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1">
                         <DropdownMenu>

@@ -350,17 +350,6 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="md:hidden">
                   <Link
-                    href="/brands"
-                    className={`flex items-center gap-2 cursor-pointer ${
-                      router.pathname === "/brands" ? "bg-brand-primary/10 text-brand-primary" : ""
-                    }`}
-                  >
-                    <Palette className="w-4 h-4" />
-                    Brands
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="md:hidden">
-                  <Link
                     href="/time-logs"
                     className={`flex items-center gap-2 cursor-pointer ${
                       router.pathname === "/time-logs" ? "bg-brand-primary/10 text-brand-primary" : ""

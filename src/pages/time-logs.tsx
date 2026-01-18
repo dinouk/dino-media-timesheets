@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import jsPDF from "jspdf";
+import { jsPDF, GState } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ import { storageService } from "@/services/storageService";
 import { fileAttachmentService } from "@/services/fileAttachmentService";
 import { userSettingsService } from "@/services/userSettingsService";
 import type { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 type Client = Database["public"]["Tables"]["clients"]["Row"] & {
   brands: { name: string; logo_url: string; brand_color: string } | null;
@@ -476,15 +477,41 @@ export default function TimeLogsPage() {
     if (!selectedClient || !stats) return;
 
     // Use brand details if available, otherwise fall back to defaults
-    const brandLogo = selectedClient.brands?.logo_url || companyLogo;
-    const brandColorHex = selectedClient.brands?.brand_color || "#0188a9";
-    const brandColorRgb = hexToRgb(brandColorHex);
+    let clientBrandLogoUrl: string | null = null;
+    let clientBrandColor: string | null = null;
+    
+    if (selectedClient.brand_id) {
+      const { data: brandData } = await supabase
+        .from("brands")
+        .select("logo_url, brand_color")
+        .eq("id", selectedClient.brand_id)
+        .single();
+      
+      if (brandData) {
+        // Only use logo if it's a non-empty string
+        if (brandData.logo_url && brandData.logo_url.trim().length > 0) {
+          clientBrandLogoUrl = brandData.logo_url;
+        }
+        clientBrandColor = brandData.brand_color;
+      }
+    }
+
+    // Determine colors
+    const brandColorToUse = clientBrandColor || "#0188a9";
+    const brandColorRgb = hexToRgb(brandColorToUse);
+    // Calculate faint version for grid lines (approx 20% opacity on white)
+    const faintBrandColorRgb = [
+      Math.round(brandColorRgb[0] * 0.2 + 255 * 0.8),
+      Math.round(brandColorRgb[1] * 0.2 + 255 * 0.8),
+      Math.round(brandColorRgb[2] * 0.2 + 255 * 0.8)
+    ];
 
     const [year, month] = selectedPeriod.split("-");
     const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 20;
+
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.text(selectedClient.name, 14, yPos);
@@ -492,21 +519,38 @@ export default function TimeLogsPage() {
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, 14, yPos);
+    
     const logoYPos = 12;
-    if (brandLogo) {
+    if (clientBrandLogoUrl) {
       try {
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = brandLogo;
+        img.src = clientBrandLogoUrl;
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
         const aspectRatio = img.width / img.height;
         let logoWidth = 36, logoHeight = logoWidth / aspectRatio;
         if (logoHeight > 14.4) { logoHeight = 14.4; logoWidth = logoHeight * aspectRatio; }
         const logoX = pageWidth - logoWidth - 14;
-        doc.addImage(brandLogo, "PNG", logoX, logoYPos, logoWidth, logoHeight);
-        if (logoYPos + logoHeight > yPos) yPos = logoYPos + logoHeight;
-      } catch (error) { console.error("Error adding logo to PDF:", error); }
+        doc.addImage(img, "PNG", logoX, logoYPos, logoWidth, logoHeight);
+      } catch (error) {
+        console.error("Error adding logo to PDF:", error);
+        // Fallback to brand name if logo fails to load
+        doc.setFontSize(24);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
+        doc.text(selectedClient.brands?.name || "Timesheet", pageWidth - 14, 25, { align: "right" });
+      }
+    } else {
+       // No logo - show brand name on the right
+       doc.setFontSize(24);
+       doc.setFont("helvetica", "bold");
+       doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
+       
+       // Get brand name from client relation if available, otherwise default
+       const brandName = selectedClient.brands?.name || "Timesheet";
+       doc.text(brandName, pageWidth - 14, 25, { align: "right" });
     }
+    
     yPos += 10;
     const boxWidth = (pageWidth - 28 - 9) / 4, boxHeight = 18, boxY = yPos, boxSpacing = 3;
     const statBoxes = [
@@ -529,16 +573,43 @@ export default function TimeLogsPage() {
     yPos = boxY + boxHeight + 10;
     const entriesWithFiles = await Promise.all(filteredEntries.map(async (entry) => ({ entry, files: await fileAttachmentService.getFileAttachments(entry.id) })));
     const tableData = entriesWithFiles.map(({ entry, files }) => [new Date(entry.date).toLocaleDateString(), entry.hours.toString(), entry.description, (entry.tags as string[]).join(", "), files.length > 0 ? files.map((f) => f.display_name).join(", ") : "No files"]);
+
+    // Table styling with alternating rows using brand color with opacity
     autoTable(doc, {
       startY: yPos,
       head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
       body: tableData,
-      theme: "striped",
-      styles: { lineColor: [248, 250, 252], lineWidth: 0, cellPadding: 3, fontSize: 7.5, textColor: [51, 65, 85] },
-      headStyles: { fillColor: brandColorRgb as [number, number, number], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, lineWidth: 0 },
-      bodyStyles: { fontSize: 7.5, textColor: [51, 65, 85], lineWidth: 0 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 18 }, 2: { cellWidth: 70 }, 3: { cellWidth: 35 }, 4: { cellWidth: 37 } },
+      theme: "grid",
+      headStyles: {
+        fillColor: [brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]],
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        lineWidth: 0.1,
+        lineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]]
+      },
+      bodyStyles: {
+        lineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]],
+        lineWidth: 0.1
+      },
+      alternateRowStyles: {
+        fillColor: [
+          Math.round(brandColorRgb[0] + (255 - brandColorRgb[0]) * 0.9),
+          Math.round(brandColorRgb[1] + (255 - brandColorRgb[1]) * 0.9),
+          Math.round(brandColorRgb[2] + (255 - brandColorRgb[2]) * 0.9)
+        ]
+      },
+      tableLineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]],
+      tableLineWidth: 0.1,
+      styles: {
+        fontSize: 10,
+        cellPadding: 8,
+      },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: "auto" },
+      },
       margin: { left: 14, right: 14 },
       tableWidth: "auto",
       didDrawCell: (data) => {

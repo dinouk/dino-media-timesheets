@@ -163,7 +163,7 @@ export default function BrandsPage() {
       name: brand.name,
       brand_color: brand.brand_color,
       logoFile: null,
-      logoPreview: brand.logo_url
+      logoPreview: brand.logo_url || ""
     });
     setIsDialogOpen(true);
   };
@@ -251,66 +251,43 @@ export default function BrandsPage() {
           </Card>
         ) : (
           <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Brands List - Card Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {brands.map((brand) => (
-                <Card
-                  key={brand.id}
-                  className="hover:shadow-lg transition-all border-2 border-slate-200 hover:border-brand-primary"
-                >
+                <Card key={brand.id}>
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">{brand.name}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-6 h-6 rounded border border-slate-300"
-                            style={{ backgroundColor: brand.brand_color }}
-                          />
-                          <span className="text-sm text-slate-600 font-mono">{brand.brand_color}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{brand.name}</CardTitle>
+                      <div className="flex gap-2">
                         <Button
-                          variant="outline"
-                          size="icon"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleEdit(brand)}
+                          className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant="outline"
-                          size="icon"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDelete(brand.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-center p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <img
-                        src={brand.logo_url}
-                        alt={brand.name}
-                        className="max-h-24 max-w-full object-contain"
-                      />
-                    </div>
-                  </CardContent>
                 </Card>
               ))}
-            </div>
-
-            <div className="flex justify-center pb-8">
-              <Button
-                size="lg"
-                className="gap-2"
-                onClick={() => setIsDialogOpen(true)}
-                style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}
-              >
-                <Plus className="w-5 h-5" />
-                Add New Brand
-              </Button>
+              
+              {/* Add New Brand Card */}
+              <Card className="border-dashed border-2 border-slate-300 bg-transparent hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setIsDialogOpen(true)}>
+                <CardContent className="flex flex-col items-center justify-center h-full min-h-[100px] pt-6">
+                  <Plus className="w-8 h-8 text-slate-400 mb-2" />
+                  <span className="font-medium text-slate-500">Add New Brand</span>
+                </CardContent>
+              </Card>
             </div>
           </>
         )}
@@ -356,7 +333,7 @@ export default function BrandsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="logo">Brand Logo</Label>
+                  <Label htmlFor="logo">Brand Logo <span className="text-xs font-normal text-slate-500">(Optional)</span></Label>
                   <Input
                     id="logo"
                     name="logo"
@@ -364,6 +341,15 @@ export default function BrandsPage() {
                     accept="image/*"
                     onChange={handleLogoChange}
                   />
+                  {formData.logoPreview && (
+                    <div className="mt-2 w-full h-32 bg-slate-50 rounded border border-slate-200 flex items-center justify-center p-2">
+                      <img 
+                        src={formData.logoPreview} 
+                        alt="Logo Preview" 
+                        className="max-h-full max-w-full object-contain" 
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <DialogFooter>
