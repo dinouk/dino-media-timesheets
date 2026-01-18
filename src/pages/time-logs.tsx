@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import { jsPDF, GState } from "jspdf";
+import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -107,7 +107,7 @@ export default function TimeLogsPage() {
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
 
-  const hexToRgb = (hex: string) => {
+  const hexToRgb = (hex: string): [number, number, number] => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? [
       parseInt(result[1], 16),
@@ -561,8 +561,9 @@ export default function TimeLogsPage() {
     ];
     statBoxes.forEach((box, index) => {
       const x = 14 + index * (boxWidth + boxSpacing);
-      doc.setDrawColor(200, 200, 200);
-      doc.setFillColor(248, 250, 252);
+      // Use faint brand color for border
+      doc.setDrawColor(faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]);
+      doc.setFillColor(252, 252, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
       doc.setFontSize(8); doc.setTextColor(100, 116, 139);
       doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
@@ -577,52 +578,49 @@ export default function TimeLogsPage() {
     // Table styling with alternating rows using brand color with opacity
     autoTable(doc, {
       startY: yPos,
-      head: [["Date", "Hours", "Description", "Tags", "Attachments"]],
-      body: tableData,
+      head: [[
+        { content: "Date", styles: { halign: "left" } },
+        { content: "Hours", styles: { halign: "left" } },
+        { content: "Description", styles: { halign: "left" } }
+      ]],
+      body: entriesWithFiles.flatMap(({ entry, files }) => {
+        const rows: any[] = [{
+          0: entry.date,
+          1: entry.hours.toFixed(2),
+          2: entry.description || "-"
+        }];
+        if (files.length > 0) {
+          rows.push({
+            0: { content: `📎 ${files.length} file(s): ${files.map(f => f.file_name).join(", ")}`, colSpan: 3, styles: { fontStyle: "italic", textColor: [100, 116, 139] } }
+          });
+        }
+        return rows;
+      }),
       theme: "grid",
       headStyles: {
-        fillColor: [brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]],
+        fillColor: brandColorRgb,
         textColor: [255, 255, 255],
-        fontSize: 11,
         fontStyle: "bold",
+        halign: "left",
+        cellPadding: 3
+      },
+      styles: {
+        fontSize: 9,
+        textColor: [51, 65, 85],
+        lineColor: faintBrandColorRgb,
         lineWidth: 0.1,
-        lineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]]
+        cellPadding: 2, // Reduced padding
       },
       bodyStyles: {
-        lineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]],
-        lineWidth: 0.1
+        fillColor: 255, // Ensure white background (no alternating colors)
       },
       alternateRowStyles: {
-        fillColor: [
-          Math.round(brandColorRgb[0] + (255 - brandColorRgb[0]) * 0.9),
-          Math.round(brandColorRgb[1] + (255 - brandColorRgb[1]) * 0.9),
-          Math.round(brandColorRgb[2] + (255 - brandColorRgb[2]) * 0.9)
-        ]
-      },
-      tableLineColor: [faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]],
-      tableLineWidth: 0.1,
-      styles: {
-        fontSize: 10,
-        cellPadding: 8,
+        fillColor: 255, // Ensure white background for alternating rows too
       },
       columnStyles: {
-        0: { cellWidth: 40 },
+        0: { cellWidth: 25 },
         1: { cellWidth: 30 },
-        2: { cellWidth: "auto" },
-      },
-      margin: { left: 14, right: 14 },
-      tableWidth: "auto",
-      didDrawCell: (data) => {
-        if (data.column.index === 4 && data.section === "body" && data.row.index < entriesWithFiles.length) {
-          const { files } = entriesWithFiles[data.row.index];
-          if (files.length > 0) {
-            files.forEach((file, fileIndex) => {
-              doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); 
-              doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
-              doc.textWithLink(file.display_name, data.cell.x + 2, data.cell.y + 5 + fileIndex * 6, { url: file.file_url });
-            });
-          }
-        }
+        2: { cellWidth: "auto" }
       }
     });
     const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
