@@ -354,16 +354,32 @@ export default function ClientsPage() {
     };
   };
 
-  const budgetFilteredClients = clients.filter((client) => {
-    if (budgetFilter === "all") return true;
+  const filteredClients = clients
+    .filter((client) => {
+      // Filter by brand
+      if (selectedBrandFilter !== "all" && client.brand_id !== selectedBrandFilter) {
+        return false;
+      }
+      
+      // Filter by status
+      if (statusFilter === "active") return !client.archived;
+      if (statusFilter === "archived") return client.archived;
+      return true;
+    })
+    .filter((client) => {
+      // Filter by budget
+      if (budgetFilter === "all") return true;
 
-    const stats = getCurrentMonthStats(client);
-
-    if (budgetFilter === "remaining") return stats.remainingHours >= 0;
-    if (budgetFilter === "over") return stats.remainingHours < 0;
-
-    return true;
-  });
+      const stats = getCurrentMonthStats(client);
+      
+      if (budgetFilter === "remaining") {
+        return stats.remainingHours >= 0;
+      }
+      if (budgetFilter === "over") {
+        return stats.remainingHours < 0;
+      }
+      return true;
+    });
 
   if (!mounted || loading || loadingData) {
     return (
@@ -453,7 +469,7 @@ export default function ClientsPage() {
               </Button>
             </CardContent>
           </Card> :
-        budgetFilteredClients.length === 0 ?
+        filteredClients.length === 0 ?
         <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
@@ -469,7 +485,7 @@ export default function ClientsPage() {
         <>
             {/* Clients Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {budgetFilteredClients.map((client) => {
+              {filteredClients.map((client) => {
               const stats = getCurrentMonthStats(client);
               const clientTags = client.tags as string[] || [];
 
