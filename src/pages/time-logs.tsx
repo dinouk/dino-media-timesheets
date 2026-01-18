@@ -44,6 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Client = Database["public"]["Tables"]["clients"]["Row"] & {
   brands: { name: string; logo_url: string; brand_color: string } | null;
+  recording_type: string;
 };
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
@@ -547,25 +548,56 @@ export default function TimeLogsPage() {
     }
     
     yPos += 10;
-    const boxWidth = (pageWidth - 28 - 9) / 4, boxHeight = 18, boxY = yPos, boxSpacing = 3;
-    const statBoxes = [
-      { label: "Rolled Over", value: stats.rolloverHours.toFixed(2) },
-      { label: "Allocated", value: stats.allocatedHours.toFixed(2) },
-      { label: "Used", value: stats.usedHours.toFixed(2) },
-      { label: "Remaining", value: stats.remainingHours.toFixed(2) }
-    ];
-    statBoxes.forEach((box, index) => {
-      const x = 14 + index * (boxWidth + boxSpacing);
+    
+    const isOpenRecording = (selectedClient.recording_type || "time_allocation") === "open";
+    
+    if (isOpenRecording) {
+      const boxWidth = (pageWidth - 28) / 2;
+      const boxHeight = 18;
+      const boxY = yPos;
+      const x = 14 + (pageWidth - 28 - boxWidth) / 2;
+      
       doc.setDrawColor(faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]);
       doc.setFillColor(252, 252, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
-      doc.setFontSize(8); doc.setTextColor(100, 116, 139);
-      doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
-      doc.setFontSize(10); doc.setTextColor(51, 65, 85); doc.setFont("helvetica", "bold");
-      doc.text(`${box.value}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 3.5, { align: "center" });
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Total Used", x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${stats.usedHours.toFixed(2)}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 3.5, { align: "center" });
       doc.setFont("helvetica", "normal");
-    });
-    yPos = boxY + boxHeight + 10;
+      
+      yPos = boxY + boxHeight + 10;
+    } else {
+      const boxWidth = (pageWidth - 28 - 9) / 4;
+      const boxHeight = 18;
+      const boxY = yPos;
+      const boxSpacing = 3;
+      const statBoxes = [
+        { label: "Rolled Over", value: stats.rolloverHours.toFixed(2) },
+        { label: "Allocated", value: stats.allocatedHours.toFixed(2) },
+        { label: "Used", value: stats.usedHours.toFixed(2) },
+        { label: "Remaining", value: stats.remainingHours.toFixed(2) }
+      ];
+      statBoxes.forEach((box, index) => {
+        const x = 14 + index * (boxWidth + boxSpacing);
+        doc.setDrawColor(faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]);
+        doc.setFillColor(252, 252, 252);
+        doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(box.label, x + boxWidth / 2, boxY + boxHeight / 2 - 1.5, { align: "center" });
+        doc.setFontSize(10);
+        doc.setTextColor(51, 65, 85);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${box.value}h`, x + boxWidth / 2, boxY + boxHeight / 2 + 3.5, { align: "center" });
+        doc.setFont("helvetica", "normal");
+      });
+      yPos = boxY + boxHeight + 10;
+    }
+    
     const entriesWithFiles = await Promise.all(filteredEntries.map(async (entry) => ({ entry, files: await fileAttachmentService.getFileAttachments(entry.id) })));
     const tableData = entriesWithFiles.map(({ entry, files }) => [
       new Date(entry.date).toLocaleDateString("en-GB", {
