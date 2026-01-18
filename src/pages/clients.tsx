@@ -356,7 +356,7 @@ export default function ClientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", allocatedHours: "", brandId: "", recordingType: "time_allocation" });
+    setFormData({ name: "", allocatedHours: "", brandId: "", recordingType: "allocation" });
     setTags([]);
     setTagInput("");
     setEditingClient(null);
@@ -396,8 +396,10 @@ export default function ClientsPage() {
 
   const filteredClients = clients.filter((client) => {
     // Filter by brand
-    if (selectedBrandFilter !== "all" && client.brand_id !== selectedBrandFilter) {
-      return false;
+    if (selectedBrandFilter && selectedBrandFilter !== "all") {
+      if (client.brand_id !== selectedBrandFilter) {
+        return false;
+      }
     }
     
     // Filter by recording type
@@ -412,7 +414,7 @@ export default function ClientsPage() {
     if (statusFilter === "active") return !client.archived;
     if (statusFilter === "archived") return client.archived;
     return true;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   if (!mounted || loading || loadingData) {
     return (
@@ -480,14 +482,17 @@ export default function ClientsPage() {
                 </Select>
               </div>
               <div>
-                <Select value={recordingTypeFilter} onValueChange={handleRecordingTypeFilterChange}>
+                <Select
+                  value={recordingTypeFilter}
+                  onValueChange={(value) => handleRecordingTypeFilterChange(value as RecordingTypeFilter)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="time_allocation">Time Allocation</SelectItem>
+                    <SelectItem value="allocation">Time Allocation</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -557,23 +562,16 @@ export default function ClientsPage() {
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CardTitle className="text-xl">{client.name}</CardTitle>
-                            {client.archived && (
-                              <Badge variant="secondary" className="bg-slate-200 text-slate-600">
-                                Archived
-                              </Badge>
-                            )}
-                            {(client.recording_type || "time_allocation") === "open" && (
-                              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                                Open
-                              </Badge>
-                            )}
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-semibold">{client.name}</h3>
+                            <Badge variant={client.recording_type === "open" ? "secondary" : "default"}>
+                              {client.recording_type === "open" ? "Open" : "Time Allocation"}
+                            </Badge>
                           </div>
-                          {client.brands && (
-                            <div className="text-sm text-slate-500 mt-0.5">
-                              {client.brands.name}
-                            </div>
+                          {client.archived && (
+                            <Badge variant="secondary" className="bg-slate-200 text-slate-600">
+                              Archived
+                            </Badge>
                           )}
                         </div>
                         <div className="flex gap-1">
@@ -618,50 +616,60 @@ export default function ClientsPage() {
                           </Button>
                         </div>
                       </div>
+                      {client.brands && (
+                        <div className="text-sm text-slate-500 mt-0.5">
+                          {client.brands.name}
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="pt-2 border-t border-slate-200">
-                        {(client.recording_type || "time_allocation") === "open" ? (
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-slate-900 font-semibold">Total Used:</span>
-                              <span className="text-brand-primary font-bold">{stats.usedHours.toFixed(2)}h</span>
+                      <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="text-sm font-medium text-muted-foreground mb-3">
+                          Current Month
+                        </div>
+                        <div className="space-y-2">
+                          {client.recording_type === "open" ? (
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-900 font-semibold">Total Used:</span>
+                                <span className="text-brand-primary font-bold">{stats.usedHours.toFixed(2)}h</span>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
-                              <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
-                                Remaining: {stats.remainingHours.toFixed(2)}h
-                              </span>
-                            </div>
-                            {(() => {
-                              const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-                              let progressValue = 0;
-                              let isOverBudget = false;
+                          ) : (
+                            <>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                                <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                  Remaining: {stats.remainingHours.toFixed(2)}h
+                                </span>
+                              </div>
+                              {(() => {
+                                const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                                let progressValue = 0;
+                                let isOverBudget = false;
 
-                              if (totalAvailable > 0) {
-                                progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
-                                isOverBudget = stats.usedHours > totalAvailable;
-                              } else if (totalAvailable === 0) {
-                                progressValue = stats.usedHours > 0 ? 100 : 0;
-                                isOverBudget = stats.usedHours > 0;
-                              } else {
-                                progressValue = 100;
-                                isOverBudget = true;
-                              }
+                                if (totalAvailable > 0) {
+                                  progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
+                                  isOverBudget = stats.usedHours > totalAvailable;
+                                } else if (totalAvailable === 0) {
+                                  progressValue = stats.usedHours > 0 ? 100 : 0;
+                                  isOverBudget = stats.usedHours > 0;
+                                } else {
+                                  progressValue = 100;
+                                  isOverBudget = true;
+                                }
 
-                              return (
-                                <Progress
-                                  value={progressValue}
-                                  className="h-2 bg-slate-100"
-                                  indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
-                                />
-                              );
-                            })()}
-                          </div>
-                        )}
+                                return (
+                                  <Progress
+                                    value={progressValue}
+                                    className="h-2 bg-slate-100"
+                                    indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
+                                  />
+                                );
+                              })()}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -743,8 +751,8 @@ export default function ClientsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="time_allocation">Time Allocation</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="allocation">Time Allocation</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500">

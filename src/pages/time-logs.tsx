@@ -130,7 +130,7 @@ export default function TimeLogsPage() {
 
   useEffect(() => {
     if (clients.length > 0) {
-      const activeClients = clients.filter((c) => !c.archived);
+      const activeClients = clients.filter((c) => !c.archived).sort((a, b) => a.name.localeCompare(b.name));
       
       if (router.query.clientId && typeof router.query.clientId === "string") {
         setSelectedClientId(router.query.clientId);
@@ -473,8 +473,8 @@ export default function TimeLogsPage() {
   const addClientTags = selectedAddClient ? selectedAddClient.tags as string[] || [] : [];
   const shouldShowAddTags = addClientTags.length > 1;
   const selectedClient = clients.find((c) => c.id === selectedClientId);
-  const activeClients = clients.filter((c) => !c.archived);
-  const archivedClients = clients.filter((c) => c.archived);
+  const activeClients = clients.filter((c) => !c.archived).sort((a, b) => a.name.localeCompare(b.name));
+  const archivedClients = clients.filter((c) => c.archived).sort((a, b) => a.name.localeCompare(b.name));
 
   const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
@@ -813,30 +813,41 @@ export default function TimeLogsPage() {
         </Card>
 
         {stats && selectedClient && <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><ArrowUp className="w-4 h-4 text-black" /><span>Rolled Over</span></CardTitle></CardHeader>
-              <CardContent>{editingRollover ? <div className="flex items-center gap-2"><Input type="number" step="0.25" value={rolloverValue} onChange={(e) => setRolloverValue(e.target.value)} className="h-8 text-sm" autoFocus /><Button variant="ghost" size="sm" onClick={handleSaveRollover} className="h-8 w-8 p-0 text-green-600"><Save className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => setEditingRollover(false)} className="h-8 w-8 p-0 text-red-600"><X className="w-4 h-4" /></Button></div> : <div className="flex items-center justify-between"><div className="text-2xl font-bold text-black">{stats.rolloverHours.toFixed(2)}h</div><Button variant="ghost" size="sm" onClick={handleStartEditRollover} className="h-8 w-8 p-0"><Edit2 className="w-4 h-4" /></Button></div>}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><Clock className="w-4 h-4 text-black" /><span>Allocated</span></CardTitle></CardHeader>
-              <CardContent>{editingAllocation ? <div className="flex items-center gap-2"><Input type="number" step="0.25" value={allocationValue} onChange={(e) => setAllocationValue(e.target.value)} className="h-8 text-sm" autoFocus /><Button variant="ghost" size="sm" onClick={handleSaveAllocation} className="h-8 w-8 p-0 text-green-600"><Save className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => setEditingAllocation(false)} className="h-8 w-8 p-0 text-red-600"><X className="w-4 h-4" /></Button></div> : <div className="flex items-center justify-between"><div className="text-2xl font-bold text-black">{stats.allocatedHours.toFixed(2)}h</div><Button variant="ghost" size="sm" onClick={handleStartEditAllocation} className="h-8 w-8 p-0"><Edit2 className="w-4 h-4" /></Button></div>}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><AlertCircle className="w-4 h-4 text-black" /><span>Usage</span></CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center text-sm"><div><span className="text-black font-semibold">Used: </span><span className="text-black">{stats.usedHours.toFixed(2)}h</span></div><div><span className="text-black font-semibold">Remaining: </span><span className={stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}>{stats.remainingHours.toFixed(2)}h</span></div></div>
-                {(() => {
-                  const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-                  let progressValue = 0, isOverBudget = false;
-                  if (totalAvailable > 0) { progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100); isOverBudget = stats.usedHours > totalAvailable; }
-                  else if (totalAvailable === 0) { progressValue = stats.usedHours > 0 ? 100 : 0; isOverBudget = stats.usedHours > 0; }
-                  else { progressValue = 100; isOverBudget = true; }
-                  return <Progress value={progressValue} className="h-3 bg-slate-100" indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />;
-                })()}
-              </CardContent>
-            </Card>
-          </div>
+          {selectedClient.recording_type === "open" ? (
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><Clock className="w-4 h-4 text-black" /><span>Total Usage</span></CardTitle></CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-black">{stats.usedHours.toFixed(2)}h</div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><ArrowUp className="w-4 h-4 text-black" /><span>Rolled Over</span></CardTitle></CardHeader>
+                <CardContent>{editingRollover ? <div className="flex items-center gap-2"><Input type="number" step="0.25" value={rolloverValue} onChange={(e) => setRolloverValue(e.target.value)} className="h-8 text-sm" autoFocus /><Button variant="ghost" size="sm" onClick={handleSaveRollover} className="h-8 w-8 p-0 text-green-600"><Save className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => setEditingRollover(false)} className="h-8 w-8 p-0 text-red-600"><X className="w-4 h-4" /></Button></div> : <div className="flex items-center justify-between"><div className="text-2xl font-bold text-black">{stats.rolloverHours.toFixed(2)}h</div><Button variant="ghost" size="sm" onClick={handleStartEditRollover} className="h-8 w-8 p-0"><Edit2 className="w-4 h-4" /></Button></div>}</CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><Clock className="w-4 h-4 text-black" /><span>Allocated</span></CardTitle></CardHeader>
+                <CardContent>{editingAllocation ? <div className="flex items-center gap-2"><Input type="number" step="0.25" value={allocationValue} onChange={(e) => setAllocationValue(e.target.value)} className="h-8 text-sm" autoFocus /><Button variant="ghost" size="sm" onClick={handleSaveAllocation} className="h-8 w-8 p-0 text-green-600"><Save className="w-4 h-4" /></Button><Button variant="ghost" size="sm" onClick={() => setEditingAllocation(false)} className="h-8 w-8 p-0 text-red-600"><X className="w-4 h-4" /></Button></div> : <div className="flex items-center justify-between"><div className="text-2xl font-bold text-black">{stats.allocatedHours.toFixed(2)}h</div><Button variant="ghost" size="sm" onClick={handleStartEditAllocation} className="h-8 w-8 p-0"><Edit2 className="w-4 h-4" /></Button></div>}</CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3"><CardTitle className="text-sm font-medium text-black flex items-center gap-2"><AlertCircle className="w-4 h-4 text-black" /><span>Usage</span></CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center text-sm"><div><span className="text-black font-semibold">Used: </span><span className="text-black">{stats.usedHours.toFixed(2)}h</span></div><div><span className="text-black font-semibold">Remaining: </span><span className={stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}>{stats.remainingHours.toFixed(2)}h</span></div></div>
+                  {(() => {
+                    const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                    let progressValue = 0, isOverBudget = false;
+                    if (totalAvailable > 0) { progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100); isOverBudget = stats.usedHours > totalAvailable; }
+                    else if (totalAvailable === 0) { progressValue = stats.usedHours > 0 ? 100 : 0; isOverBudget = stats.usedHours > 0; }
+                    else { progressValue = 100; isOverBudget = true; }
+                    return <Progress value={progressValue} className="h-3 bg-slate-100" indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />;
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
+          )}
           <Card><CardContent className="pt-6">
             {filteredEntries.length === 0 ? <div className="text-center py-12"><Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" /><h3 className="text-xl font-semibold mb-2">No Time Entries</h3><p className="text-slate-600 mb-6">No time entries found for this period</p><Button size="lg" className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800" onClick={() => handleOpenAddDialog()} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}><Plus className="w-5 h-5" />Add New Log</Button></div> : <>
               <div className="overflow-x-auto"><Table>
