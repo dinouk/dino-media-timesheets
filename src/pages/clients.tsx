@@ -27,6 +27,7 @@ type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
 type StatusFilter = "active" | "archived";
 type BudgetFilter = "all" | "remaining" | "over";
+type RecordingTypeFilter = "all" | "open" | "time_allocation";
 
 interface ClientStats {
   allocatedHours: number;
@@ -50,10 +51,12 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [budgetFilter, setBudgetFilter] = useState<BudgetFilter>("all");
+  const [recordingTypeFilter, setRecordingTypeFilter] = useState<RecordingTypeFilter>("all");
   const [formData, setFormData] = useState({
     name: "",
     allocatedHours: "",
-    brandId: ""
+    brandId: "",
+    recordingType: "time_allocation"
   });
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -73,7 +76,7 @@ export default function ClientsPage() {
   // Sync filters with URL query params on mount
   useEffect(() => {
     if (router.isReady) {
-      const { status, budgetStatus } = router.query;
+      const { status, budgetStatus, recordingType } = router.query;
 
       if (status && typeof status === "string") {
         if (["active", "archived"].includes(status)) {
@@ -84,6 +87,12 @@ export default function ClientsPage() {
       if (budgetStatus && typeof budgetStatus === "string") {
         if (["all", "remaining", "over"].includes(budgetStatus)) {
           setBudgetFilter(budgetStatus as BudgetFilter);
+        }
+      }
+
+      if (recordingType && typeof recordingType === "string") {
+        if (["all", "open", "time_allocation"].includes(recordingType)) {
+          setRecordingTypeFilter(recordingType as RecordingTypeFilter);
         }
       }
     }
@@ -99,6 +108,9 @@ export default function ClientsPage() {
     if (budgetFilter !== "all") {
       newQuery.budgetStatus = budgetFilter;
     }
+    if (recordingTypeFilter !== "all") {
+      newQuery.recordingType = recordingTypeFilter;
+    }
     router.push({
       pathname: router.pathname,
       query: newQuery
@@ -113,6 +125,27 @@ export default function ClientsPage() {
     }
     if (value !== "all") {
       newQuery.budgetStatus = value;
+    }
+    if (recordingTypeFilter !== "all") {
+      newQuery.recordingType = recordingTypeFilter;
+    }
+    router.push({
+      pathname: router.pathname,
+      query: newQuery
+    }, undefined, { shallow: true });
+  };
+
+  const handleRecordingTypeFilterChange = (value: RecordingTypeFilter) => {
+    setRecordingTypeFilter(value);
+    const newQuery: Record<string, string> = {};
+    if (statusFilter !== "active") {
+      newQuery.status = statusFilter;
+    }
+    if (budgetFilter !== "all") {
+      newQuery.budgetStatus = budgetFilter;
+    }
+    if (value !== "all") {
+      newQuery.recordingType = value;
     }
     router.push({
       pathname: router.pathname,
@@ -184,10 +217,14 @@ export default function ClientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.allocatedHours || !formData.brandId || !user) {
+    const isOpenRecording = formData.recordingType === "open";
+    
+    if (!formData.name || (!isOpenRecording && !formData.allocatedHours) || !formData.brandId || !user) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields including Brand",
+        description: isOpenRecording 
+          ? "Please fill in all required fields including Brand"
+          : "Please fill in all required fields including Brand and Allocated Hours",
         variant: "destructive"
       });
       return;
@@ -206,9 +243,10 @@ export default function ClientsPage() {
       if (editingClient) {
         await clientService.updateClient(editingClient.id, {
           name: formData.name,
-          allocated_hours_per_month: parseFloat(formData.allocatedHours),
+          allocated_hours_per_month: isOpenRecording ? 0 : parseFloat(formData.allocatedHours),
           brand_id: formData.brandId,
-          tags: tags
+          tags: tags,
+          recording_type: formData.recordingType
         });
 
         toast({
@@ -219,10 +257,11 @@ export default function ClientsPage() {
         await clientService.createClient({
           user_id: user.id,
           name: formData.name,
-          allocated_hours_per_month: parseFloat(formData.allocatedHours),
+          allocated_hours_per_month: isOpenRecording ? 0 : parseFloat(formData.allocatedHours),
           brand_id: formData.brandId,
           tags: tags,
-          archived: false
+          archived: false,
+          recording_type: formData.recordingType
         });
 
         toast({
@@ -250,7 +289,8 @@ export default function ClientsPage() {
     setFormData({
       name: client.name,
       allocatedHours: client.allocated_hours_per_month.toString(),
-      brandId: client.brand_id || ""
+      brandId: client.brand_id || "",
+      recordingType: client.recording_type || "time_allocation"
     });
     setTags(client.tags as string[] || []);
     setIsDialogOpen(true);
@@ -316,7 +356,7 @@ export default function ClientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", allocatedHours: "", brandId: "" });
+    setFormData({ name: "", allocatedHours: "", brandId: "", recordingType: "time_allocation" });
     setTags([]);
     setTagInput("");
     setEditingClient(null);
@@ -360,6 +400,14 @@ export default function ClientsPage() {
       return false;
     }
     
+    // Filter by recording type
+    if (recordingTypeFilter !== "all") {
+      const clientRecordingType = client.recording_type || "time_allocation";
+      if (clientRecordingType !== recordingTypeFilter) {
+        return false;
+      }
+    }
+    
     // Filter by status
     if (statusFilter === "active") return !client.archived;
     if (statusFilter === "archived") return client.archived;
@@ -386,7 +434,7 @@ export default function ClientsPage() {
         <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-h-[60px]">
             <CardTitle>Filter Clients</CardTitle>
-            {(statusFilter !== "active" || budgetFilter !== "all" || selectedBrandFilter !== "all") && (
+            {(statusFilter !== "active" || budgetFilter !== "all" || selectedBrandFilter !== "all" || recordingTypeFilter !== "all") && (
               <Button
                 variant="outline"
                 size="sm"
@@ -394,6 +442,7 @@ export default function ClientsPage() {
                   setStatusFilter("active");
                   setBudgetFilter("all");
                   setSelectedBrandFilter("all");
+                  setRecordingTypeFilter("all");
                   router.push({
                     pathname: router.pathname,
                     query: {}
@@ -406,7 +455,7 @@ export default function ClientsPage() {
             )}
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                   <SelectTrigger>
@@ -427,6 +476,18 @@ export default function ClientsPage() {
                     <SelectItem value="all">All Budgets</SelectItem>
                     <SelectItem value="remaining">Time Remaining</SelectItem>
                     <SelectItem value="over">Over Budget</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Select value={recordingTypeFilter} onValueChange={handleRecordingTypeFilterChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="time_allocation">Time Allocation</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -503,6 +564,11 @@ export default function ClientsPage() {
                                 Archived
                               </Badge>
                             )}
+                            {(client.recording_type || "time_allocation") === "open" && (
+                              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                                Open
+                              </Badge>
+                            )}
                           </div>
                           {client.brands && (
                             <div className="text-sm text-slate-500 mt-0.5">
@@ -555,38 +621,47 @@ export default function ClientsPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="pt-2 border-t border-slate-200">
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
-                            <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
-                              Remaining: {stats.remainingHours.toFixed(2)}h
-                            </span>
+                        {(client.recording_type || "time_allocation") === "open" ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-900 font-semibold">Total Used:</span>
+                              <span className="text-brand-primary font-bold">{stats.usedHours.toFixed(2)}h</span>
+                            </div>
                           </div>
-                          {(() => {
-                            const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-                            let progressValue = 0;
-                            let isOverBudget = false;
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                              <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                Remaining: {stats.remainingHours.toFixed(2)}h
+                              </span>
+                            </div>
+                            {(() => {
+                              const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                              let progressValue = 0;
+                              let isOverBudget = false;
 
-                            if (totalAvailable > 0) {
-                              progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
-                              isOverBudget = stats.usedHours > totalAvailable;
-                            } else if (totalAvailable === 0) {
-                              progressValue = stats.usedHours > 0 ? 100 : 0;
-                              isOverBudget = stats.usedHours > 0;
-                            } else {
-                              progressValue = 100;
-                              isOverBudget = true;
-                            }
+                              if (totalAvailable > 0) {
+                                progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
+                                isOverBudget = stats.usedHours > totalAvailable;
+                              } else if (totalAvailable === 0) {
+                                progressValue = stats.usedHours > 0 ? 100 : 0;
+                                isOverBudget = stats.usedHours > 0;
+                              } else {
+                                progressValue = 100;
+                                isOverBudget = true;
+                              }
 
-                            return (
-                              <Progress
-                                value={progressValue}
-                                className="h-2 bg-slate-100"
-                                indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
-                              />
-                            );
-                          })()}
-                        </div>
+                              return (
+                                <Progress
+                                  value={progressValue}
+                                  className="h-2 bg-slate-100"
+                                  indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
+                                />
+                              );
+                            })()}
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -657,18 +732,43 @@ export default function ClientsPage() {
                     placeholder="Acme Corporation"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
-                  <Input
-                    id="allocatedHours"
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    value={formData.allocatedHours}
-                    onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
-                    placeholder="40"
-                  />
+                  <Label htmlFor="recordingType">Time Recording Type *</Label>
+                  <Select 
+                    value={formData.recordingType} 
+                    onValueChange={(value) => setFormData({ ...formData, recordingType: value })}
+                  >
+                    <SelectTrigger id="recordingType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="time_allocation">Time Allocation</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    {formData.recordingType === "open" 
+                      ? "Open: Track total hours used without monthly allocations"
+                      : "Time Allocation: Track hours with monthly allocations and rollovers"}
+                  </p>
                 </div>
+
+                {formData.recordingType === "time_allocation" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
+                    <Input
+                      id="allocatedHours"
+                      type="number"
+                      step="0.25"
+                      min="0"
+                      value={formData.allocatedHours}
+                      onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
+                      placeholder="40"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="tags">Tags *</Label>
                   <div className="flex gap-2">
