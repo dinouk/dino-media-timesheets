@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -15,10 +15,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      brands: {
+        Row: {
+          brand_color: string
+          created_at: string | null
+          id: string
+          logo_path: string | null
+          logo_url: string | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_color?: string
+          created_at?: string | null
+          id?: string
+          logo_path?: string | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_color?: string
+          created_at?: string | null
+          id?: string
+          logo_path?: string | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           allocated_hours_per_month: number
           archived: boolean
+          brand_id: string | null
           created_at: string | null
           id: string
           name: string
@@ -29,6 +63,7 @@ export type Database = {
         Insert: {
           allocated_hours_per_month?: number
           archived?: boolean
+          brand_id?: string | null
           created_at?: string | null
           id?: string
           name: string
@@ -39,6 +74,7 @@ export type Database = {
         Update: {
           allocated_hours_per_month?: number
           archived?: boolean
+          brand_id?: string | null
           created_at?: string | null
           id?: string
           name?: string
@@ -46,7 +82,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       file_attachments: {
         Row: {
