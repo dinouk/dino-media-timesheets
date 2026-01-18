@@ -135,7 +135,7 @@ export default function BrandsPage() {
           name: formData.name,
           brand_color: formData.brand_color,
           logo_url: logoUrl,
-          logo_path: `${user.id}/${Date.now()}-${formData.logoFile!.name}`
+          logo_path: formData.logoFile ? `${user.id}/${Date.now()}-${formData.logoFile.name}` : null
         });
 
         toast({
@@ -356,38 +356,14 @@ export default function BrandsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="logo">Brand Logo {!editingBrand && "*"}</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="logo"
-                      type="file"
-                      onChange={handleLogoChange}
-                      accept="image/*"
-                      className="cursor-pointer"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => document.getElementById("logo")?.click()}
-                    >
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-500">Max 5MB. PNG, JPG, or SVG recommended.</p>
-                  
-                  {formData.logoPreview && (
-                    <div className="mt-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                      <p className="text-sm font-medium text-slate-700 mb-2">Logo Preview</p>
-                      <div className="flex items-center justify-center p-4 bg-white rounded border border-slate-200">
-                        <img
-                          src={formData.logoPreview}
-                          alt="Logo preview"
-                          className="max-h-24 max-w-full object-contain"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <Label htmlFor="logo">Brand Logo</Label>
+                  <Input
+                    id="logo"
+                    name="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                  />
                 </div>
               </div>
               <DialogFooter>

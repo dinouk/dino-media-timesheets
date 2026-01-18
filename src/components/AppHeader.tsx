@@ -6,9 +6,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger } from
-"@/components/ui/dropdown-menu";
-import { Menu, Plus, Users, Clock, Settings, User, LogOut, Palette } from "lucide-react";
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Menu, Plus, Users, Clock, User, LogOut, Palette } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -152,7 +152,7 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
     setAddForm((prev) => ({
       ...prev,
       files: prev.files.map((f) =>
-      f.id === fileId ? { ...f, displayName: newDisplayName } : f
+        f.id === fileId ? { ...f, displayName: newDisplayName } : f
       )
     }));
   };
@@ -160,9 +160,9 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
   const toggleAddTag = (tag: string) => {
     setAddForm((prev) => ({
       ...prev,
-      tags: prev.tags.includes(tag) ?
-      prev.tags.filter((t) => t !== tag) :
-      [...prev.tags, tag]
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag]
     }));
   };
 
@@ -172,10 +172,17 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
     const addClient = clients.find((c) => c.id === addForm.clientId);
     if (!addClient) return;
 
-    const clientTags = addClient.tags as string[] || [];
+    const clientTags = (addClient.tags as string[]) || [];
     const finalTags = clientTags.length === 1 ? clientTags : addForm.tags;
 
-    if (!addForm.clientId || !addForm.date || !addForm.hours || finalTags.length === 0 || !addForm.description.trim() || !user) {
+    if (
+      !addForm.clientId ||
+      !addForm.date ||
+      !addForm.hours ||
+      finalTags.length === 0 ||
+      !addForm.description.trim() ||
+      !user
+    ) {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields including description and select at least one tag",
@@ -247,17 +254,8 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
   };
 
   const selectedAddClient = clients.find((c) => c.id === addForm.clientId);
-  const addClientTags = selectedAddClient ? selectedAddClient.tags as string[] || [] : [];
+  const addClientTags = selectedAddClient ? ((selectedAddClient.tags as string[]) || []) : [];
   const shouldShowAddTags = addClientTags.length > 1;
-
-  const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/clients", label: "Clients" },
-  { href: "/time-logs", label: "Time Logs" },
-  { href: "/rollover-management", label: "Rollover Management" },
-  { href: "/settings", label: "Settings" },
-  { href: "/my-account", label: "My Account" }];
-
 
   if (!mounted) return null;
 
@@ -267,12 +265,13 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/dashboard">
             <div className="cursor-pointer">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-primary to-slate-700 bg-clip-text text-transparent" style={{ backgroundColor: "rgb(1, 136, 169)", backgroundImage: "none" }}>Timesheets
-
+              <h1
+                className="text-2xl font-bold bg-gradient-to-r from-brand-primary to-slate-700 bg-clip-text text-transparent"
+                style={{ backgroundColor: "rgb(1, 136, 169)", backgroundImage: "none" }}
+              >
+                Timesheets
               </h1>
-              {currentUser &&
-              <p className="text-sm text-slate-600 mt-0.5">{currentUser}</p>
-              }
+              {currentUser && <p className="text-sm text-slate-600 mt-0.5">{currentUser}</p>}
             </div>
           </Link>
 
@@ -283,11 +282,11 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 <Button
                   variant="ghost"
                   className={`gap-2 ${
-                  router.pathname === "/clients" ?
-                  "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" :
-                  ""}`
-                  }>
-
+                    router.pathname === "/clients"
+                      ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20"
+                      : ""
+                  }`}
+                >
                   <Users className="w-4 h-4" />
                   Clients
                 </Button>
@@ -296,11 +295,11 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 <Button
                   variant="ghost"
                   className={`gap-2 ${
-                  router.pathname === "/brands" ?
-                  "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" :
-                  ""}`
-                  }>
-
+                    router.pathname === "/brands"
+                      ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20"
+                      : ""
+                  }`}
+                >
                   <Palette className="w-4 h-4" />
                   Brands
                 </Button>
@@ -309,11 +308,11 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 <Button
                   variant="ghost"
                   className={`gap-2 ${
-                  router.pathname === "/time-logs" ?
-                  "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" :
-                  ""}`
-                  }>
-
+                    router.pathname === "/time-logs"
+                      ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20"
+                      : ""
+                  }`}
+                >
                   <Clock className="w-4 h-4" />
                   Time Logs
                 </Button>
@@ -324,8 +323,8 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
               variant="default"
               className="bg-brand-primary hover:bg-brand-primary-hover h-10 gap-2"
               title="Log Time"
-              onClick={handleOpenAddDialog}>
-
+              onClick={handleOpenAddDialog}
+            >
               <Plus className="w-5 h-5" />
               <span className="hidden md:inline">Log Time</span>
             </Button>
@@ -337,16 +336,14 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {/* Hide Clients and Time Logs on desktop, show on mobile/tablet */}
+                {/* Hide Clients, Brands and Time Logs on desktop, show on mobile/tablet */}
                 <DropdownMenuItem asChild className="md:hidden">
                   <Link
                     href="/clients"
                     className={`flex items-center gap-2 cursor-pointer ${
-                    router.pathname === "/clients" ?
-                    "bg-brand-primary/10 text-brand-primary" :
-                    ""}`
-                    }>
-
+                      router.pathname === "/clients" ? "bg-brand-primary/10 text-brand-primary" : ""
+                    }`}
+                  >
                     <Users className="w-4 h-4" />
                     Clients
                   </Link>
@@ -355,11 +352,9 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                   <Link
                     href="/brands"
                     className={`flex items-center gap-2 cursor-pointer ${
-                    router.pathname === "/brands" ?
-                    "bg-brand-primary/10 text-brand-primary" :
-                    ""}`
-                    }>
-
+                      router.pathname === "/brands" ? "bg-brand-primary/10 text-brand-primary" : ""
+                    }`}
+                  >
                     <Palette className="w-4 h-4" />
                     Brands
                   </Link>
@@ -368,11 +363,9 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                   <Link
                     href="/time-logs"
                     className={`flex items-center gap-2 cursor-pointer ${
-                    router.pathname === "/time-logs" ?
-                    "bg-brand-primary/10 text-brand-primary" :
-                    ""}`
-                    }>
-
+                      router.pathname === "/time-logs" ? "bg-brand-primary/10 text-brand-primary" : ""
+                    }`}
+                  >
                     <Clock className="w-4 h-4" />
                     Time Logs
                   </Link>
@@ -380,38 +373,28 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                 <DropdownMenuSeparator className="md:hidden" />
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/settings"
+                    href="/brands"
                     className={`flex items-center gap-2 cursor-pointer ${
-                    router.pathname === "/settings" ?
-                    "bg-brand-primary/10 text-brand-primary" :
-                    ""}`
-                    }>
-
-                    <Settings className="w-4 h-4" />
-                    Settings
+                      router.pathname === "/brands" ? "bg-brand-primary/10 text-brand-primary" : ""
+                    }`}
+                  >
+                    <Palette className="w-4 h-4" />
+                    Brands
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
                     href="/my-account"
                     className={`flex items-center gap-2 cursor-pointer ${
-                    router.pathname === "/my-account" ?
-                    "bg-brand-primary/10 text-brand-primary" :
-                    ""}`
-                    }>
-
+                      router.pathname === "/my-account" ? "bg-brand-primary/10 text-brand-primary" : ""
+                    }`}
+                  >
                     <User className="w-4 h-4" />
                     My Account
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/brands" className="flex items-center cursor-pointer">
-                    <Palette className="mr-2 h-4 w-4" />
-                    <span>Brands</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log Out</span>
                 </DropdownMenuItem>
@@ -421,8 +404,8 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
         </div>
       </header>
 
-      {isAddingTimeLog &&
-      <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
+      {isAddingTimeLog && (
+        <Dialog open={isAddingTimeLog} onOpenChange={setIsAddingTimeLog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Log Time Entry</DialogTitle>
@@ -430,16 +413,19 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
             <form onSubmit={handleSubmitTimeEntry} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="add-client">Client *</Label>
-                <Select value={addForm.clientId} onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}>
+                <Select
+                  value={addForm.clientId}
+                  onValueChange={(value) => setAddForm({ ...addForm, clientId: value, tags: [] })}
+                >
                   <SelectTrigger id="add-client">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client) =>
-                  <SelectItem key={client.id} value={client.id}>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>
-                  )}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -447,31 +433,28 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
               <div className="space-y-2">
                 <Label htmlFor="add-date">Date *</Label>
                 <Input
-                id="add-date"
-                type="date"
-                value={addForm.date}
-                onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
-                min={minDate}
-                max={maxDate}
-                className="h-10" />
-
+                  id="add-date"
+                  type="date"
+                  value={addForm.date}
+                  onChange={(e) => setAddForm({ ...addForm, date: e.target.value })}
+                  min={minDate}
+                  max={maxDate}
+                  className="h-10"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="add-hours">Hours (15-minute intervals) *</Label>
-                <Select
-                value={addForm.hours}
-                onValueChange={(value) => setAddForm({ ...addForm, hours: value })}>
-
+                <Select value={addForm.hours} onValueChange={(value) => setAddForm({ ...addForm, hours: value })}>
                   <SelectTrigger id="add-hours">
                     <SelectValue placeholder="Select hours" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) =>
-                  <SelectItem key={value} value={value.toString()}>
+                    {Array.from({ length: 33 }, (_, i) => i * 0.25).map((value) => (
+                      <SelectItem key={value} value={value.toString()}>
                         {value} hours
                       </SelectItem>
-                  )}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -479,112 +462,117 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
               <div className="space-y-2">
                 <Label htmlFor="add-description">Task Description *</Label>
                 <Textarea
-                id="add-description"
-                placeholder="Describe the work performed..."
-                value={addForm.description}
-                onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-                rows={4}
-                className="resize-none" />
-
+                  id="add-description"
+                  placeholder="Describe the work performed..."
+                  value={addForm.description}
+                  onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                  rows={4}
+                  className="resize-none"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="add-files">File Attachments (Optional)</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                  id="add-files"
-                  type="file"
-                  onChange={handleAddFileUpload}
-                  multiple
-                  className="cursor-pointer"
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx" />
-
+                    id="add-files"
+                    type="file"
+                    onChange={handleAddFileUpload}
+                    multiple
+                    className="cursor-pointer"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xls,.xlsx"
+                  />
                   <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => document.getElementById("add-files")?.click()}
-                  title="Upload files">
-
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => document.getElementById("add-files")?.click()}
+                    title="Upload files"
+                  >
                     <Upload className="w-4 h-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-slate-500">Max 5MB per file. Supports PDF, images, documents, and spreadsheets.</p>
-                
-                {addForm.files.length > 0 &&
-              <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <p className="text-xs text-slate-500">
+                  Max 5MB per file. Supports PDF, images, documents, and spreadsheets.
+                </p>
+
+                {addForm.files.length > 0 && (
+                  <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <p className="text-sm font-medium text-slate-700">Attached Files ({addForm.files.length})</p>
                     <div className="space-y-2">
-                      {addForm.files.map((file) =>
-                  <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200">
+                      {addForm.files.map((file) => (
+                        <div
+                          key={file.id}
+                          className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200"
+                        >
                           <FileIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
                           <Input
-                      type="text"
-                      value={file.displayName}
-                      onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
-                      className="h-8 text-sm flex-1"
-                      placeholder="Display name..." />
-
+                            type="text"
+                            value={file.displayName}
+                            onChange={(e) => handleUpdateAddFileDisplayName(file.id, e.target.value)}
+                            className="h-8 text-sm flex-1"
+                            placeholder="Display name..."
+                          />
                           <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveAddFile(file.id)}
-                      className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
-
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveAddFile(file.id)}
+                            className="flex-shrink-0 h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
-                  )}
+                      ))}
                     </div>
                   </div>
-              }
+                )}
               </div>
 
-              {shouldShowAddTags && selectedAddClient &&
-            <div className="space-y-2">
+              {shouldShowAddTags && selectedAddClient && (
+                <div className="space-y-2">
                   <Label>Tags *</Label>
                   <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-                    {addClientTags.map((tag) =>
-                <Badge
-                  key={tag}
-                  variant={addForm.tags.includes(tag) ? "default" : "outline"}
-                  className={`cursor-pointer transition-all ${
-                  addForm.tags.includes(tag) ?
-                  "bg-brand-primary hover:bg-brand-primary-hover" :
-                  "hover:bg-slate-200"}`
-                  }
-                  onClick={() => toggleAddTag(tag)}>
-
+                    {addClientTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant={addForm.tags.includes(tag) ? "default" : "outline"}
+                        className={`cursor-pointer transition-all ${
+                          addForm.tags.includes(tag)
+                            ? "bg-brand-primary hover:bg-brand-primary-hover"
+                            : "hover:bg-slate-200"
+                        }`}
+                        onClick={() => toggleAddTag(tag)}
+                      >
                         {tag}
                       </Badge>
-                )}
+                    ))}
                   </div>
                 </div>
-            }
+              )}
 
               <div className="flex gap-2">
                 <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddingTimeLog(false)}
-                className="flex-1"
-                disabled={submitting}>
-
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddingTimeLog(false)}
+                  className="flex-1"
+                  disabled={submitting}
+                >
                   Cancel
                 </Button>
                 <Button
-                type="submit"
-                className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-                disabled={submitting}>
-
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                  disabled={submitting}
+                >
                   {submitting ? "Logging..." : "Log Time Entry"}
                 </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
-      }
-    </>);
-
+      )}
+    </>
+  );
 }
