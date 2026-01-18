@@ -354,11 +354,7 @@ export default function ClientsPage() {
     };
   };
 
-  const filteredClients = selectedBrandFilter === "all" 
-    ? clients 
-    : clients.filter(client => client.brand_id === selectedBrandFilter);
-
-  const budgetFilteredClients = filteredClients.filter((client) => {
+  const budgetFilteredClients = clients.filter((client) => {
     if (budgetFilter === "all") return true;
 
     const stats = getCurrentMonthStats(client);
@@ -394,7 +390,7 @@ export default function ClientsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                     <SelectTrigger>
@@ -419,6 +415,23 @@ export default function ClientsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {brands.length > 1 && (
+                  <div>
+                    <Select value={selectedBrandFilter} onValueChange={(value) => setSelectedBrandFilter(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Brands" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Brands</SelectItem>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -454,29 +467,8 @@ export default function ClientsPage() {
           </Card> :
 
         <>
-            {/* Clients List */}
-            {brands.length > 1 && (
-              <div className="mb-4">
-                <label htmlFor="brand-filter" className="block text-sm font-medium mb-2">
-                  Filter by Brand
-                </label>
-                <select
-                  id="brand-filter"
-                  value={selectedBrandFilter}
-                  onChange={(e) => setSelectedBrandFilter(e.target.value)}
-                  className="w-full md:w-64 px-3 py-2 border rounded-md bg-background"
-                >
-                  <option value="all">All Brands</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Clients Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {budgetFilteredClients.map((client) => {
               const stats = getCurrentMonthStats(client);
               const clientTags = client.tags as string[] || [];
