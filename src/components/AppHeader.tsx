@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger } from
 "@/components/ui/dropdown-menu";
-import { Menu, Plus, Users, Clock, Settings, User, LogOut } from "lucide-react";
+import { Menu, Plus, Users, Clock, Settings, User, LogOut, Palette } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -292,6 +292,19 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                   Clients
                 </Button>
               </Link>
+              <Link href="/brands">
+                <Button
+                  variant="ghost"
+                  className={`gap-2 ${
+                  router.pathname === "/brands" ?
+                  "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" :
+                  ""}`
+                  }>
+
+                  <Palette className="w-4 h-4" />
+                  Brands
+                </Button>
+              </Link>
               <Link href="/time-logs">
                 <Button
                   variant="ghost"
@@ -336,6 +349,19 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
 
                     <Users className="w-4 h-4" />
                     Clients
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="md:hidden">
+                  <Link
+                    href="/brands"
+                    className={`flex items-center gap-2 cursor-pointer ${
+                    router.pathname === "/brands" ?
+                    "bg-brand-primary/10 text-brand-primary" :
+                    ""}`
+                    }>
+
+                    <Palette className="w-4 h-4" />
+                    Brands
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="md:hidden">

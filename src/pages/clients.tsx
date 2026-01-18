@@ -16,9 +16,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { clientService } from "@/services/clientService";
 import { timeEntryService } from "@/services/timeEntryService";
 import { monthlyAllocationService } from "@/services/monthlyAllocationService";
+import { brandService } from "@/services/brandService";
 import type { Database } from "@/integrations/supabase/types";
 
-type Client = Database["public"]["Tables"]["clients"]["Row"];
+type Client = Database["public"]["Tables"]["clients"]["Row"] & {
+  brands: { name: string; logo_url: string; brand_color: string } | null;
+};
+type Brand = Database["public"]["Tables"]["brands"]["Row"];
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
 type StatusFilter = "active" | "archived" | "all";
@@ -37,6 +41,7 @@ export default function ClientsPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [monthlyAllocations, setMonthlyAllocations] = useState<MonthlyAllocation[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -46,7 +51,8 @@ export default function ClientsPage() {
   const [budgetFilter, setBudgetFilter] = useState<BudgetFilter>("all");
   const [formData, setFormData] = useState({
     name: "",
-    allocatedHours: ""
+    allocatedHours: "",
+    brandId: ""
   });
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -117,15 +123,17 @@ export default function ClientsPage() {
 
     try {
       setLoadingData(true);
-      const [clientsData, entriesData, allocationsData] = await Promise.all([
+      const [clientsData, entriesData, allocationsData, brandsData] = await Promise.all([
       clientService.getClients(user.id),
       timeEntryService.getTimeEntries(user.id),
-      monthlyAllocationService.getMonthlyAllocations(user.id)]
+      monthlyAllocationService.getMonthlyAllocations(user.id),
+      brandService.getBrands(user.id)]
       );
 
       setClients(clientsData);
       setTimeEntries(entriesData);
       setMonthlyAllocations(allocationsData);
+      setBrands(brandsData);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -160,10 +168,10 @@ export default function ClientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.allocatedHours || !user) {
+    if (!formData.name || !formData.allocatedHours || !formData.brandId || !user) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including Brand",
         variant: "destructive"
       });
       return;
@@ -183,6 +191,7 @@ export default function ClientsPage() {
         await clientService.updateClient(editingClient.id, {
           name: formData.name,
           allocated_hours_per_month: parseFloat(formData.allocatedHours),
+          brand_id: formData.brandId,
           tags: tags
         });
 
@@ -195,6 +204,7 @@ export default function ClientsPage() {
           user_id: user.id,
           name: formData.name,
           allocated_hours_per_month: parseFloat(formData.allocatedHours),
+          brand_id: formData.brandId,
           tags: tags,
           archived: false
         });
@@ -223,7 +233,8 @@ export default function ClientsPage() {
     setEditingClient(client);
     setFormData({
       name: client.name,
-      allocatedHours: client.allocated_hours_per_month.toString()
+      allocatedHours: client.allocated_hours_per_month.toString(),
+      brandId: client.brand_id || ""
     });
     setTags(client.tags as string[] || []);
     setIsDialogOpen(true);
@@ -289,7 +300,7 @@ export default function ClientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", allocatedHours: "" });
+    setFormData({ name: "", allocatedHours: "", brandId: "" });
     setTags([]);
     setTagInput("");
     setEditingClient(null);
@@ -445,6 +456,14 @@ export default function ClientsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <CardTitle className="text-xl">{client.name}</CardTitle>
+                          {client.brands && (
+                            <Badge variant="outline" className="text-xs" style={{ 
+                              borderColor: client.brands.brand_color, 
+                              color: client.brands.brand_color 
+                            }}>
+                              {client.brands.name}
+                            </Badge>
+                          )}
                           {client.archived &&
                           <Badge variant="secondary" className="bg-slate-200 text-slate-600">
                               Archived
@@ -559,11 +578,41 @@ export default function ClientsPage() {
             <DialogHeader>
               <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
               <DialogDescription>
-                {editingClient ? "Update client information" : "Create a new client with allocated hours and tags"}
+                {editingClient ? "Update client information" : "Create a new client with allocated hours, brand, and tags"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brand">Brand *</Label>
+                  <Select 
+                    value={formData.brandId} 
+                    onValueChange={(value) => setFormData({ ...formData, brandId: value })}
+                  >
+                    <SelectTrigger id="brand">
+                      <SelectValue placeholder="Select a brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: brand.brand_color }} 
+                            />
+                            {brand.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {brands.length === 0 && (
+                    <p className="text-xs text-amber-600">
+                      No brands found. Please create a brand first.
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="name">Client Name *</Label>
                   <Input

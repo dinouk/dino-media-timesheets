@@ -9,23 +9,37 @@ export const clientService = {
   async getClients(userId: string) {
     const { data, error } = await supabase
       .from("clients")
-      .select("*")
+      .select(`
+        *,
+        brands (
+          name,
+          logo_url,
+          brand_color
+        )
+      `)
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as Client[];
+    return data as (Client & { brands: { name: string; logo_url: string; brand_color: string } | null })[];
   },
 
   async getClientById(id: string) {
     const { data, error } = await supabase
       .from("clients")
-      .select("*")
+      .select(`
+        *,
+        brands (
+          name,
+          logo_url,
+          brand_color
+        )
+      `)
       .eq("id", id)
       .single();
 
     if (error) throw error;
-    return data as Client;
+    return data as (Client & { brands: { name: string; logo_url: string; brand_color: string } | null });
   },
 
   async createClient(client: Omit<ClientInsert, "id" | "created_at" | "updated_at">) {

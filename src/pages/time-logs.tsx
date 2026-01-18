@@ -41,7 +41,9 @@ import { fileAttachmentService } from "@/services/fileAttachmentService";
 import { userSettingsService } from "@/services/userSettingsService";
 import type { Database } from "@/integrations/supabase/types";
 
-type Client = Database["public"]["Tables"]["clients"]["Row"];
+type Client = Database["public"]["Tables"]["clients"]["Row"] & {
+  brands: { name: string; logo_url: string; brand_color: string } | null;
+};
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
 type FileAttachment = Database["public"]["Tables"]["file_attachments"]["Row"];
@@ -103,6 +105,15 @@ export default function TimeLogsPage() {
 
   const minDate = "2025-10-01";
   const maxDate = new Date().toISOString().split("T")[0];
+
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    ] : [1, 136, 169]; // Default fallback
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -463,6 +474,12 @@ export default function TimeLogsPage() {
 
   const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
+
+    // Use brand details if available, otherwise fall back to defaults
+    const brandLogo = selectedClient.brands?.logo_url || companyLogo;
+    const brandColorHex = selectedClient.brands?.brand_color || "#0188a9";
+    const brandColorRgb = hexToRgb(brandColorHex);
+
     const [year, month] = selectedPeriod.split("-");
     const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'long' });
     const doc = new jsPDF();
@@ -476,17 +493,17 @@ export default function TimeLogsPage() {
     doc.setFont("helvetica", "normal");
     doc.text(`${monthName} ${year}`, 14, yPos);
     const logoYPos = 12;
-    if (companyLogo) {
+    if (brandLogo) {
       try {
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = companyLogo;
+        img.src = brandLogo;
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
         const aspectRatio = img.width / img.height;
         let logoWidth = 36, logoHeight = logoWidth / aspectRatio;
         if (logoHeight > 14.4) { logoHeight = 14.4; logoWidth = logoHeight * aspectRatio; }
         const logoX = pageWidth - logoWidth - 14;
-        doc.addImage(companyLogo, "PNG", logoX, logoYPos, logoWidth, logoHeight);
+        doc.addImage(brandLogo, "PNG", logoX, logoYPos, logoWidth, logoHeight);
         if (logoYPos + logoHeight > yPos) yPos = logoYPos + logoHeight;
       } catch (error) { console.error("Error adding logo to PDF:", error); }
     }
@@ -518,7 +535,7 @@ export default function TimeLogsPage() {
       body: tableData,
       theme: "striped",
       styles: { lineColor: [248, 250, 252], lineWidth: 0, cellPadding: 3, fontSize: 7.5, textColor: [51, 65, 85] },
-      headStyles: { fillColor: [1, 136, 169], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, lineWidth: 0 },
+      headStyles: { fillColor: brandColorRgb as [number, number, number], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, lineWidth: 0 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 65, 85], lineWidth: 0 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 18 }, 2: { cellWidth: 70 }, 3: { cellWidth: 35 }, 4: { cellWidth: 37 } },
@@ -529,7 +546,8 @@ export default function TimeLogsPage() {
           const { files } = entriesWithFiles[data.row.index];
           if (files.length > 0) {
             files.forEach((file, fileIndex) => {
-              doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(1, 136, 169);
+              doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); 
+              doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
               doc.textWithLink(file.display_name, data.cell.x + 2, data.cell.y + 5 + fileIndex * 6, { url: file.file_url });
             });
           }
