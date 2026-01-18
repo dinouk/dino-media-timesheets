@@ -701,7 +701,28 @@ export default function TimeLogsPage() {
       <AppHeader currentUser={user?.email || ""} />
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
-          <CardHeader><CardTitle className="flex items-center gap-2"><Filter className="w-5 h-5 text-brand-primary" />Filter Time Logs</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Filter Time Logs</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedClientId("");
+                const now = new Date();
+                const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+                setSelectedPeriod(currentPeriod);
+                
+                // Update URL to remove client filter but keep current period
+                router.push({
+                  pathname: router.pathname,
+                  query: { period: currentPeriod }
+                }, undefined, { shallow: true });
+              }}
+              className="ml-auto"
+            >
+              Clear All Filters
+            </Button>
+          </CardHeader>
           <CardContent><div className="grid md:grid-cols-2 gap-4">
             <div><Select value={selectedClientId} onValueChange={handleClientFilterChange}><SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger><SelectContent>
               {activeClients.length > 0 && <SelectGroup><SelectLabel>Active Clients</SelectLabel>{activeClients.map((client) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectGroup>}

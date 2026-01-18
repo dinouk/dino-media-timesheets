@@ -397,61 +397,69 @@ export default function ClientsPage() {
       <AppHeader currentUser={user?.email || ""} />
 
       <main className="container mx-auto px-4 py-8">
-        {clients.length > 0 &&
-        <Card className="mb-6 border-2 border-slate-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-brand-primary" />
-                Filter Clients
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                      <SelectItem value="all">All</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Select value={budgetFilter} onValueChange={handleBudgetFilterChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Budgets</SelectItem>
-                      <SelectItem value="remaining">Time Remaining</SelectItem>
-                      <SelectItem value="over">Over Budget</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {brands.length > 1 && (
-                  <div>
-                    <Select value={selectedBrandFilter} onValueChange={(value) => setSelectedBrandFilter(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Brands" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Brands</SelectItem>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+        {/* Filter Clients */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Filter Clients</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setStatusFilter("active");
+                setBudgetFilter("all");
+                setSelectedBrandFilter("all");
+              }}
+              className="ml-auto"
+            >
+              Clear All Filters
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        }
+              <div>
+                <Select value={budgetFilter} onValueChange={handleBudgetFilterChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Budgets</SelectItem>
+                    <SelectItem value="remaining">Time Remaining</SelectItem>
+                    <SelectItem value="over">Over Budget</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {brands.length > 1 && (
+                <div>
+                  <Select value={selectedBrandFilter} onValueChange={(value) => setSelectedBrandFilter(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Brands" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Brands</SelectItem>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {clients.length === 0 ?
         <Card className="text-center py-12 border-2 border-slate-200">
