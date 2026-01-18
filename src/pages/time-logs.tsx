@@ -701,7 +701,7 @@ export default function TimeLogsPage() {
       <AppHeader currentUser={user?.email || ""} />
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Filter Time Logs</CardTitle>
             <Button
               variant="outline"

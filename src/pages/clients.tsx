@@ -399,7 +399,7 @@ export default function ClientsPage() {
       <main className="container mx-auto px-4 py-8">
         {/* Filter Clients */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Filter Clients</CardTitle>
             <Button
               variant="outline"
@@ -408,6 +408,11 @@ export default function ClientsPage() {
                 setStatusFilter("active");
                 setBudgetFilter("all");
                 setSelectedBrandFilter("all");
+                // Clear URL query params
+                router.push({
+                  pathname: router.pathname,
+                  query: {}
+                }, undefined, { shallow: true });
               }}
               className="ml-auto"
             >
