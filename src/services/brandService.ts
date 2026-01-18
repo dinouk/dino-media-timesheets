@@ -17,18 +17,7 @@ export const brandService = {
     return data || [];
   },
 
-  async getBrand(brandId: string): Promise<Brand | null> {
-    const { data, error } = await supabase
-      .from("brands")
-      .select("*")
-      .eq("id", brandId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async createBrand(brand: BrandInsert): Promise<Brand> {
+  async createBrand(brand: Omit<BrandInsert, "id" | "created_at" | "updated_at">): Promise<Brand> {
     const { data, error } = await supabase
       .from("brands")
       .insert(brand)
@@ -39,11 +28,11 @@ export const brandService = {
     return data;
   },
 
-  async updateBrand(brandId: string, updates: BrandUpdate): Promise<Brand> {
+  async updateBrand(id: string, updates: BrandUpdate): Promise<Brand> {
     const { data, error } = await supabase
       .from("brands")
-      .update(updates)
-      .eq("id", brandId)
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
       .select()
       .single();
 
@@ -51,12 +40,30 @@ export const brandService = {
     return data;
   },
 
-  async deleteBrand(brandId: string): Promise<void> {
+  async deleteBrand(id: string): Promise<void> {
     const { error } = await supabase
       .from("brands")
       .delete()
-      .eq("id", brandId);
+      .eq("id", id);
 
     if (error) throw error;
-  }
+  },
+
+  async uploadBrandLogo(userId: string, brandId: string, file: File): Promise<string> {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${userId}/${brandId}/logo.${fileExt}`;
+    const filePath = `brand-logos/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("user-files")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("user-files")
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  },
 };

@@ -594,7 +594,7 @@ export default function ClientsPage() {
               })}
             </div>
 
-            <div className="flex justify-center pb-8">
+            <div className="flex justify-center pb-8 mt-8">
               <Button
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
