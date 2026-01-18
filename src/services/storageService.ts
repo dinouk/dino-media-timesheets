@@ -13,11 +13,8 @@ export const storageService = {
     return data;
   },
 
-  async getPublicUrl(bucket: string, path: string) {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-
+  async getPublicUrl(bucketName: string, filePath: string): Promise<string> {
+    const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
     return data.publicUrl;
   },
 
@@ -37,5 +34,25 @@ export const storageService = {
 
     if (error) throw error;
     return data;
+  },
+
+  // Helper method for uploading brand logos
+  async uploadBrandLogo(userId: string, file: File): Promise<string> {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+    
+    await this.uploadFile("brand-logos", filePath, file);
+    return await this.getPublicUrl("brand-logos", filePath);
+  },
+
+  // Helper method for deleting brand logos
+  async deleteBrandLogo(logoUrl: string): Promise<void> {
+    // Extract the file path from the URL
+    const urlParts = logoUrl.split("/brand-logos/");
+    if (urlParts.length === 2) {
+      const filePath = urlParts[1];
+      await this.deleteFile("brand-logos", filePath);
+    }
   }
 };

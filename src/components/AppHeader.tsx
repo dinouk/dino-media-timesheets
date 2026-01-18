@@ -405,12 +405,15 @@ export function AppHeader({ currentUser }: AppHeaderProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600">
-
-                  <LogOut className="w-4 h-4" />
-                  Log Out
+                <DropdownMenuItem asChild>
+                  <Link href="/brands" className="flex items-center cursor-pointer">
+                    <Palette className="mr-2 h-4 w-4" />
+                    <span>Brands</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

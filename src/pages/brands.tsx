@@ -12,8 +12,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { brandService } from "@/services/brandService";
 import { storageService } from "@/services/storageService";
 import type { Database } from "@/integrations/supabase/types";
+import { z } from "zod";
 
 type Brand = Database["public"]["Tables"]["brands"]["Row"];
+
+const brandSchema = z.object({
+  name: z.string().min(1, "Brand name is required"),
+  brand_color: z.string().regex(/^#[0-9A-F]{6}$/i, "Must be a valid hex color"),
+  logo_url: z.string().optional().or(z.literal(""))
+});
 
 export default function BrandsPage() {
   const router = useRouter();
@@ -92,15 +99,6 @@ export default function BrandsPage() {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!editingBrand && !formData.logoFile) {
-      toast({
-        title: "Validation Error",
-        description: "Please upload a logo",
         variant: "destructive"
       });
       return;
