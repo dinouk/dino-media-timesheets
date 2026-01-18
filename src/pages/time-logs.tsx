@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Filter, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
+import { FileDown, AlertCircle, Plus, MoreVertical, Edit2, Save, X, Download, Upload, Calendar, Clock, TrendingUp as ArrowUp, FileIcon } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { jsPDF } from "jspdf";
@@ -76,8 +76,8 @@ export default function TimeLogsPage() {
   const [timeEntries, setTimeEntries] = useState([] as TimeEntry[]);
   const [fileAttachments, setFileAttachments] = useState([] as FileAttachment[]);
   const [monthlyAllocations, setMonthlyAllocations] = useState([] as MonthlyAllocation[]);
-  const [selectedClientId, setSelectedClientId] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string>("all");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("");
   const [stats, setStats] = useState<ClientStats | null>(null);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<TimeEntry | null>(null);
@@ -113,7 +113,7 @@ export default function TimeLogsPage() {
       parseInt(result[1], 16),
       parseInt(result[2], 16),
       parseInt(result[3], 16)
-    ] : [1, 136, 169]; // Default fallback
+    ] : [1, 136, 169];
   };
 
   useEffect(() => {
@@ -124,12 +124,6 @@ export default function TimeLogsPage() {
     }
     if (user) {
       loadData();
-    }
-
-    if (!router.query.period) {
-      const now = new Date();
-      const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-      setSelectedPeriod(currentPeriod);
     }
   }, [user, loading, router]);
 
@@ -147,6 +141,10 @@ export default function TimeLogsPage() {
     }
     if (router.query.period && typeof router.query.period === "string") {
       setSelectedPeriod(router.query.period);
+    } else if (!router.query.period && selectedPeriod === "") {
+      const now = new Date();
+      const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+      setSelectedPeriod(currentPeriod);
     }
   }, [router.query.clientId, router.query.period, router.query.add, clients]);
 
@@ -386,7 +384,6 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
-    // Give Radix Dialog time to fully unmount before callback
     if (callback) {
       setTimeout(callback, 300);
     }
@@ -402,13 +399,11 @@ export default function TimeLogsPage() {
       tags: [],
       files: []
     });
-    // Give Radix Dialog time to fully unmount before callback
     if (callback) {
       setTimeout(callback, 300);
     }
   };
 
-  // Simple cleanup to ensure body styles are reset
   useEffect(() => {
     if (!editingEntry && !isAddingTimeLog && !deletingEntry) {
       const timer = setTimeout(() => {
@@ -456,7 +451,6 @@ export default function TimeLogsPage() {
         setSelectedClientId(targetClientId);
         setSelectedPeriod(targetPeriod);
         router.push({ pathname: "/time-logs", query: { clientId: targetClientId, period: targetPeriod } }, undefined, { shallow: true });
-        // Small additional delay after navigation before reloading
         setTimeout(() => loadData(), 100);
       });
     } catch (error: any) {
@@ -468,15 +462,12 @@ export default function TimeLogsPage() {
   const selectedAddClient = clients.find((c) => c.id === addForm.clientId);
   const addClientTags = selectedAddClient ? selectedAddClient.tags as string[] || [] : [];
   const shouldShowAddTags = addClientTags.length > 1;
-  const filteredEntries = timeEntries.filter((entry) => entry.client_id === selectedClientId && entry.month === selectedPeriod).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const selectedClient = clients.find((c) => c.id === selectedClientId);
   const activeClients = clients.filter((c) => !c.archived);
-  const archivedClients = clients.filter((c) => c.archived);
 
   const handleExportPDF = async () => {
     if (!selectedClient || !stats) return;
 
-    // Use brand details if available, otherwise fall back to defaults
     let clientBrandLogoUrl: string | null = null;
     let clientBrandColor: string | null = null;
     
@@ -488,7 +479,6 @@ export default function TimeLogsPage() {
         .single();
       
       if (brandData) {
-        // Only use logo if it's a non-empty string
         if (brandData.logo_url && brandData.logo_url.trim().length > 0) {
           clientBrandLogoUrl = brandData.logo_url;
         }
@@ -496,10 +486,8 @@ export default function TimeLogsPage() {
       }
     }
 
-    // Determine colors
     const brandColorToUse = clientBrandColor || "#0188a9";
     const brandColorRgb = hexToRgb(brandColorToUse);
-    // Calculate faint version for grid lines (approx 20% opacity on white)
     const faintBrandColorRgb: [number, number, number] = [
       Math.round(brandColorRgb[0] * 0.2 + 255 * 0.8),
       Math.round(brandColorRgb[1] * 0.2 + 255 * 0.8),
@@ -534,19 +522,16 @@ export default function TimeLogsPage() {
         doc.addImage(img, "PNG", logoX, logoYPos, logoWidth, logoHeight);
       } catch (error) {
         console.error("Error adding logo to PDF:", error);
-        // Fallback to brand name if logo fails to load
         doc.setFontSize(24);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
         doc.text(selectedClient.brands?.name || "Timesheet", pageWidth - 14, 25, { align: "right" });
       }
     } else {
-       // No logo - show brand name on the right
        doc.setFontSize(24);
        doc.setFont("helvetica", "bold");
        doc.setTextColor(brandColorRgb[0], brandColorRgb[1], brandColorRgb[2]);
        
-       // Get brand name from client relation if available, otherwise default
        const brandName = selectedClient.brands?.name || "Timesheet";
        doc.text(brandName, pageWidth - 14, 25, { align: "right" });
     }
@@ -561,7 +546,6 @@ export default function TimeLogsPage() {
     ];
     statBoxes.forEach((box, index) => {
       const x = 14 + index * (boxWidth + boxSpacing);
-      // Use faint brand color for border
       doc.setDrawColor(faintBrandColorRgb[0], faintBrandColorRgb[1], faintBrandColorRgb[2]);
       doc.setFillColor(252, 252, 252);
       doc.roundedRect(x, boxY, boxWidth, boxHeight, 1.5, 1.5, "FD");
@@ -585,7 +569,6 @@ export default function TimeLogsPage() {
       files.length > 0 ? files.map((f) => f.display_name).join(", ") : "-"
     ]);
 
-    // Generate PDF table
     autoTable(doc, {
       startY: yPos,
       head: [["Date", "Hours", "Description", "Tags", "Files"]],
@@ -630,6 +613,18 @@ export default function TimeLogsPage() {
     return options.reverse();
   };
   const periodOptions = generatePeriodOptions();
+
+  const filteredEntries = timeEntries.filter((entry) => {
+    if (selectedClientId !== "all" && entry.client_id !== selectedClientId) {
+      return false;
+    }
+
+    if (selectedPeriod && selectedPeriod.includes("-")) {
+      return entry.month === selectedPeriod;
+    }
+
+    return true;
+  });
 
   const handleClientFilterChange = (value: string) => {
     setSelectedClientId(value);
@@ -692,6 +687,8 @@ export default function TimeLogsPage() {
   const handleStartEditRollover = () => { if (stats) { setRolloverValue(stats.rolloverHours.toString()); setEditingRollover(true); } };
   const handleStartEditAllocation = () => { if (stats) { setAllocationValue(stats.allocatedHours.toString()); setEditingAllocation(true); } };
 
+  const currentMonth = new Date().toISOString().split("T")[0].slice(0, 7);
+
   if (!mounted || loading || loadingData) {
     return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100"><div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div><p className="mt-4 text-slate-600">Loading...</p></div></div>;
   }
@@ -701,37 +698,60 @@ export default function TimeLogsPage() {
       <AppHeader currentUser={user?.email || ""} />
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-h-[60px]">
             <CardTitle>Filter Time Logs</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSelectedClientId("");
-                const now = new Date();
-                const currentPeriod = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-                setSelectedPeriod(currentPeriod);
-                
-                // Update URL to remove client filter but keep current period
-                router.push({
-                  pathname: router.pathname,
-                  query: { period: currentPeriod }
-                }, undefined, { shallow: true });
-              }}
-              className="ml-auto"
-            >
-              Clear All Filters
-            </Button>
+            {(selectedClientId !== "all" || selectedPeriod !== currentMonth) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedClientId("all");
+                  setSelectedPeriod(currentMonth);
+                  router.push({
+                    pathname: router.pathname,
+                    query: {}
+                  }, undefined, { shallow: true });
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                Reset
+              </Button>
+            )}
           </CardHeader>
-          <CardContent><div className="grid md:grid-cols-2 gap-4">
-            <div><Select value={selectedClientId} onValueChange={handleClientFilterChange}><SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger><SelectContent>
-              {activeClients.length > 0 && <SelectGroup><SelectLabel>Active Clients</SelectLabel>{activeClients.map((client) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectGroup>}
-              {archivedClients.length > 0 && <SelectGroup><SelectLabel>Archived Clients</SelectLabel>{archivedClients.map((client) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectGroup>}
-            </SelectContent></Select></div>
-            <div><Select value={selectedPeriod} onValueChange={handlePeriodFilterChange}><SelectTrigger><SelectValue placeholder="Select period" /></SelectTrigger><SelectContent className="max-h-[300px]">
-              {periodOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-            </SelectContent></Select></div>
-          </div></CardContent>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Select value={selectedClientId} onValueChange={handleClientFilterChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Clients" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Select value={selectedPeriod} onValueChange={handlePeriodFilterChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periodOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         {stats && selectedClient && <>

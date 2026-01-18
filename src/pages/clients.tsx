@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, X, Tag as TagIcon, Archive, ArchiveRestore, MoreVertical } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +25,7 @@ type Client = Database["public"]["Tables"]["clients"]["Row"] & {
 type Brand = Database["public"]["Tables"]["brands"]["Row"];
 type TimeEntry = Database["public"]["Tables"]["time_entries"]["Row"];
 type MonthlyAllocation = Database["public"]["Tables"]["monthly_allocations"]["Row"];
-type StatusFilter = "active" | "archived" | "all";
+type StatusFilter = "active" | "archived";
 type BudgetFilter = "all" | "remaining" | "over";
 
 interface ClientStats {
@@ -76,7 +76,7 @@ export default function ClientsPage() {
       const { status, budgetStatus } = router.query;
 
       if (status && typeof status === "string") {
-        if (["active", "archived", "all"].includes(status)) {
+        if (["active", "archived"].includes(status)) {
           setStatusFilter(status as StatusFilter);
         }
       }
@@ -142,9 +142,9 @@ export default function ClientsPage() {
     try {
       setLoadingData(true);
       const [clientsData, entriesData, allocationsData] = await Promise.all([
-      clientService.getClients(user.id),
-      timeEntryService.getTimeEntries(user.id),
-      monthlyAllocationService.getMonthlyAllocations(user.id),
+        clientService.getClients(user.id),
+        timeEntryService.getTimeEntries(user.id),
+        monthlyAllocationService.getMonthlyAllocations(user.id),
       ]);
 
       setClients(clientsData);
@@ -354,32 +354,17 @@ export default function ClientsPage() {
     };
   };
 
-  const filteredClients = clients
-    .filter((client) => {
-      // Filter by brand
-      if (selectedBrandFilter !== "all" && client.brand_id !== selectedBrandFilter) {
-        return false;
-      }
-      
-      // Filter by status
-      if (statusFilter === "active") return !client.archived;
-      if (statusFilter === "archived") return client.archived;
-      return true;
-    })
-    .filter((client) => {
-      // Filter by budget
-      if (budgetFilter === "all") return true;
-
-      const stats = getCurrentMonthStats(client);
-      
-      if (budgetFilter === "remaining") {
-        return stats.remainingHours >= 0;
-      }
-      if (budgetFilter === "over") {
-        return stats.remainingHours < 0;
-      }
-      return true;
-    });
+  const filteredClients = clients.filter((client) => {
+    // Filter by brand
+    if (selectedBrandFilter !== "all" && client.brand_id !== selectedBrandFilter) {
+      return false;
+    }
+    
+    // Filter by status
+    if (statusFilter === "active") return !client.archived;
+    if (statusFilter === "archived") return client.archived;
+    return true;
+  });
 
   if (!mounted || loading || loadingData) {
     return (
@@ -388,8 +373,8 @@ export default function ClientsPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
-      </div>);
-
+      </div>
+    );
   }
 
   return (
@@ -398,26 +383,27 @@ export default function ClientsPage() {
 
       <main className="container mx-auto px-4 py-8">
         {/* Filter Clients */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-h-[60px]">
             <CardTitle>Filter Clients</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setStatusFilter("active");
-                setBudgetFilter("all");
-                setSelectedBrandFilter("all");
-                // Clear URL query params
-                router.push({
-                  pathname: router.pathname,
-                  query: {}
-                }, undefined, { shallow: true });
-              }}
-              className="ml-auto"
-            >
-              Clear All Filters
-            </Button>
+            {(statusFilter !== "active" || budgetFilter !== "all" || selectedBrandFilter !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter("active");
+                  setBudgetFilter("all");
+                  setSelectedBrandFilter("all");
+                  router.push({
+                    pathname: router.pathname,
+                    query: {}
+                  }, undefined, { shallow: true });
+                }}
+                className="h-7 px-2 text-xs"
+              >
+                Reset
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -429,7 +415,6 @@ export default function ClientsPage() {
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -466,8 +451,8 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
 
-        {clients.length === 0 ?
-        <Card className="text-center py-12 border-2 border-slate-200">
+        {clients.length === 0 ? (
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-brand-lighter flex items-center justify-center">
@@ -481,9 +466,9 @@ export default function ClientsPage() {
                 Add Your First Client
               </Button>
             </CardContent>
-          </Card> :
-        filteredClients.length === 0 ?
-        <Card className="text-center py-12 border-2 border-slate-200">
+          </Card>
+        ) : filteredClients.length === 0 ? (
+          <Card className="text-center py-12 border-2 border-slate-200">
             <CardContent>
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
@@ -493,139 +478,135 @@ export default function ClientsPage() {
               <h3 className="text-xl font-semibold mb-2">No matching clients</h3>
               <p className="text-slate-600">Try changing the filters to see more clients</p>
             </CardContent>
-          </Card> :
-
-        <>
+          </Card>
+        ) : (
+          <>
             {/* Clients Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredClients.map((client) => {
-              const stats = getCurrentMonthStats(client);
-              const clientTags = client.tags as string[] || [];
+                const stats = getCurrentMonthStats(client);
+                const clientTags = client.tags as string[] || [];
 
-              return (
-                <Card
-                  key={client.id}
-                  className={`hover:shadow-lg transition-all border-2 border-slate-200 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
-                  onClick={() => handleClientClick(client.id)}>
-
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CardTitle className="text-xl">{client.name}</CardTitle>
-                          {client.archived &&
-                          <Badge variant="secondary" className="bg-slate-200 text-slate-600">
-                              Archived
-                            </Badge>
-                          }
-                        </div>
-                        {client.brands && (
-                          <div className="text-sm text-slate-500 mt-0.5">
-                            {client.brands.name}
+                return (
+                  <Card
+                    key={client.id}
+                    className={`hover:shadow-lg transition-all border-2 border-slate-200 hover:border-brand-primary cursor-pointer ${client.archived ? "opacity-75" : ""}`}
+                    onClick={() => handleClientClick(client.id)}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CardTitle className="text-xl">{client.name}</CardTitle>
+                            {client.archived && (
+                              <Badge variant="secondary" className="bg-slate-200 text-slate-600">
+                                Archived
+                              </Badge>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="flex gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => handleEdit(client, e)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
-                              {client.archived ?
-                              <>
-                                  <ArchiveRestore className="w-4 h-4 mr-2" />
-                                  Unarchive
-                                </> :
-
-                              <>
-                                  <Archive className="w-4 h-4 mr-2" />
-                                  Archive
-                                </>
-                              }
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button
-                          variant="default"
-                          size="icon"
-                          onClick={(e) => handleAddTimeLog(client.id, e)}
-                          title="Add time log"
-                          className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9">
-
-                          <Plus className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="pt-2 border-t border-slate-200">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
-                          <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            Remaining: {stats.remainingHours.toFixed(2)}h
-                          </span>
+                          {client.brands && (
+                            <div className="text-sm text-slate-500 mt-0.5">
+                              {client.brands.name}
+                            </div>
+                          )}
                         </div>
-                        {(() => {
-                          const totalAvailable = stats.allocatedHours + stats.rolloverHours;
-
-                          // Always show progress bar, even with 0 logs and negative rollover
-                          let progressValue = 0;
-                          let isOverBudget = false;
-
-                          if (totalAvailable > 0) {
-                            // Normal case: positive total time available
-                            progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
-                            isOverBudget = stats.usedHours > totalAvailable;
-                          } else if (totalAvailable === 0) {
-                            // Edge case: exactly 0 available (negative rollover = allocated)
-                            progressValue = stats.usedHours > 0 ? 100 : 0;
-                            isOverBudget = stats.usedHours > 0;
-                          } else {
-                            // Negative available time (negative rollover > allocated)
-                            // Show as over budget even with 0 usage
-                            progressValue = 100;
-                            isOverBudget = true;
-                          }
-
-                          return (
-                            <Progress
-                              value={progressValue}
-                              className="h-2 bg-slate-100"
-                              indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"} />);
-
-
-                        })()}
+                        <div className="flex gap-1">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => handleEdit(client, e)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => handleToggleArchive(client.id, e)}>
+                                {client.archived ? (
+                                  <>
+                                    <ArchiveRestore className="w-4 h-4 mr-2" />
+                                    Unarchive
+                                  </>
+                                ) : (
+                                  <>
+                                    <Archive className="w-4 h-4 mr-2" />
+                                    Archive
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => handleDelete(client.id, e)} className="text-red-600">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <Button
+                            variant="default"
+                            size="icon"
+                            onClick={(e) => handleAddTimeLog(client.id, e)}
+                            title="Add time log"
+                            className="bg-brand-primary hover:bg-brand-primary-hover text-white shadow-md hover:shadow-lg transition-all rounded-sm h-9 w-9"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>);
-            })}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="pt-2 border-t border-slate-200">
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-900 font-semibold">Used: {stats.usedHours.toFixed(2)}h</span>
+                            <span className={`font-semibold ${stats.remainingHours >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              Remaining: {stats.remainingHours.toFixed(2)}h
+                            </span>
+                          </div>
+                          {(() => {
+                            const totalAvailable = stats.allocatedHours + stats.rolloverHours;
+                            let progressValue = 0;
+                            let isOverBudget = false;
+
+                            if (totalAvailable > 0) {
+                              progressValue = Math.min(stats.usedHours / totalAvailable * 100, 100);
+                              isOverBudget = stats.usedHours > totalAvailable;
+                            } else if (totalAvailable === 0) {
+                              progressValue = stats.usedHours > 0 ? 100 : 0;
+                              isOverBudget = stats.usedHours > 0;
+                            } else {
+                              progressValue = 100;
+                              isOverBudget = true;
+                            }
+
+                            return (
+                              <Progress
+                                value={progressValue}
+                                className="h-2 bg-slate-100"
+                                indicatorClassName={isOverBudget ? "bg-red-600" : "bg-green-600"}
+                              />
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             <div className="flex justify-center pb-8">
               <Button
-              size="lg"
-              className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
-              onClick={() => setIsDialogOpen(true)} style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}>
-
+                size="lg"
+                className="gap-2 bg-gradient-to-r from-brand-primary to-slate-700 hover:from-brand-primary-hover hover:to-slate-800"
+                onClick={() => setIsDialogOpen(true)}
+                style={{ backgroundColor: "#0188a9", backgroundImage: "none" }}
+              >
                 <Plus className="w-5 h-5" />
                 Add New Client
               </Button>
             </div>
           </>
-        }
+        )}
 
         <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogContent className="sm:max-w-[500px]">
@@ -673,8 +654,8 @@ export default function ClientsPage() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Acme Corporation" />
-
+                    placeholder="Acme Corporation"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="allocatedHours">Allocated Hours per Month *</Label>
@@ -685,8 +666,8 @@ export default function ClientsPage() {
                     min="0"
                     value={formData.allocatedHours}
                     onChange={(e) => setFormData({ ...formData, allocatedHours: e.target.value })}
-                    placeholder="40" />
-
+                    placeholder="40"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tags">Tags *</Label>
@@ -696,31 +677,31 @@ export default function ClientsPage() {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleTagInputKeyDown}
-                      placeholder="Enter a tag and press Enter" />
-
+                      placeholder="Enter a tag and press Enter"
+                    />
                     <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  {tags.length > 0 &&
-                  <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                      {tags.map((tag, index) =>
-                    <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      {tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="gap-1 pl-3 pr-2 py-1 bg-brand-lighter text-brand-primary hover:bg-brand-light">
                           {tag}
                           <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors">
-
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:bg-brand-light rounded-full p-0.5 transition-colors"
+                          >
                             <X className="w-3 h-3" />
                           </button>
                         </Badge>
-                    )}
+                      ))}
                     </div>
-                  }
-                  {tags.length === 0 &&
-                  <p className="text-sm text-slate-500 mt-1">Add at least one tag for this client</p>
-                  }
+                  )}
+                  {tags.length === 0 && (
+                    <p className="text-sm text-slate-500 mt-1">Add at least one tag for this client</p>
+                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -735,6 +716,6 @@ export default function ClientsPage() {
           </DialogContent>
         </Dialog>
       </main>
-    </div>);
-
+    </div>
+  );
 }
