@@ -564,9 +564,6 @@ export default function ClientsPage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold">{client.name}</h3>
-                            <Badge variant={client.recording_type === "open" ? "secondary" : "default"}>
-                              {client.recording_type === "open" ? "Open" : "Time Allocation"}
-                            </Badge>
                           </div>
                           {client.archived && (
                             <Badge variant="secondary" className="bg-slate-200 text-slate-600">
