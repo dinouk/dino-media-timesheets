@@ -601,6 +601,7 @@ export default function TimeLogsPage() {
         textColor: [51, 65, 85],
         lineColor: faintBrandColorRgb,
         lineWidth: 0.1,
+        cellPadding: 2,
       },
       bodyStyles: {
         fillColor: [255, 255, 255],
