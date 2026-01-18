@@ -500,7 +500,7 @@ export default function TimeLogsPage() {
     const brandColorToUse = clientBrandColor || "#0188a9";
     const brandColorRgb = hexToRgb(brandColorToUse);
     // Calculate faint version for grid lines (approx 20% opacity on white)
-    const faintBrandColorRgb = [
+    const faintBrandColorRgb: [number, number, number] = [
       Math.round(brandColorRgb[0] * 0.2 + 255 * 0.8),
       Math.round(brandColorRgb[1] * 0.2 + 255 * 0.8),
       Math.round(brandColorRgb[2] * 0.2 + 255 * 0.8)
@@ -601,15 +601,13 @@ export default function TimeLogsPage() {
         fillColor: brandColorRgb,
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        halign: "left",
-        cellPadding: 3
+        halign: "left"
       },
       styles: {
         fontSize: 9,
         textColor: [51, 65, 85],
         lineColor: faintBrandColorRgb,
-        lineWidth: 0.1,
-        cellPadding: 2, // Reduced padding
+        lineWidth: 0.1
       },
       bodyStyles: {
         fillColor: 255, // Ensure white background (no alternating colors)
