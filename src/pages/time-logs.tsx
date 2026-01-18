@@ -573,53 +573,41 @@ export default function TimeLogsPage() {
     });
     yPos = boxY + boxHeight + 10;
     const entriesWithFiles = await Promise.all(filteredEntries.map(async (entry) => ({ entry, files: await fileAttachmentService.getFileAttachments(entry.id) })));
-    const tableData = entriesWithFiles.map(({ entry, files }) => [new Date(entry.date).toLocaleDateString(), entry.hours.toString(), entry.description, (entry.tags as string[]).join(", "), files.length > 0 ? files.map((f) => f.display_name).join(", ") : "No files"]);
+    const tableData = entriesWithFiles.map(({ entry, files }) => [
+      new Date(entry.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      entry.hours.toFixed(2),
+      entry.description || "-",
+      (entry.tags as string[]).join(", ") || "-",
+      files.length > 0 ? files.map((f) => f.display_name).join(", ") : "-"
+    ]);
 
-    // Table styling with alternating rows using brand color with opacity
+    // Generate PDF table
     autoTable(doc, {
       startY: yPos,
-      head: [[
-        { content: "Date", styles: { halign: "left" } },
-        { content: "Hours", styles: { halign: "left" } },
-        { content: "Description", styles: { halign: "left" } }
-      ]],
-      body: entriesWithFiles.flatMap(({ entry, files }) => {
-        const rows: any[] = [{
-          0: entry.date,
-          1: entry.hours.toFixed(2),
-          2: entry.description || "-"
-        }];
-        if (files.length > 0) {
-          rows.push({
-            0: { content: `📎 ${files.length} file(s): ${files.map(f => f.file_name).join(", ")}`, colSpan: 3, styles: { fontStyle: "italic", textColor: [100, 116, 139] } }
-          });
-        }
-        return rows;
-      }),
+      head: [["Date", "Hours", "Description", "Tags", "Files"]],
+      body: tableData,
       theme: "grid",
       headStyles: {
         fillColor: brandColorRgb,
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        halign: "left"
       },
       styles: {
         fontSize: 9,
         textColor: [51, 65, 85],
         lineColor: faintBrandColorRgb,
-        lineWidth: 0.1
+        lineWidth: 0.1,
       },
       bodyStyles: {
-        fillColor: 255, // Ensure white background (no alternating colors)
+        fillColor: [255, 255, 255],
       },
       alternateRowStyles: {
-        fillColor: 255, // Ensure white background for alternating rows too
+        fillColor: [255, 255, 255],
       },
-      columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: "auto" }
-      }
     });
     const sanitizedClientName = selectedClient.name.replace(/[^a-zA-Z0-9]/g, "-");
     doc.save(`${sanitizedClientName}-${year}-${month}.pdf`);
