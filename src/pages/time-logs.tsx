@@ -666,7 +666,7 @@ export default function TimeLogsPage() {
     }
 
     return true;
-  });
+  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const handleClientFilterChange = (value: string) => {
     setSelectedClientId(value);
