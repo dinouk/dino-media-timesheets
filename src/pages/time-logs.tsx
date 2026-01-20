@@ -631,7 +631,7 @@ export default function TimeLogsPage() {
       },
       columnStyles: {
         0: { cellWidth: 25, overflow: 'visible' },
-        3: { overflow: 'visible' },
+        3: { cellWidth: 35, overflow: 'visible' },
       },
       bodyStyles: {
         fillColor: [255, 255, 255],
