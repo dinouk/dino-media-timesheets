@@ -602,7 +602,7 @@ export default function TimeLogsPage() {
     const tableData = entriesWithFiles.map(({ entry, files }) => [
       new Date(entry.date).toLocaleDateString("en-GB", {
         day: "2-digit",
-        month: "short",
+        month: "2-digit",
         year: "numeric",
       }),
       entry.hours.toFixed(2),
@@ -627,6 +627,11 @@ export default function TimeLogsPage() {
         lineColor: faintBrandColorRgb,
         lineWidth: 0.1,
         cellPadding: 2,
+        overflow: 'linebreak',
+      },
+      columnStyles: {
+        0: { cellWidth: 25, overflow: 'visible' },
+        3: { overflow: 'visible' },
       },
       bodyStyles: {
         fillColor: [255, 255, 255],
